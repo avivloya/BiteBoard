@@ -44,6 +44,7 @@ export default function RootLayout() {
         <Stack.Screen name="weight" options={sheet} />
         <Stack.Screen name="settings" options={sheet} />
         <Stack.Screen name="pro" options={sheet} />
+        <Stack.Screen name="boards" options={{ headerShown: true, title: '', headerShadowVisible: false, headerStyle: { backgroundColor: Colors.bg }, headerTintColor: Colors.ink }} />
         <Stack.Screen name="board/[id]" options={{ headerShown: true, title: '', headerShadowVisible: false, headerStyle: { backgroundColor: Colors.bg }, headerTintColor: Colors.ink }} />
       </Stack>
     </>

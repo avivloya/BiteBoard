@@ -9,7 +9,7 @@ import { Colors, Radius } from '@/constants/theme';
 import { findRecipe, useStore } from '@/lib/store';
 import type { Board } from '@/lib/types';
 
-function Cover({ board }: { board: Board }) {
+export function Cover({ board }: { board: Board }) {
   const rs = board.ids.map((id) => findRecipe(id)).filter((r) => !!r).slice(0, 3);
   return (
     <View style={styles.cover}>
@@ -27,7 +27,7 @@ export default function Boards() {
   const [name, setName] = useState('');
 
   return (
-    <Screen>
+    <Screen edges={[]}>
       <View style={{ gap: 6 }}>
         <T variant="title">Your boards</T>
         <T variant="muted">Pin recipes into collections, like a weekly meal plan or go-to snacks.</T>

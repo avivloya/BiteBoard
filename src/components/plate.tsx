@@ -33,7 +33,7 @@ export function RecipeArt({ recipe, style }: { recipe: Recipe; style?: ViewStyle
   if (image) {
     return (
       <View style={[{ backgroundColor: Colors.tile, overflow: 'hidden' }, style]}>
-        <Image source={typeof image === 'number' ? image : { uri: image }} style={{ width: '100%', height: '100%' }} contentFit="cover" transition={200} accessibilityLabel={recipe.title} />
+        <Image source={typeof image === 'string' ? { uri: image } : image} style={{ width: '100%', height: '100%' }} contentFit="cover" transition={200} accessibilityLabel={recipe.title} />
       </View>
     );
   }

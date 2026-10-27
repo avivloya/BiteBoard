@@ -7,8 +7,8 @@ import { RecipeArt } from './plate';
 
 const HEIGHTS = [210, 260, 230, 290, 240, 270];
 
-export function RecipeCard({ recipe, index }: { recipe: Recipe; index: number }) {
-  const h = HEIGHTS[(index * 7 + recipe.id.length) % HEIGHTS.length];
+export function RecipeCard({ recipe, index, height }: { recipe: Recipe; index: number; height?: number }) {
+  const h = height ?? HEIGHTS[(index * 7 + recipe.id.length) % HEIGHTS.length];
   return (
     <Pressable onPress={() => router.push({ pathname: '/recipe/[id]', params: { id: recipe.id } })} style={({ pressed }) => [styles.card, pressed && { opacity: 0.9 }]} accessibilityLabel={recipe.title}>
       <View style={[styles.tile, { height: h }]}>

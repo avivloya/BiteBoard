@@ -11,16 +11,16 @@ export default function TabsLayout() {
   return (
     <NativeTabs backgroundColor={Colors.surface} indicatorColor={Colors.surface2} labelStyle={{ selected: { color: Colors.ink } }} tintColor={Colors.accent}>
       <NativeTabs.Trigger name="index">
+        <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf={{ default: 'house', selected: 'house.fill' }} md="home" />
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="discover">
         <NativeTabs.Trigger.Label>Discover</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf={{ default: 'square.grid.2x2', selected: 'square.grid.2x2.fill' }} md="dashboard" />
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="snap">
         <NativeTabs.Trigger.Label>Snap meal</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf={{ default: 'camera', selected: 'camera.fill' }} md="photo_camera" />
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="boards">
-        <NativeTabs.Trigger.Label>Boards</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf={{ default: 'bookmark', selected: 'bookmark.fill' }} md="bookmark" />
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="today">
         <NativeTabs.Trigger.Label>Today</NativeTabs.Trigger.Label>
