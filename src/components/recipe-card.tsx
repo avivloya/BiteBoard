@@ -15,7 +15,12 @@ export function RecipeCard({ recipe, index }: { recipe: Recipe; index: number })
         <RecipeArt recipe={recipe} style={StyleSheet.absoluteFill} />
       </View>
       <Text style={styles.title} numberOfLines={2}>{recipe.title}</Text>
-      <Text style={styles.meta}>{recipe.by ? `@${recipe.by} · ` : ''}{Math.round(recipe.kcal)} kcal · {recipe.min} min</Text>
+      <Text style={styles.meta}>
+        {recipe.by && (
+          <Text style={styles.by} onPress={recipe.byId ? () => router.push({ pathname: '/person/[id]', params: { id: recipe.byId! } }) : undefined}>@{recipe.by} · </Text>
+        )}
+        {Math.round(recipe.kcal)} kcal · {recipe.min} min
+      </Text>
     </Pressable>
   );
 }
@@ -45,4 +50,5 @@ const styles = StyleSheet.create({
   tile: { borderRadius: Radius.lg, overflow: 'hidden', backgroundColor: Colors.tile },
   title: { fontSize: 15, fontWeight: '600', color: Colors.ink, marginTop: 6, paddingHorizontal: 2 },
   meta: { fontSize: 12, color: Colors.muted, paddingHorizontal: 2 },
+  by: { fontWeight: '700', color: Colors.ink },
 });

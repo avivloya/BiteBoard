@@ -2,6 +2,7 @@ import 'react-native-url-polyfill/auto';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
+import { File } from 'expo-file-system';
 
 import type { Recipe } from './types';
 
@@ -68,16 +69,48 @@ export async function profilesByIds(ids: string[]) {
   return (data as PublicProfile[]) ?? [];
 }
 
+type Row = { owner: string; recipe: Recipe; created_at: string; profiles?: { handle: string } | null };
+const toPost = (r: Row): Recipe => ({ ...r.recipe, by: r.profiles?.handle, byId: r.owner, posted: Date.parse(r.created_at) });
+
 export async function recipesBy(ownerIds: string[]) {
   if (!ownerIds.length) return [];
   const { data } = await db().from('shared_recipes').select('id, owner, recipe, created_at').in('owner', ownerIds).order('created_at', { ascending: false });
-  return (data ?? []).map((r) => ({ owner: r.owner as string, recipe: r.recipe as Recipe }));
+  return (data ?? []).map((r) => ({ owner: r.owner as string, recipe: { ...(r.recipe as Recipe), posted: Date.parse(r.created_at as string) } }));
 }
 
-export async function setShared(userId: string, recipe: Recipe, on: boolean) {
-  const t = db().from('shared_recipes');
-  const { error } = on
-    ? await t.upsert({ id: recipe.id, owner: userId, recipe: { ...recipe, shared: undefined } })
-    : await t.delete().eq('id', recipe.id).eq('owner', userId);
+/** Newest posts from everyone except you, for the For you feed. */
+export async function forYouPosts(userId: string, limit = 60) {
+  const { data, error } = await db().from('shared_recipes').select('id, owner, recipe, created_at, profiles(handle)')
+    .neq('owner', userId).order('created_at', { ascending: false }).limit(limit);
   if (error) throw new Error(error.message);
+  return ((data ?? []) as unknown as Row[]).map(toPost);
+}
+
+const BUCKET = 'recipe-photos';
+
+/** Uploads a photo on this phone into the poster's own folder, so everyone can see it but only they can replace it. */
+async function uploadPhoto(userId: string, recipeId: string, localUri: string) {
+  const ext = (localUri.split('.').pop()?.split('?')[0] || 'jpg').toLowerCase();
+  const type = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
+  const body = await new File(localUri).arrayBuffer();
+  const path = `${userId}/${recipeId}.${ext}`;
+  const { error } = await db().storage.from(BUCKET).upload(path, body, { contentType: type, upsert: true });
+  if (error) throw new Error(error.message);
+  return `${db().storage.from(BUCKET).getPublicUrl(path).data.publicUrl}?v=${Date.now()}`;
+}
+
+/** Posts a recipe (with its photo) to your recipe page and For you, or takes it down. Returns the photo's public URL when posting. */
+export async function setShared(userId: string, recipe: Recipe, on: boolean, localPhoto?: string) {
+  const t = db().from('shared_recipes');
+  if (!on) {
+    const { error } = await t.delete().eq('id', recipe.id).eq('owner', userId);
+    if (error) throw new Error(error.message);
+    const { data } = await db().storage.from(BUCKET).list(userId, { search: recipe.id });
+    if (data?.length) await db().storage.from(BUCKET).remove(data.map((f) => `${userId}/${f.name}`));
+    return null;
+  }
+  const image = localPhoto && !localPhoto.startsWith('http') ? await uploadPhoto(userId, recipe.id, localPhoto) : localPhoto ?? recipe.image ?? null;
+  const { error } = await t.upsert({ id: recipe.id, owner: userId, recipe: { ...recipe, image, shared: undefined, by: undefined, byId: undefined, posted: undefined } });
+  if (error) throw new Error(error.message);
+  return image;
 }

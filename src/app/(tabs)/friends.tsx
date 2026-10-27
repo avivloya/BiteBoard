@@ -38,7 +38,7 @@ export default function Friends() {
   const head = (
     <View style={{ gap: 6 }}>
       <T variant="title">Friends</T>
-      <T variant="muted">Share your recipes on a public profile and see what your friends are cooking.</T>
+      <T variant="muted">Post your recipes to your own recipe page and see what your friends are cooking.</T>
     </View>
   );
   if (!socialConfigured) return <Screen>{head}<Panel><T variant="h3">Friends isn't set up yet</T><T variant="muted">Add the Supabase keys from the README to turn on profiles and friends.</T></Panel></Screen>;
@@ -72,11 +72,11 @@ export default function Friends() {
           <Avatar p={me} size={56} />
           <View style={{ flex: 1 }}>
             <T variant="h3">{me.name}</T>
-            <T variant="muted">@{me.handle} · {streakInfo(days).current} day streak · {mine.filter((r) => r.shared).length} shared</T>
+            <T variant="muted">@{me.handle} · {streakInfo(days).current} day streak · {mine.filter((r) => r.shared).length} posted</T>
           </View>
         </Row>
         {!!me.bio && <T>{me.bio}</T>}
-        <T variant="muted">To share a recipe you created, open it and tap Share on my profile.</T>
+        <Button title="View my recipe page" onPress={() => router.push({ pathname: '/person/[id]', params: { id: userId } })} />
       </Panel>
       <Panel>
         <T variant="label">Find friends</T>
@@ -86,7 +86,7 @@ export default function Friends() {
       {ids.length > 0 && <Panel><T variant="label">Your friends</T>{ids.map((id) => people[id]).filter(Boolean).map(person)}</Panel>}
       {!!error && <T style={{ color: Colors.warn }}>{error}</T>}
       <T variant="h2">From your friends</T>
-      {feed.length ? <Masonry recipes={feed} /> : <T variant="muted">{ids.length ? "Your friends haven't shared recipes yet." : 'Add friends to see their recipes here.'}</T>}
+      {feed.length ? <Masonry recipes={feed} /> : <T variant="muted">{ids.length ? "Your friends haven't posted recipes yet." : 'Add friends to see their recipes here.'}</T>}
     </Screen>
   );
 }
@@ -110,8 +110,8 @@ function CreateProfile({ userId, defaultName, error: initialError }: { userId: s
   };
   return (
     <Panel>
-      <T variant="h3">Create your public profile</T>
-      <T variant="muted">Friends find you by your handle. Only recipes you choose to share appear on it. Your weight and food log stay private on your phone.</T>
+      <T variant="h3">Create your recipe page</T>
+      <T variant="muted">Friends find you by your handle. Only recipes you post appear on it. Your weight and food log stay private on your phone.</T>
       <Field label="Handle" value={handle} onChangeText={setHandle} autoCapitalize="none" placeholder="aviv.cooks" />
       <Field label="Display name" value={name} onChangeText={setName} />
       <Field label="Bio" value={bio} onChangeText={setBio} maxLength={120} placeholder="Cooking my way to my goal weight" />

@@ -10,6 +10,8 @@ type SocialState = {
   friendIds: string[];
   people: Record<string, PublicProfile>;
   feed: Recipe[];
+  /** newest posts from everyone, for Discover's For you */
+  forYou: Recipe[];
   set: (patch: Partial<Omit<SocialState, 'set'>>) => void;
 };
 
@@ -19,5 +21,6 @@ export const useSocial = create<SocialState>()((set) => ({
   friendIds: [],
   people: {},
   feed: [],
+  forYou: [],
   set: (patch) => set(patch),
 }));

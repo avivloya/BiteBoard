@@ -29,7 +29,7 @@ Subscriptions (RevenueCat) need a development build instead of Expo Go: `eas bui
 
 1. Create a project at supabase.com.
 2. Install the Supabase CLI and link it: `supabase link --project-ref YOUR-PROJECT`.
-3. Create the tables: `supabase db push` (runs `supabase/migrations`).
+3. Create the tables and the `recipe-photos` storage bucket: `supabase db push` (runs `supabase/migrations`).
 4. Turn on **Anonymous sign-ins** under Authentication → Sign In / Providers.
 5. Add your Anthropic API key and deploy the AI function:
    ```bash

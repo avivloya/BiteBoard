@@ -19,10 +19,14 @@ export type Recipe = {
   ai?: boolean;
   /** written by the user */
   own?: boolean;
-  /** shared on the user's public profile */
+  /** posted to the user's recipe page and the For you feed */
   shared?: boolean;
-  /** handle of the friend who shared it */
+  /** handle of the person who posted it */
   by?: string;
+  /** user id of the person who posted it */
+  byId?: string;
+  /** when it was posted, ms since epoch */
+  posted?: number;
 };
 
 export type Sex = 'female' | 'male' | 'other';

@@ -19,7 +19,7 @@ export async function refreshSocial(userId: string) {
   const people = Object.fromEntries(friends.map((f) => [f.id, f]));
   useSocial.getState().set({
     userId, me, friendIds: ids, people,
-    feed: shared.map(({ owner, recipe }) => ({ ...recipe, by: people[owner]?.handle })),
+    feed: shared.map(({ owner, recipe }) => ({ ...recipe, by: people[owner]?.handle, byId: owner })),
   });
 }
 

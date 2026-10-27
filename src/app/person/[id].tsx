@@ -21,7 +21,7 @@ export default function Person() {
     Promise.all([profilesByIds([id]), recipesBy([id])])
       .then(([[person], rs]) => {
         if (!person) return;
-        const list = rs.map((r) => ({ ...r.recipe, by: person.handle }));
+        const list = rs.map((r) => ({ ...r.recipe, by: person.handle, byId: id }));
         setP(person);
         setRecipes(list);
         // Make this person's recipes openable from the recipe screen.
@@ -47,8 +47,8 @@ export default function Person() {
       {userId && userId !== id && (
         <Button title={friend ? 'Friends ✓' : 'Add friend'} kind={friend ? 'secondary' : 'primary'} onPress={async () => { await setFriend(userId, id, !friend); await refreshSocial(userId); }} />
       )}
-      <T variant="label">{recipes.length} recipe{recipes.length === 1 ? '' : 's'}</T>
-      {recipes.length ? <Masonry recipes={recipes} /> : <T variant="muted">No shared recipes yet.</T>}
+      <T variant="label">{recipes.length} posted recipe{recipes.length === 1 ? '' : 's'}</T>
+      {recipes.length ? <Masonry recipes={recipes} /> : <T variant="muted">{userId === id ? 'Open a recipe you wrote and tap Post to For you, and it shows up here.' : 'No posts yet.'}</T>}
     </Screen>
   );
 }
