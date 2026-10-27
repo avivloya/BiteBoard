@@ -2,6 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
+import { Logo } from '@/components/logo';
 import { Row, Screen } from '@/components/screen';
 import { Button, Field, Panel, Segmented, T } from '@/components/ui';
 import { Colors, Radius } from '@/constants/theme';
@@ -59,6 +60,7 @@ export default function Onboarding() {
   if (step === 0) {
     return (
       <Screen style={{ gap: 22, paddingTop: 24 }}>
+        <Logo size={44} />
         {progress}
         <View style={{ gap: 8 }}>
           <T variant="title">Lose weight, one plate at a time.</T>

@@ -8,7 +8,7 @@ import { Button, Field, Panel, Segmented, T } from '@/components/ui';
 import { WeightChart } from '@/components/weight-chart';
 import { Colors } from '@/constants/theme';
 import { kgToLb } from '@/lib/plan';
-import { dayKey, guessMeal, shiftDay, weekdayLetter } from '@/lib/dates';
+import { dayKey, guessMeal, shiftDay } from '@/lib/dates';
 import { totals, useStore } from '@/lib/store';
 import { streakInfo } from '@/lib/streak';
 import { MEALS, type Meal } from '@/lib/types';
@@ -22,8 +22,6 @@ export default function Today() {
   const t = totals(entries);
   const over = t.kcal > targets.kcal;
   const streak = streakInfo(days);
-  const week = Array.from({ length: 7 }, (_, i) => shiftDay(dayKey(), i - 6));
-  const max = Math.max(targets.kcal * 1.25, ...week.map((d) => totals(days[d]).kcal));
   const label = day === dayKey() ? 'Today' : day === shiftDay(dayKey(), -1) ? 'Yesterday' : day;
 
   return (
@@ -69,33 +67,9 @@ export default function Today() {
             <T variant="num" style={{ fontSize: 18 }}>{streak.best}</T>
           </View>
         </Row>
-        <Row style={{ justifyContent: 'space-between', flexWrap: 'nowrap' }}>
-          {week.map((d) => (
-            <View key={d} style={{ alignItems: 'center', gap: 4 }}>
-              <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: days[d]?.length ? Colors.accent : Colors.surface2, borderWidth: 2, borderColor: d === dayKey() ? Colors.accent : 'transparent' }} />
-              <T variant="muted" style={{ fontSize: 11 }}>{weekdayLetter(d)}</T>
-            </View>
-          ))}
-        </Row>
-        <T variant="muted">{streak.today ? "You've logged today. See you tomorrow!" : streak.current ? 'Log a meal today to keep your streak.' : 'Log any meal to start a streak.'}</T>
       </Panel>
 
       <WeightPanel weights={weights} goalKg={profile?.goalKg ?? 0} imperial={profile?.units === 'imperial'} />
-
-      <Panel>
-        <T variant="label">Last 7 days</T>
-        <Row style={{ height: 130, alignItems: 'flex-end', flexWrap: 'nowrap', justifyContent: 'space-between' }}>
-          {week.map((d) => {
-            const v = totals(days[d]).kcal;
-            return (
-              <Pressable key={d} onPress={() => setDay(d)} style={{ flex: 1, alignItems: 'center', gap: 4 }}>
-                <View style={{ width: '60%', height: Math.max(2, (v / max) * 100), borderRadius: 6, backgroundColor: v > targets.kcal ? Colors.warn : d === day ? Colors.accent : Colors.carbs }} />
-                <T variant="muted" style={{ fontSize: 11 }}>{weekdayLetter(d)}</T>
-              </Pressable>
-            );
-          })}
-        </Row>
-      </Panel>
 
       <Panel>
         <Row style={{ justifyContent: 'space-between' }}>

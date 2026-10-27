@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { Colors, Fonts, Radius } from '@/constants/theme';
+import { Colors, Radius } from '@/constants/theme';
 import type { Recipe } from '@/lib/types';
 import { RecipeArt } from './plate';
 
@@ -13,10 +13,9 @@ export function RecipeCard({ recipe, index }: { recipe: Recipe; index: number })
     <Pressable onPress={() => router.push({ pathname: '/recipe/[id]', params: { id: recipe.id } })} style={({ pressed }) => [styles.card, pressed && { opacity: 0.9 }]} accessibilityLabel={recipe.title}>
       <View style={[styles.tile, { height: h }]}>
         <RecipeArt recipe={recipe} style={StyleSheet.absoluteFill} />
-        <View style={styles.kcal}><Text style={styles.kcalText}>{Math.round(recipe.kcal)} kcal</Text></View>
       </View>
       <Text style={styles.title} numberOfLines={2}>{recipe.title}</Text>
-      <Text style={styles.meta}>{recipe.by ? `@${recipe.by} · ` : ''}{recipe.min} min · {Math.round(recipe.p)}g protein</Text>
+      <Text style={styles.meta}>{recipe.by ? `@${recipe.by} · ` : ''}{Math.round(recipe.kcal)} kcal · {recipe.min} min</Text>
     </Pressable>
   );
 }
@@ -44,8 +43,6 @@ export function Masonry({ recipes }: { recipes: Recipe[] }) {
 const styles = StyleSheet.create({
   card: { gap: 4 },
   tile: { borderRadius: Radius.lg, overflow: 'hidden', backgroundColor: Colors.tile },
-  kcal: { position: 'absolute', left: 10, top: 10, backgroundColor: 'rgba(248,239,226,0.92)', borderRadius: Radius.pill, paddingHorizontal: 10, paddingVertical: 3 },
-  kcalText: { fontFamily: Fonts.mono, fontSize: 11, color: Colors.ink },
   title: { fontSize: 15, fontWeight: '600', color: Colors.ink, marginTop: 6, paddingHorizontal: 2 },
   meta: { fontSize: 12, color: Colors.muted, paddingHorizontal: 2 },
 });

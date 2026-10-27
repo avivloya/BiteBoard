@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { ScrollView, TextInput, View } from 'react-native';
 
+import { Logo } from '@/components/logo';
 import { Masonry } from '@/components/recipe-card';
 import { Row, Screen } from '@/components/screen';
 import { Button, Chip, T, styles as ui } from '@/components/ui';
@@ -24,9 +25,13 @@ export default function Discover() {
 
   return (
     <Screen style={{ gap: 14 }}>
+      <Row>
+        <Logo />
+        <T style={{ fontSize: 22, fontWeight: '800', color: Colors.ink, letterSpacing: -0.6 }}>Biteboard</T>
+      </Row>
       <Row style={{ flexWrap: 'nowrap' }}>
         <TextInput value={q} onChangeText={setQ} placeholder="Search healthy recipes" placeholderTextColor={Colors.muted} returnKeyType="search"
-          style={[ui.input, { flex: 1, borderRadius: 999, backgroundColor: Colors.surface2, borderColor: 'transparent' }]} />
+          style={[ui.input, { flex: 1, borderRadius: 999, backgroundColor: 'rgba(248,239,226,0.7)', borderColor: 'transparent' }]} />
         <Button title="AI" kind="primary" onPress={() => router.push('/ai-recipe')} />
         <Button title="+" onPress={() => router.push('/write-recipe')} />
       </Row>

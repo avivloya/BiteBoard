@@ -51,4 +51,4 @@ export const LIBRARY: Recipe[] = [
   steps:["Stir chia into coconut milk; chill 3 hours.","Top with mango, chili and lime zest."]}
 ];
 
-export const FILTERS = ['All', 'High protein', 'Under 400', 'Low carb', 'Vegetarian', 'Vegan', 'Meal prep', 'Breakfast', 'Lunch', 'Dinner', 'Snack'];
+export const FILTERS = ['All', 'Breakfast', 'Lunch', 'Dinner', 'Snack', 'High protein', 'Vegetarian'];

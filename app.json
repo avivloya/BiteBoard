@@ -10,7 +10,6 @@
     "ios": {
       "bundleIdentifier": "com.avivloya.biteboard",
       "supportsTablet": false,
-      "icon": "./assets/expo.icon",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -35,7 +34,7 @@
         {
           "backgroundColor": "#E2CEB1",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "imageWidth": 120
         }
       ],
       [
