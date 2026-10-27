@@ -50,8 +50,10 @@ export type Entry = {
   c: number;
   f: number;
   meal: Meal;
-  src: 'recipe' | 'photo' | 'manual';
+  src: 'recipe' | 'photo' | 'manual' | 'barcode';
   t: number;
 };
 
 export type Board = { id: string; name: string; ids: string[] };
+
+export type Reminders = { meals: boolean; streak: boolean; weighIn: boolean };

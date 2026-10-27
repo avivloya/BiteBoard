@@ -45,6 +45,19 @@
           "cameraPermission": "Biteboard uses the camera to snap your meals and estimate their calories.",
           "microphonePermission": false
         }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Biteboard uses the camera to snap meals and scan food barcodes.",
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#6B4026"
+        }
       ]
     ],
     "experiments": {

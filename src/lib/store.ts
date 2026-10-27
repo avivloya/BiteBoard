@@ -5,9 +5,17 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import { LIBRARY } from '@/data/recipes';
 import { dayKey } from './dates';
 import { calcPlan } from './plan';
-import type { Board, Entry, Profile, Recipe, Targets } from './types';
+import type { Board, Entry, Profile, Recipe, Reminders, Targets } from './types';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
+const latestDay = (w: Record<string, number>) => Object.keys(w).sort().pop() ?? '';
+
+/** Monday of the current week, as a day key. */
+export function weekStart(d = new Date()) {
+  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
+  return dayKey(x);
+}
 
 type State = {
   hydrated: boolean;
@@ -16,7 +24,16 @@ type State = {
   boards: Board[];
   mine: Recipe[];
   days: Record<string, Entry[]>;
+  /** weigh-ins by day, in kg */
+  weights: Record<string, number>;
+  reminders: Reminders;
+  /** free-tier AI usage, reset each week */
+  aiUsage: { week: string; scans: number; recipes: number };
 
+  logWeight: (kg: number, day?: string) => void;
+  removeWeight: (day: string) => void;
+  setReminders: (r: Reminders) => void;
+  countAiUse: (kind: 'scans' | 'recipes') => void;
   finishOnboarding: (p: Profile) => void;
   setTargets: (t: Targets) => void;
   addEntry: (e: Omit<Entry, 'id' | 't'>, day?: string) => void;
@@ -42,10 +59,25 @@ export const useStore = create<State>()(
       ],
       mine: [],
       days: {},
+      weights: {},
+      reminders: { meals: false, streak: false, weighIn: false },
+      aiUsage: { week: weekStart(), scans: 0, recipes: 0 },
 
+      logWeight: (kg, day = dayKey()) =>
+        set((s) => ({ weights: { ...s.weights, [day]: kg }, profile: s.profile && day >= latestDay(s.weights) ? { ...s.profile, weightKg: kg } : s.profile })),
+      removeWeight: (day) => set((s) => { const { [day]: _, ...rest } = s.weights; return { weights: rest }; }),
+      setReminders: (reminders) => set({ reminders }),
+      countAiUse: (kind) => set((s) => {
+        const u = s.aiUsage.week === weekStart() ? s.aiUsage : { week: weekStart(), scans: 0, recipes: 0 };
+        return { aiUsage: { ...u, [kind]: u[kind] + 1 } };
+      }),
       finishOnboarding: (p) => {
         const plan = calcPlan(p);
-        set({ profile: p, targets: { kcal: plan.kcal, p: plan.p, c: plan.c, f: plan.f } });
+        set((s) => ({
+          profile: p,
+          targets: { kcal: plan.kcal, p: plan.p, c: plan.c, f: plan.f },
+          weights: Object.keys(s.weights).length ? s.weights : { [dayKey()]: p.weightKg },
+        }));
       },
       setTargets: (targets) => set({ targets }),
       addEntry: (e, day = dayKey()) =>
@@ -88,3 +120,11 @@ export const findRecipe = (id: string, extra: Recipe[] = []) =>
 
 export const totals = (entries: Entry[] = []) =>
   entries.reduce((a, e) => ({ kcal: a.kcal + e.kcal, p: a.p + e.p, c: a.c + e.c, f: a.f + e.f }), { kcal: 0, p: 0, c: 0, f: 0 });
+
+export const FREE_LIMITS = { scans: 3, recipes: 3 } as const;
+
+/** AI uses left this week on the free plan. */
+export const aiLeft = (kind: 'scans' | 'recipes') => {
+  const u = useStore.getState().aiUsage;
+  return Math.max(0, FREE_LIMITS[kind] - (u.week === weekStart() ? u[kind] : 0));
+};

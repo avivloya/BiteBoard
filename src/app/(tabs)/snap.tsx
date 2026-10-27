@@ -9,7 +9,8 @@ import { Button, Panel, Segmented, T } from '@/components/ui';
 import { Colors, Fonts, Radius } from '@/constants/theme';
 import { type MealEstimate, type MealItem, aiConfigured, estimateMeal } from '@/lib/ai';
 import { guessMeal } from '@/lib/dates';
-import { useStore } from '@/lib/store';
+import { usePro } from '@/lib/pro';
+import { aiLeft, useStore } from '@/lib/store';
 import { MEALS, type Meal } from '@/lib/types';
 
 const COLS: { key: keyof MealItem; label: string }[] = [
@@ -18,6 +19,10 @@ const COLS: { key: keyof MealItem; label: string }[] = [
 
 export default function Snap() {
   const addEntry = useStore((s) => s.addEntry);
+  const countAiUse = useStore((s) => s.countAiUse);
+  useStore((s) => s.aiUsage); // re-render when the weekly count changes
+  const isPro = usePro((s) => s.isPro);
+  const left = aiLeft('scans');
   const [photo, setPhoto] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -35,9 +40,11 @@ export default function Snap() {
 
   const analyze = async () => {
     if (!photo?.base64) return;
+    if (!isPro && left <= 0) return router.push('/pro');
     setBusy(true); setError('');
     try {
       setResult(await estimateMeal(photo.base64, photo.mimeType ?? 'image/jpeg'));
+      if (!isPro) countAiUse('scans');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'The estimate did not come back. Try again.');
     }
@@ -67,7 +74,9 @@ export default function Snap() {
       <Row>
         <Button title={photo ? 'Retake' : 'Take photo'} kind={photo ? 'secondary' : 'primary'} onPress={() => pick(true)} />
         <Button title="Choose from library" onPress={() => pick(false)} />
+        <Button title="Scan a barcode" onPress={() => router.push('/scan')} />
       </Row>
+      {!isPro && <T variant="muted">{left} free photo scan{left === 1 ? '' : 's'} left this week. Barcode scans are always free.</T>}
 
       {photo && !result && (
         <Button title={busy ? 'Looking at your meal…' : 'Estimate calories'} kind="primary" disabled={busy || !aiConfigured} onPress={analyze}

@@ -5,14 +5,16 @@ import { Pressable, View } from 'react-native';
 import { MacroBar, Ring } from '@/components/ring';
 import { Row, Screen } from '@/components/screen';
 import { Button, Field, Panel, Segmented, T } from '@/components/ui';
+import { WeightChart } from '@/components/weight-chart';
 import { Colors } from '@/constants/theme';
+import { kgToLb } from '@/lib/plan';
 import { dayKey, guessMeal, shiftDay, weekdayLetter } from '@/lib/dates';
 import { totals, useStore } from '@/lib/store';
 import { streakInfo } from '@/lib/streak';
 import { MEALS, type Meal } from '@/lib/types';
 
 export default function Today() {
-  const { targets, days, addEntry, removeEntry, setTargets } = useStore();
+  const { targets, days, addEntry, removeEntry, setTargets, weights, profile } = useStore();
   const [day, setDay] = useState(dayKey());
   const [adding, setAdding] = useState(false);
   const [editingGoals, setEditingGoals] = useState(false);
@@ -31,6 +33,7 @@ export default function Today() {
         <Row>
           <Button title="‹" onPress={() => setDay(shiftDay(day, -1))} />
           <Button title="›" disabled={day >= dayKey()} onPress={() => setDay(shiftDay(day, 1))} />
+          <Button title="⚙︎" onPress={() => router.push('/settings')} />
         </Row>
       </Row>
 
@@ -76,6 +79,8 @@ export default function Today() {
         </Row>
         <T variant="muted">{streak.today ? "You've logged today. See you tomorrow!" : streak.current ? 'Log a meal today to keep your streak.' : 'Log any meal to start a streak.'}</T>
       </Panel>
+
+      <WeightPanel weights={weights} goalKg={profile?.goalKg ?? 0} imperial={profile?.units === 'imperial'} />
 
       <Panel>
         <T variant="label">Last 7 days</T>
@@ -154,5 +159,23 @@ function GoalsForm({ onSave }: { onSave: (t: { kcal: number; p: number; c: numbe
       </Row>
       <Button title="Save targets" kind="primary" onPress={() => onSave({ kcal: Number(v.kcal) || targets.kcal, p: Number(v.p) || 0, c: Number(v.c) || 0, f: Number(v.f) || 0 })} />
     </View>
+  );
+}
+
+function WeightPanel({ weights, goalKg, imperial }: { weights: Record<string, number>; goalKg: number; imperial: boolean }) {
+  const show = (kg: number) => Math.round((imperial ? kgToLb(kg) : kg) * 10) / 10;
+  const days = Object.keys(weights).sort();
+  const latest = days.length ? show(weights[days[days.length - 1]]) : null;
+  return (
+    <Pressable onPress={() => router.push('/weight')}>
+      <Panel>
+        <Row style={{ justifyContent: 'space-between' }}>
+          <T variant="label">Weight</T>
+          <T variant="muted">Log weight ›</T>
+        </Row>
+        <T style={{ fontSize: 28, fontWeight: '800' }}>{latest ?? '–'} <T variant="muted">{imperial ? 'lb' : 'kg'}</T></T>
+        <WeightChart points={days.slice(-30).map((d) => ({ day: d, v: show(weights[d]) }))} goal={show(goalKg)} height={100} />
+      </Panel>
+    </Pressable>
   );
 }
