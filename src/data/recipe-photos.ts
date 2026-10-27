@@ -13,4 +13,5 @@ export const BUILT_IN_PHOTOS: Record<string, number> = {
   r6: require('../../assets/recipes/r6.jpg'),
   r7: require('../../assets/recipes/r7.jpg'),
   r15: require('../../assets/recipes/r15.jpg'),
+  r8: require('../../assets/recipes/r8.jpg'),
 };
