@@ -2,17 +2,17 @@ import { Directory, File, Paths } from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
 import { Alert, Platform } from 'react-native';
 
-/** Let the user pick a recipe photo and keep a copy in the app's documents, so it survives cache clears. */
-export async function pickRecipePhoto(): Promise<string | null> {
+/** Let the user pick a photo. With `keep`, a copy goes in the app's documents so it survives cache clears. */
+export async function pickRecipePhoto({ aspect = [4, 5] as [number, number], keep = true } = {}): Promise<string | null> {
   const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (!perm.granted) {
     Alert.alert('Photos access needed', 'Allow Biteboard to use your photos in Settings to add a picture.');
     return null;
   }
-  const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [4, 5], quality: 0.7 });
+  const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect, quality: 0.7 });
   if (res.canceled || !res.assets[0]) return null;
   const uri = res.assets[0].uri;
-  if (Platform.OS === 'web') return uri;
+  if (Platform.OS === 'web' || !keep) return uri;
 
   const dir = new Directory(Paths.document, 'recipe-photos');
   if (!dir.exists) dir.create({ intermediates: true });

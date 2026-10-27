@@ -15,7 +15,7 @@ export const supabase = socialConfigured
   ? createClient(url!, anonKey!, { auth: { storage: AsyncStorage, persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } })
   : null;
 
-export type PublicProfile = { id: string; handle: string; name: string; bio: string; streak: number };
+export type PublicProfile = { id: string; handle: string; name: string; bio: string; streak: number; photo?: string | null };
 
 function db() {
   if (!supabase) throw new Error('Friends needs Supabase. Add EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY to your .env file.');
@@ -37,7 +37,7 @@ export async function myProfile(userId: string) {
   return (data as PublicProfile | null) ?? null;
 }
 
-export async function saveProfile(userId: string, p: { handle: string; name: string; bio: string; streak: number }) {
+export async function saveProfile(userId: string, p: { handle: string; name: string; bio: string; streak: number; photo?: string | null }) {
   const { error } = await db().from('profiles').upsert({ id: userId, ...p, updated_at: new Date().toISOString() });
   if (error) throw new Error(error.code === '23505' ? 'That handle is taken. Try another one.' : error.message);
 }
@@ -89,14 +89,22 @@ export async function forYouPosts(userId: string, limit = 60) {
 const BUCKET = 'recipe-photos';
 
 /** Uploads a photo on this phone into the poster's own folder, so everyone can see it but only they can replace it. */
-async function uploadPhoto(userId: string, recipeId: string, localUri: string) {
+async function uploadPhoto(userId: string, name: string, localUri: string) {
   const ext = (localUri.split('.').pop()?.split('?')[0] || 'jpg').toLowerCase();
   const type = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
   const body = await new File(localUri).arrayBuffer();
-  const path = `${userId}/${recipeId}.${ext}`;
+  const path = `${userId}/${name}.${ext}`;
   const { error } = await db().storage.from(BUCKET).upload(path, body, { contentType: type, upsert: true });
   if (error) throw new Error(error.message);
   return `${db().storage.from(BUCKET).getPublicUrl(path).data.publicUrl}?v=${Date.now()}`;
+}
+
+/** Uploads a new profile picture and saves it on your profile. Only you can replace it. */
+export async function setProfilePhoto(userId: string, localUri: string) {
+  const photo = await uploadPhoto(userId, 'avatar', localUri);
+  const { error } = await db().from('profiles').update({ photo, updated_at: new Date().toISOString() }).eq('id', userId);
+  if (error) throw new Error(error.message);
+  return photo;
 }
 
 /** Posts a recipe (with its photo) to your recipe page and For you, or takes it down. Returns the photo's public URL when posting. */

@@ -1,14 +1,15 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, TextInput, View } from 'react-native';
 
 import { Masonry } from '@/components/recipe-card';
 import { Row, Screen } from '@/components/screen';
 import { Button, Field, Panel, T, styles as ui } from '@/components/ui';
 import { Colors } from '@/constants/theme';
 import {
-  type PublicProfile, ensureSession, saveProfile, searchPeople, setFriend, socialConfigured,
+  type PublicProfile, ensureSession, saveProfile, searchPeople, setFriend, setProfilePhoto, socialConfigured,
 } from '@/lib/social';
+import { pickRecipePhoto } from '@/lib/photos';
 import { Avatar, refreshSocial } from '@/components/social';
 import { useSocial } from '@/lib/social-store';
 import { useStore } from '@/lib/store';
@@ -64,12 +65,30 @@ export default function Friends() {
     </Row>
   );
 
+  // Only you can set your own picture: it's uploaded into your own folder.
+  async function changePhoto() {
+    if (!userId) return;
+    const uri = await pickRecipePhoto({ aspect: [1, 1], keep: false });
+    if (!uri) return;
+    try {
+      await setProfilePhoto(userId, uri);
+      await refreshSocial(userId);
+    } catch (e) {
+      Alert.alert('Could not update your picture', e instanceof Error ? e.message : 'Try again.');
+    }
+  }
+
   return (
     <Screen>
       {head}
       <Panel>
         <Row style={{ flexWrap: 'nowrap' }}>
-          <Avatar p={me} size={56} />
+          <Pressable onPress={changePhoto} accessibilityLabel={me.photo ? 'Change profile picture' : 'Add a profile picture'}>
+            <Avatar p={me} size={56} />
+            <View style={{ position: 'absolute', right: -2, bottom: -2, width: 22, height: 22, borderRadius: 11, backgroundColor: Colors.ink, alignItems: 'center', justifyContent: 'center' }}>
+              <T style={{ color: Colors.bg, fontSize: 14, lineHeight: 16, fontWeight: '800' }}>+</T>
+            </View>
+          </Pressable>
           <View style={{ flex: 1 }}>
             <T variant="h3">{me.name}</T>
             <T variant="muted">@{me.handle} · {streakInfo(days).current} day streak · {mine.filter((r) => r.shared).length} posted</T>
