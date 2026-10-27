@@ -5,6 +5,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import { LIBRARY } from '@/data/recipes';
 import { dayKey } from './dates';
 import { calcPlan } from './plan';
+import { deleteRecipePhoto } from './photos';
 import type { Board, Entry, Profile, Recipe, Reminders, Targets } from './types';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -29,6 +30,8 @@ type State = {
   reminders: Reminders;
   /** free-tier AI usage, reset each week */
   aiUsage: { week: string; scans: number; recipes: number };
+  /** photos the user added, by recipe id (works for library recipes too) */
+  photos: Record<string, string>;
 
   logWeight: (kg: number, day?: string) => void;
   removeWeight: (day: string) => void;
@@ -45,6 +48,7 @@ type State = {
   addRecipe: (r: Omit<Recipe, 'id'>) => string;
   updateRecipe: (id: string, patch: Partial<Recipe>) => void;
   deleteRecipe: (id: string) => void;
+  setPhoto: (recipeId: string, uri: string | null) => void;
 };
 
 export const useStore = create<State>()(
@@ -58,6 +62,7 @@ export const useStore = create<State>()(
         { id: 'b2', name: 'Quick breakfasts', ids: ['r1', 'r4', 'r8'] },
       ],
       mine: [],
+      photos: {},
       days: {},
       weights: {},
       reminders: { meals: false, streak: false, weighIn: false },
@@ -103,8 +108,21 @@ export const useStore = create<State>()(
         return id;
       },
       updateRecipe: (id, patch) => set((s) => ({ mine: s.mine.map((r) => (r.id === id ? { ...r, ...patch } : r)) })),
-      deleteRecipe: (id) =>
-        set((s) => ({ mine: s.mine.filter((r) => r.id !== id), boards: s.boards.map((b) => ({ ...b, ids: b.ids.filter((x) => x !== id) })) })),
+      deleteRecipe: (id) => {
+        deleteRecipePhoto(get().photos[id]);
+        set((s) => {
+          const { [id]: _gone, ...photos } = s.photos;
+          return { photos, mine: s.mine.filter((r) => r.id !== id), boards: s.boards.map((b) => ({ ...b, ids: b.ids.filter((x) => x !== id) })) };
+        });
+      },
+      setPhoto: (recipeId, uri) => {
+        const old = get().photos[recipeId];
+        if (old && old !== uri) deleteRecipePhoto(old);
+        set((s) => {
+          const { [recipeId]: _old, ...rest } = s.photos;
+          return { photos: uri ? { ...rest, [recipeId]: uri } : rest };
+        });
+      },
     }),
     {
       name: 'biteboard',

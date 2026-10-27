@@ -11,6 +11,7 @@ import { setShared, socialConfigured } from '@/lib/social';
 import { useSocial } from '@/lib/social-store';
 import { findRecipe, useStore } from '@/lib/store';
 import { MEALS, type Meal } from '@/lib/types';
+import { pickRecipePhoto } from '@/lib/photos';
 
 export default function RecipeScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -18,7 +19,8 @@ export default function RecipeScreen() {
   const { userId, me } = useSocial();
   const mine = useStore((s) => s.mine);
   const boards = useStore((s) => s.boards);
-  const { addEntry, toggleSave, createBoard, updateRecipe, deleteRecipe } = useStore();
+  const { addEntry, toggleSave, createBoard, updateRecipe, deleteRecipe, setPhoto } = useStore();
+  const hasPhoto = useStore((s) => !!s.photos[id]);
   const recipe = mine.find((r) => r.id === id) ?? findRecipe(id, feed);
   const [qty, setQty] = useState(1);
   const [meal, setMeal] = useState<Meal>(recipe?.cat === 'Snack' ? 'Snack' : guessMeal());
@@ -38,7 +40,13 @@ export default function RecipeScreen() {
 
   return (
     <Screen edges={[]} bg={Colors.surface} style={{ padding: 0, gap: 0 }}>
-      <RecipeArt recipe={recipe} style={{ height: 300 }} />
+      <View>
+        <RecipeArt recipe={recipe} style={{ height: 300 }} />
+        <Row style={{ position: 'absolute', left: 16, bottom: 16 }}>
+          <Button title={hasPhoto ? 'Change photo' : 'Add a photo'} onPress={async () => { const uri = await pickRecipePhoto(); if (uri) setPhoto(recipe.id, uri); }} />
+          {hasPhoto && <Button title="Remove" onPress={() => setPhoto(recipe.id, null)} />}
+        </Row>
+      </View>
       <View style={{ padding: 20, gap: 18 }}>
         <View style={{ gap: 4 }}>
           <T variant="muted">{recipe.cat} · {recipe.min} min · {recipe.serv} serving{recipe.serv > 1 ? 's' : ''}{recipe.ai ? ' · Created with AI' : ''}{recipe.by ? ` · by @${recipe.by}` : ''}</T>

@@ -4,6 +4,7 @@ import { View, type ViewStyle } from 'react-native';
 import Svg, { Circle, Ellipse } from 'react-native-svg';
 
 import { Colors } from '@/constants/theme';
+import { useStore } from '@/lib/store';
 import type { Recipe } from '@/lib/types';
 
 function seeded(seed: string) {
@@ -18,6 +19,7 @@ function seeded(seed: string) {
 
 /** Recipe artwork: the recipe's photo when it has one, otherwise a drawn plate in warm tones. */
 export function RecipeArt({ recipe, style }: { recipe: Recipe; style?: ViewStyle }) {
+  const image = useStore((s) => s.photos[recipe.id]) ?? recipe.image;
   const blobs = useMemo(() => {
     const r = seeded(recipe.id);
     return Array.from({ length: 3 + Math.floor(r() * 3) }, (_, i) => {
@@ -27,10 +29,10 @@ export function RecipeArt({ recipe, style }: { recipe: Recipe; style?: ViewStyle
     });
   }, [recipe.id]);
 
-  if (recipe.image) {
+  if (image) {
     return (
       <View style={[{ backgroundColor: Colors.tile, overflow: 'hidden' }, style]}>
-        <Image source={{ uri: recipe.image }} style={{ width: '100%', height: '100%' }} contentFit="cover" transition={200} accessibilityLabel={recipe.title} />
+        <Image source={{ uri: image }} style={{ width: '100%', height: '100%' }} contentFit="cover" transition={200} accessibilityLabel={recipe.title} />
       </View>
     );
   }
