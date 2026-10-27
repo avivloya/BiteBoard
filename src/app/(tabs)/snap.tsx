@@ -2,20 +2,16 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, TextInput, useWindowDimensions, View } from 'react-native';
 
 import { Row, Screen } from '@/components/screen';
 import { Button, Panel, Segmented, T } from '@/components/ui';
 import { Colors, Fonts, Radius } from '@/constants/theme';
-import { type MealEstimate, type MealItem, aiConfigured, estimateMeal } from '@/lib/ai';
+import { type MealEstimate, aiConfigured, estimateMeal } from '@/lib/ai';
 import { guessMeal } from '@/lib/dates';
 import { usePro } from '@/lib/pro';
 import { aiLeft, useStore } from '@/lib/store';
 import { MEALS, type Meal } from '@/lib/types';
-
-const COLS: { key: keyof MealItem; label: string }[] = [
-  { key: 'grams', label: 'g' }, { key: 'kcal', label: 'kcal' }, { key: 'protein', label: 'P' }, { key: 'carbs', label: 'C' }, { key: 'fat', label: 'F' },
-];
 
 export default function Snap() {
   const addEntry = useStore((s) => s.addEntry);
@@ -28,6 +24,7 @@ export default function Snap() {
   const [error, setError] = useState('');
   const [result, setResult] = useState<MealEstimate | null>(null);
   const [meal, setMeal] = useState<Meal>(guessMeal());
+  const { height } = useWindowDimensions();
 
   const pick = async (camera: boolean) => {
     setError('');
@@ -53,74 +50,78 @@ export default function Snap() {
 
   const items = result?.items ?? [];
   const sum = items.reduce((a, i) => ({ kcal: a.kcal + i.kcal, p: a.p + i.protein, c: a.c + i.carbs, f: a.f + i.fat }), { kcal: 0, p: 0, c: 0, f: 0 });
-  const edit = (i: number, key: keyof MealItem, v: string) =>
-    setResult((r) => r && { ...r, items: r.items.map((it, j) => (j !== i ? it : { ...it, [key]: key === 'name' ? v : Number(v) || 0 })) });
+  // Changing the grams rescales that food's calories and macros.
+  const edit = (i: number, key: 'name' | 'grams', v: string) =>
+    setResult((r) => r && {
+      ...r,
+      items: r.items.map((it, j) => {
+        if (j !== i) return it;
+        if (key === 'name') return { ...it, name: v };
+        const g = Number(v) || 0, f = it.grams > 0 && g > 0 ? g / it.grams : 1;
+        return { ...it, grams: g, kcal: it.kcal * f, protein: it.protein * f, carbs: it.carbs * f, fat: it.fat * f };
+      }),
+    });
+  const boxHeight = result ? 140 : Math.min(340, height * 0.42);
 
   return (
-    <Screen>
-      <View style={{ gap: 6 }}>
-        <T variant="title">Snap a meal</T>
-        <T variant="muted">Take a photo of your plate and get a calorie and macro estimate.</T>
-      </View>
+    <Screen style={{ gap: 12 }}>
+      {!result && <T variant="title">Snap a meal</T>}
 
-      <Pressable onPress={() => pick(true)} style={{ borderRadius: Radius.lg, borderWidth: 1.5, borderStyle: 'dashed', borderColor: Colors.line, backgroundColor: Colors.surface2, overflow: 'hidden', minHeight: 260, alignItems: 'center', justifyContent: 'center' }}>
-        {photo ? <Image source={{ uri: photo.uri }} style={{ width: '100%', height: 320 }} contentFit="cover" accessibilityLabel="Your meal photo" /> : (
-          <View style={{ alignItems: 'center', gap: 8, padding: 24 }}>
+      <Pressable onPress={() => pick(true)} style={{ borderRadius: Radius.lg, borderWidth: photo ? 0 : 1.5, borderStyle: 'dashed', borderColor: Colors.line, backgroundColor: Colors.surface2, overflow: 'hidden', height: boxHeight, alignItems: 'center', justifyContent: 'center' }}>
+        {photo ? <Image source={{ uri: photo.uri }} style={{ width: '100%', height: '100%' }} contentFit="cover" accessibilityLabel="Your meal photo" /> : (
+          <View style={{ alignItems: 'center', gap: 6, padding: 24 }}>
             <T variant="h3">Tap to take a photo</T>
             <T variant="muted">From above works best</T>
           </View>
         )}
       </Pressable>
-      <Row>
-        <Button title={photo ? 'Retake' : 'Take photo'} kind={photo ? 'secondary' : 'primary'} onPress={() => pick(true)} />
-        <Button title="Choose from library" onPress={() => pick(false)} />
-        <Button title="Scan a barcode" onPress={() => router.push('/scan')} />
-      </Row>
-      {!isPro && <T variant="muted">{left} free photo scan{left === 1 ? '' : 's'} left this week. Barcode scans are always free.</T>}
+      {!result && (
+        <Row style={{ flexWrap: 'nowrap' }}>
+          <Button title={photo ? 'Retake' : 'Camera'} kind={photo ? 'secondary' : 'primary'} onPress={() => pick(true)} style={{ flex: 1, paddingHorizontal: 8 }} />
+          <Button title="Library" onPress={() => pick(false)} style={{ flex: 1, paddingHorizontal: 8 }} />
+          <Button title="Barcode" onPress={() => router.push('/scan')} style={{ flex: 1, paddingHorizontal: 8 }} />
+        </Row>
+      )}
+      {!isPro && !result && <T variant="muted" style={{ fontSize: 12 }}>{left} free photo scan{left === 1 ? '' : 's'} left this week. Barcodes are always free.</T>}
 
       {photo && !result && (
         <Button title={busy ? 'Looking at your meal…' : 'Estimate calories'} kind="primary" disabled={busy || !aiConfigured} onPress={analyze}
           icon={busy ? <ActivityIndicator color={Colors.accentInk} /> : undefined} />
       )}
-      {!aiConfigured && <T variant="muted">Photo estimates need the AI backend. See the README to set EXPO_PUBLIC_AI_URL.</T>}
+      {!aiConfigured && <T variant="muted" style={{ fontSize: 12 }}>Photo estimates need the AI backend. See the README to set EXPO_PUBLIC_AI_URL.</T>}
       {!!error && <T style={{ color: Colors.warn }}>{error}</T>}
 
       {result && (
-        <Panel>
-          <Row style={{ justifyContent: 'space-between' }}>
-            <T variant="h3" style={{ flex: 1 }}>{result.meal_name || 'Your meal'}</T>
+        <Panel style={{ gap: 10 }}>
+          <Row style={{ justifyContent: 'space-between', flexWrap: 'nowrap' }}>
+            <T variant="h3" style={{ flex: 1 }} numberOfLines={1}>{result.meal_name || 'Your meal'}</T>
             <T variant="label">{result.confidence} confidence</T>
           </Row>
           {items.length ? items.map((it, i) => (
-            <View key={i} style={{ gap: 6, borderTopWidth: 1, borderTopColor: Colors.line, paddingTop: 10 }}>
-              <Row style={{ flexWrap: 'nowrap' }}>
-                <TextInput value={it.name} onChangeText={(v) => edit(i, 'name', v)} style={{ flex: 1, fontSize: 15, fontWeight: '600', color: Colors.ink }} />
-                <Pressable onPress={() => setResult({ ...result, items: items.filter((_, j) => j !== i) })} accessibilityLabel={`Remove ${it.name}`} hitSlop={10}>
-                  <T variant="muted">Remove</T>
-                </Pressable>
-              </Row>
-              <Row style={{ flexWrap: 'nowrap', gap: 6 }}>
-                {COLS.map((c) => (
-                  <View key={c.key} style={{ flex: 1, gap: 2 }}>
-                    <T variant="label" style={{ fontSize: 10 }}>{c.label}</T>
-                    <TextInput value={String(Math.round(it[c.key] as number))} onChangeText={(v) => edit(i, c.key, v)} keyboardType="number-pad"
-                      style={{ fontFamily: Fonts.mono, fontSize: 14, color: Colors.ink, backgroundColor: Colors.bg, borderRadius: 8, paddingHorizontal: 6, paddingVertical: 6 }} />
-                  </View>
-                ))}
-              </Row>
-            </View>
+            <Row key={i} style={{ flexWrap: 'nowrap', borderBottomWidth: 1, borderBottomColor: 'rgba(207,181,146,0.6)', paddingBottom: 6 }}>
+              <TextInput value={it.name} onChangeText={(v) => edit(i, 'name', v)} style={{ flex: 1, fontSize: 15, fontWeight: '600', color: Colors.ink, paddingVertical: 4 }} />
+              <TextInput value={String(Math.round(it.grams))} onChangeText={(v) => edit(i, 'grams', v)} keyboardType="number-pad" accessibilityLabel={`${it.name} grams`}
+                style={{ width: 48, textAlign: 'right', fontFamily: Fonts.mono, fontSize: 13, color: Colors.ink, backgroundColor: Colors.surface2, borderRadius: 8, paddingHorizontal: 6, paddingVertical: 4 }} />
+              <T variant="muted">g</T>
+              <T variant="num" style={{ width: 64, textAlign: 'right' }}>{Math.round(it.kcal)} kcal</T>
+              <Pressable onPress={() => setResult({ ...result, items: items.filter((_, j) => j !== i) })} accessibilityLabel={`Remove ${it.name}`} hitSlop={10}>
+                <T variant="muted">✕</T>
+              </Pressable>
+            </Row>
           )) : <T>No food found in this photo. Try a clearer shot of the plate.</T>}
-          <Row style={{ justifyContent: 'space-between', borderTopWidth: 2, borderTopColor: Colors.ink, paddingTop: 10 }}>
-            <T style={{ fontWeight: '700' }}>Total</T>
-            <T variant="num">{Math.round(sum.kcal)} kcal · {Math.round(sum.p)}P {Math.round(sum.c)}C {Math.round(sum.f)}F</T>
-          </Row>
-          {!!result.notes && <T variant="muted">{result.notes}</T>}
+          <View>
+            <T variant="num" style={{ fontSize: 22 }}>{Math.round(sum.kcal)} kcal</T>
+            <T variant="muted">{Math.round(sum.p)}g protein · {Math.round(sum.c)}g carbs · {Math.round(sum.f)}g fat</T>
+          </View>
           <Segmented value={meal} onChange={setMeal} options={MEALS.map((m) => ({ value: m, label: m }))} />
-          <Button title={`Add ${Math.round(sum.kcal)} kcal to today`} kind="primary" disabled={!items.length} onPress={() => {
-            addEntry({ name: result.meal_name || 'Photo meal', ...sum, meal, src: 'photo' });
-            setPhoto(null); setResult(null);
-            router.navigate('/today');
-          }} />
+          <Row style={{ flexWrap: 'nowrap' }}>
+            <Button title="Start over" kind="ghost" onPress={() => { setPhoto(null); setResult(null); }} />
+            <Button title="Add to today" kind="primary" style={{ flex: 1 }} disabled={!items.length} onPress={() => {
+              addEntry({ name: result.meal_name || 'Photo meal', ...sum, meal, src: 'photo' });
+              setPhoto(null); setResult(null);
+              router.navigate('/today');
+            }} />
+          </Row>
         </Panel>
       )}
     </Screen>
