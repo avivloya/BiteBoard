@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Alert, Pressable, View } from 'react-native';
 
 import { RecipeArt } from '@/components/plate';
+import { RecipeVideo } from '@/components/recipe-video';
 import { Row, Screen } from '@/components/screen';
 import { Button, Chip, Field, Panel, Segmented, T } from '@/components/ui';
 import { Colors, Radius } from '@/constants/theme';
@@ -11,7 +12,7 @@ import { setShared, socialConfigured } from '@/lib/social';
 import { useSocial } from '@/lib/social-store';
 import { findRecipe, useStore } from '@/lib/store';
 import { MEALS, type Meal } from '@/lib/types';
-import { pickRecipePhoto } from '@/lib/photos';
+import { deleteRecipePhoto, pickRecipePhoto, pickRecipeVideo } from '@/lib/photos';
 
 export default function RecipeScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -49,6 +50,17 @@ export default function RecipeScreen() {
     }
   };
 
+  // Same for the cooking video.
+  const changeVideo = async (add: boolean) => {
+    const uri = add ? await pickRecipeVideo() : null;
+    if (add && !uri) return;
+    deleteRecipePhoto(recipe.video ?? undefined);
+    updateRecipe(recipe.id, { video: uri });
+    if (recipe.shared && userId) {
+      await setShared(userId, { ...recipe, video: uri }, true, useStore.getState().photos[recipe.id]).catch((e) => Alert.alert('Could not update your post', e instanceof Error ? e.message : ''));
+    }
+  };
+
   return (
     <Screen edges={[]} bg={Colors.surface} style={{ padding: 0, gap: 0 }}>
       <View>
@@ -60,6 +72,7 @@ export default function RecipeScreen() {
           </Row>
         )}
       </View>
+      {recipe.video && <RecipeVideo uri={recipe.video} style={{ height: 420 }} />}
       <View style={{ padding: 20, gap: 18 }}>
         <View style={{ gap: 4 }}>
           <T variant="muted">{recipe.cat} · {recipe.min} min · {recipe.serv} serving{recipe.serv > 1 ? 's' : ''}{recipe.ai ? ' · Created with AI' : ''}</T>
@@ -115,6 +128,13 @@ export default function RecipeScreen() {
           <T variant="label">Method</T>
           {recipe.steps.map((x, i) => <T key={i}>{i + 1}. {x}</T>)}
         </View>
+
+        {own && (
+          <Row>
+            <Button title={recipe.video ? 'Change cooking video' : '+ Add a cooking video'} onPress={() => changeVideo(true)} />
+            {recipe.video && <Button title="Remove video" kind="ghost" onPress={() => changeVideo(false)} />}
+          </Row>
+        )}
 
         {own && (
           <Row>

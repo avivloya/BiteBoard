@@ -15,6 +15,8 @@ export type Recipe = {
   ing: string[];
   steps: string[];
   image?: string | null;
+  /** cooking video: a file on this phone for your own recipes, a web link for posts */
+  video?: string | null;
   /** created with AI */
   ai?: boolean;
   /** written by the user */

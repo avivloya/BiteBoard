@@ -110,6 +110,7 @@ export const useStore = create<State>()(
       updateRecipe: (id, patch) => set((s) => ({ mine: s.mine.map((r) => (r.id === id ? { ...r, ...patch } : r)) })),
       deleteRecipe: (id) => {
         deleteRecipePhoto(get().photos[id]);
+        deleteRecipePhoto(get().mine.find((r) => r.id === id)?.video ?? undefined);
         set((s) => {
           const { [id]: _gone, ...photos } = s.photos;
           return { photos, mine: s.mine.filter((r) => r.id !== id), boards: s.boards.map((b) => ({ ...b, ids: b.ids.filter((x) => x !== id) })) };

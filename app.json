@@ -40,7 +40,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Biteboard uses your photos to estimate the calories in your meals.",
+          "photosPermission": "Biteboard uses your photos and videos to estimate the calories in your meals and to add pictures and cooking videos to your recipes.",
           "cameraPermission": "Biteboard uses the camera to snap your meals and estimate their calories.",
           "microphonePermission": false
         }
@@ -57,7 +57,8 @@
         {
           "color": "#6B4026"
         }
-      ]
+      ],
+      "expo-video"
     ],
     "experiments": {
       "typedRoutes": true,

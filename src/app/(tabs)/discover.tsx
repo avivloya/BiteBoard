@@ -1,9 +1,11 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, TextInput, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Logo } from '@/components/logo';
 import { Masonry } from '@/components/recipe-card';
+import { Reels } from '@/components/reels';
 import { Row, Screen } from '@/components/screen';
 import { Button, Chip, T, styles as ui } from '@/components/ui';
 import { Colors } from '@/constants/theme';
@@ -12,7 +14,7 @@ import { ensureSession, forYouPosts, friendIds, socialConfigured } from '@/lib/s
 import { useSocial } from '@/lib/social-store';
 import { useStore } from '@/lib/store';
 
-type Feed = 'foryou' | 'recipes';
+type Feed = 'foryou' | 'watch' | 'recipes';
 
 export default function Discover() {
   const mine = useStore((s) => s.mine);
@@ -47,6 +49,8 @@ export default function Discover() {
     .filter((r) => !term || `${r.title} ${r.ing.join(' ')} ${r.by ?? ''}`.toLowerCase().includes(term))
     .sort((a, b) => Number(friends.includes(b.byId ?? '')) - Number(friends.includes(a.byId ?? '')) || (b.posted ?? 0) - (a.posted ?? 0)),
   [forYou, friends, term]);
+  // Cooking videos: posts with a video, plus your own posted ones.
+  const reels = useMemo(() => [...posts, ...mine.filter((r) => r.shared)].filter((r) => r.video), [posts, mine]);
 
   const tab = (value: Feed, label: string) => (
     <Pressable onPress={() => { setFeed(value); setQ(''); }} accessibilityRole="tab" accessibilityState={{ selected: feed === value }}>
@@ -54,13 +58,30 @@ export default function Discover() {
     </Pressable>
   );
 
-  return (
-    <Screen style={{ gap: 14 }}>
+  const header = (
+    <>
       <Row>
         <Logo />
         <T style={{ fontSize: 22, fontWeight: '800', color: Colors.ink, letterSpacing: -0.6 }}>Biteboard</T>
       </Row>
-      {socialConfigured && <Row style={{ gap: 20 }}>{tab('foryou', 'For you')}{tab('recipes', 'Recipes')}</Row>}
+      {socialConfigured && <Row style={{ gap: 20 }}>{tab('foryou', 'For you')}{tab('watch', 'Watch')}{tab('recipes', 'Recipes')}</Row>}
+    </>
+  );
+
+  // Watch is a full-height swipe feed, so it can't live inside the page's scroll view.
+  if (feed === 'watch') return (
+    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: Colors.bg, paddingHorizontal: 16, paddingTop: 16, gap: 14 }}>
+      {header}
+      {reels.length ? <Reels posts={reels} /> : (
+        <Empty title="No cooking videos yet" body="Post a recipe with a video of you making it and it shows up here." />
+      )}
+      {!reels.length && <Button title="+ Post a recipe" kind="primary" onPress={() => router.push('/write-recipe')} />}
+    </SafeAreaView>
+  );
+
+  return (
+    <Screen style={{ gap: 14 }}>
+      {header}
       <Row style={{ flexWrap: 'nowrap' }}>
         <TextInput value={q} onChangeText={setQ} placeholder={feed === 'foryou' ? 'Search posts' : 'Search healthy recipes'} placeholderTextColor={Colors.muted} returnKeyType="search"
           style={[ui.input, { flex: 1, borderRadius: 999, backgroundColor: 'rgba(248,239,226,0.7)', borderColor: 'transparent' }]} />

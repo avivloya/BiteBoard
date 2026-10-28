@@ -95,10 +95,12 @@ export async function forYouPosts(userId: string, limit = 60) {
 
 const BUCKET = 'recipe-photos';
 
-/** Uploads a photo on this phone into the poster's own folder, so everyone can see it but only they can replace it. */
+const TYPES: Record<string, string> = { png: 'image/png', webp: 'image/webp', mp4: 'video/mp4', mov: 'video/quicktime', m4v: 'video/x-m4v', webm: 'video/webm' };
+
+/** Uploads a photo or video on this phone into the poster's own folder, so everyone can see it but only they can replace it. */
 async function uploadPhoto(userId: string, name: string, localUri: string) {
   const ext = (localUri.split('.').pop()?.split('?')[0] || 'jpg').toLowerCase();
-  const type = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
+  const type = TYPES[ext] ?? 'image/jpeg';
   const body = await new File(localUri).arrayBuffer();
   const path = `${userId}/${name}.${ext}`;
   const { error } = await db().storage.from(BUCKET).upload(path, body, { contentType: type, upsert: true });
@@ -114,7 +116,7 @@ export async function setProfilePhoto(userId: string, localUri: string) {
   return photo;
 }
 
-/** Posts a recipe (with its photo) to your recipe page and For you, or takes it down. Returns the photo's public URL when posting. */
+/** Posts a recipe (with its photo and cooking video) to your recipe page and For you, or takes it down. Returns the photo's public URL when posting. */
 export async function setShared(userId: string, recipe: Recipe, on: boolean, localPhoto?: string) {
   const t = db().from('shared_recipes');
   if (!on) {
@@ -125,7 +127,8 @@ export async function setShared(userId: string, recipe: Recipe, on: boolean, loc
     return null;
   }
   const image = localPhoto && !localPhoto.startsWith('http') ? await uploadPhoto(userId, recipe.id, localPhoto) : localPhoto ?? recipe.image ?? null;
-  const { error } = await t.upsert({ id: recipe.id, owner: userId, recipe: { ...recipe, image, shared: undefined, by: undefined, byId: undefined, posted: undefined } });
+  const video = recipe.video && !recipe.video.startsWith('http') ? await uploadPhoto(userId, `${recipe.id}-video`, recipe.video) : recipe.video ?? null;
+  const { error } = await t.upsert({ id: recipe.id, owner: userId, recipe: { ...recipe, image, video, shared: undefined, by: undefined, byId: undefined, posted: undefined } });
   if (error) throw new Error(error.message);
   return image;
 }
