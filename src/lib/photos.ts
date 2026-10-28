@@ -39,13 +39,17 @@ export async function pickRecipeVideo(): Promise<string | null> {
     Alert.alert('That video is too big', `Pick one under ${MAX_VIDEO_MB} MB, or trim it to a minute or two.`);
     return null;
   }
-  if (Platform.OS === 'web') return asset.uri;
+  return keepVideo(asset.uri);
+}
 
+/** Copies a video (picked or just filmed) into the app's documents so it survives cache clears. */
+export async function keepVideo(uri: string) {
+  if (Platform.OS === 'web') return uri;
   const dir = new Directory(Paths.document, 'recipe-videos');
   if (!dir.exists) dir.create({ intermediates: true });
-  const ext = asset.uri.split('.').pop()?.split('?')[0] || 'mp4';
+  const ext = uri.split('.').pop()?.split('?')[0] || 'mp4';
   const dest = new File(dir, `${Date.now()}.${ext}`);
-  await new File(asset.uri).copy(dest);
+  await new File(uri).copy(dest);
   return dest.uri;
 }
 

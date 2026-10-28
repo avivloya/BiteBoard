@@ -41,9 +41,12 @@ export default function RootLayout() {
         <Stack.Screen name="ai-recipe" options={sheet} />
         <Stack.Screen name="person/[id]" options={sheet} />
         <Stack.Screen name="scan" options={sheet} />
+        <Stack.Screen name="snap" options={sheet} />
+        <Stack.Screen name="people" options={sheet} />
         <Stack.Screen name="weight" options={sheet} />
         <Stack.Screen name="settings" options={sheet} />
         <Stack.Screen name="pro" options={sheet} />
+        <Stack.Screen name="record-video" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="boards" options={{ headerShown: true, title: '', headerShadowVisible: false, headerStyle: { backgroundColor: Colors.bg }, headerTintColor: Colors.ink }} />
         <Stack.Screen name="board/[id]" options={{ headerShown: true, title: '', headerShadowVisible: false, headerStyle: { backgroundColor: Colors.bg }, headerTintColor: Colors.ink }} />
       </Stack>

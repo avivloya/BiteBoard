@@ -1,109 +1,106 @@
-import { router, useFocusEffect, type Href } from 'expo-router';
-import { useCallback, useMemo } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
+import { ActivityIndicator, Alert, Pressable, ScrollView, TextInput, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { RecipeCard } from '@/components/recipe-card';
-import { Ring } from '@/components/ring';
+import { Masonry } from '@/components/recipe-card';
+import { Reels } from '@/components/reels';
 import { Row, Screen } from '@/components/screen';
-import { Panel, T } from '@/components/ui';
-import { Colors, Radius } from '@/constants/theme';
-import { LIBRARY } from '@/data/recipes';
-import { dayKey, guessMeal } from '@/lib/dates';
-import { ensureSession, forYouPosts, socialConfigured } from '@/lib/social';
+import { Button, Chip, T, styles as ui } from '@/components/ui';
+import { Colors } from '@/constants/theme';
+import { FILTERS, LIBRARY } from '@/data/recipes';
+import { ensureSession, forYouPosts, friendIds, socialConfigured } from '@/lib/social';
 import { useSocial } from '@/lib/social-store';
-import { totals, useStore } from '@/lib/store';
-import { streakInfo } from '@/lib/streak';
-import { Cover } from '../boards';
+import { useStore } from '@/lib/store';
 
-const QUICK: { label: string; href: Href; icon: string }[] = [
-  { label: 'Snap a meal', href: '/snap', icon: 'M4 8h3l2-3h6l2 3h3v11H4z' },
-  { label: 'Create with AI', href: '/ai-recipe', icon: 'M12 2l2.2 6.3L20 10l-5.8 1.8L12 18l-2.2-6.2L4 10l5.8-1.7z' },
-  { label: 'Post a recipe', href: '/write-recipe', icon: 'M12 5v14M5 12h14' },
-  { label: 'Log weight', href: '/weight', icon: 'M5 20h14l-2-11H7zM9 9a3 3 0 0 1 6 0' },
-];
+type Feed = 'watch' | 'recipes';
 
-/** Home: a bit of everything — today's calories, streak, shortcuts, new posts, ideas and boards. */
-export default function Home() {
-  const profile = useStore((s) => s.profile);
-  const targets = useStore((s) => s.targets);
-  const days = useStore((s) => s.days);
-  const boards = useStore((s) => s.boards);
+/** Explore: swipe through cooking videos, or browse recipes (people's posts first, then the library). */
+export default function Explore() {
+  const mine = useStore((s) => s.mine);
   const forYou = useSocial((s) => s.forYou);
+  const friends = useSocial((s) => s.friendIds);
+  const [feed, setFeed] = useState<Feed>(socialConfigured ? 'watch' : 'recipes');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [q, setQ] = useState('');
+  const [filter, setFilter] = useState('All');
 
   useFocusEffect(useCallback(() => {
     if (!socialConfigured) return;
+    setLoading(true);
     ensureSession()
-      .then(async (id) => useSocial.getState().set({ userId: id, forYou: await forYouPosts(id, 12) }))
-      .catch(() => {});
+      .then(async (id) => {
+        const [posts, ids] = await Promise.all([forYouPosts(id), friendIds(id)]);
+        useSocial.getState().set({ userId: id, forYou: posts, friendIds: ids });
+        setError('');
+      })
+      .catch((e) => setError(e instanceof Error ? e.message : 'Could not load posts.'))
+      .finally(() => setLoading(false));
   }, []));
 
-  const t = totals(days[dayKey()]);
-  const left = Math.round(targets.kcal - t.kcal);
-  const streak = streakInfo(days);
-  const meal = guessMeal();
-  const hour = new Date().getHours();
-  const hello = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
-  const ideas = useMemo(() => LIBRARY.filter((r) => r.kcal <= Math.max(250, left) && (r.cat === meal || r.cat === 'Snack')).slice(0, 6), [left, meal]);
+  // People you follow first, then everyone else, newest first.
+  const posts = useMemo(() => [...forYou].sort((a, b) =>
+    Number(friends.includes(b.byId ?? '')) - Number(friends.includes(a.byId ?? '')) || (b.posted ?? 0) - (a.posted ?? 0)), [forYou, friends]);
+  const reels = useMemo(() => [...posts, ...mine.filter((r) => r.shared)].filter((r) => r.video), [posts, mine]);
+
+  const term = q.trim().toLowerCase();
+  const recipes = useMemo(() => [...posts, ...mine.filter((r) => !r.shared), ...LIBRARY].filter(
+    (r) => (filter === 'All' || r.tags.includes(filter) || r.cat === filter) &&
+      (!term || `${r.title} ${r.ing.join(' ')} ${r.tags.join(' ')} ${r.by ?? ''}`.toLowerCase().includes(term)),
+  ), [posts, mine, term, filter]);
+
+  const add = () => Alert.alert('Add a recipe', undefined, [
+    { text: 'Post a recipe or video', onPress: () => router.push('/write-recipe') },
+    { text: 'Create one with AI', onPress: () => router.push('/ai-recipe') },
+    { text: 'Cancel', style: 'cancel' },
+  ]);
+  const tab = (value: Feed, label: string) => (
+    <Pressable onPress={() => setFeed(value)} accessibilityRole="tab" accessibilityState={{ selected: feed === value }} hitSlop={8}>
+      <T style={{ fontSize: 20, fontWeight: '700', letterSpacing: -0.4, color: feed === value ? Colors.ink : Colors.line }}>{label}</T>
+    </Pressable>
+  );
+  const header = (
+    <Row style={{ justifyContent: 'space-between' }}>
+      <Row style={{ gap: 18 }}>{socialConfigured && tab('watch', 'Watch')}{tab('recipes', 'Recipes')}</Row>
+      <Pressable onPress={add} accessibilityRole="button" accessibilityLabel="Add a recipe" hitSlop={10}
+        style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: Colors.ink, alignItems: 'center', justifyContent: 'center' }}>
+        <T style={{ color: Colors.bg, fontSize: 22, lineHeight: 24, fontWeight: '600' }}>+</T>
+      </Pressable>
+    </Row>
+  );
+
+  // Watch is a full-height swipe feed, so it can't live inside the page's scroll view.
+  if (feed === 'watch') return (
+    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: Colors.bg, paddingHorizontal: 16, paddingTop: 12, gap: 12 }}>
+      {header}
+      {loading && !reels.length ? <ActivityIndicator color={Colors.accent} style={{ marginTop: 40 }} />
+        : reels.length ? <Reels posts={reels} />
+        : <Empty title={error ? "Couldn't load videos" : 'No cooking videos yet'} body={error || 'Tap + to post a recipe and film yourself making it.'} />}
+    </SafeAreaView>
+  );
 
   return (
-    <Screen>
-      <T variant="title">{hello}{profile?.name ? `, ${profile.name}` : ''}</T>
-
-      <Row style={{ flexWrap: 'nowrap', alignItems: 'stretch' }}>
-        <Pressable onPress={() => router.push('/today')} style={{ flex: 1.5 }}>
-          <Panel style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
-            <Ring size={56} stroke={7} value={t.kcal} max={targets.kcal} />
-            <View style={{ flex: 1 }}>
-              <T variant="num" style={{ fontSize: 24 }}>{Math.abs(left)}</T>
-              <T variant="muted">{left < 0 ? 'kcal over today' : 'kcal left today'}</T>
-            </View>
-          </Panel>
-        </Pressable>
-        <Pressable onPress={() => router.push('/today')} style={{ flex: 1 }}>
-          <Panel style={{ justifyContent: 'center', flex: 1 }}>
-            <T variant="num" style={{ fontSize: 24, color: streak.today ? Colors.warn : Colors.ink }}>{streak.current}</T>
-            <T variant="muted">day streak</T>
-          </Panel>
-        </Pressable>
-      </Row>
-
-      <Row style={{ flexWrap: 'nowrap' }}>
-        {QUICK.map((q) => (
-          <Pressable key={q.label} onPress={() => router.push(q.href)} accessibilityRole="button"
-            style={({ pressed }) => ({ flex: 1, alignItems: 'center', gap: 6, paddingVertical: 14, borderRadius: 18, backgroundColor: 'rgba(248,239,226,0.7)', opacity: pressed ? 0.8 : 1 })}>
-            <Svg width={22} height={22} viewBox="0 0 24 24"><Path d={q.icon} stroke={Colors.ink} strokeWidth={2} fill="none" strokeLinejoin="round" /></Svg>
-            <T style={{ fontSize: 12, fontWeight: '600', textAlign: 'center' }}>{q.label}</T>
-          </Pressable>
-        ))}
-      </Row>
-
-      {forYou.length > 0 && <Shelf title="New on For you" onAll={() => router.push('/discover')}>{forYou.slice(0, 6).map((r, i) => <View key={r.id} style={{ width: 170 }}><RecipeCard recipe={r} index={i} height={200} /></View>)}</Shelf>}
-      {ideas.length > 0 && <Shelf title={`Ideas for ${meal.toLowerCase()}`} onAll={() => router.push('/discover')}>{ideas.map((r, i) => <View key={r.id} style={{ width: 170 }}><RecipeCard recipe={r} index={i} height={200} /></View>)}</Shelf>}
-      <Shelf title="Your boards" onAll={() => router.push('/boards')}>
-        {boards.map((b) => (
-          <Pressable key={b.id} onPress={() => router.push({ pathname: '/board/[id]', params: { id: b.id } })} style={{ width: 200, gap: 6 }}>
-            <Cover board={b} />
-            <T style={{ fontWeight: '700' }} numberOfLines={1}>{b.name}</T>
-            <T variant="muted">{b.ids.length} recipe{b.ids.length === 1 ? '' : 's'}</T>
-          </Pressable>
-        ))}
-      </Shelf>
+    <Screen style={{ gap: 14 }}>
+      {header}
+      <TextInput value={q} onChangeText={setQ} placeholder="Search recipes" placeholderTextColor={Colors.muted} returnKeyType="search"
+        style={[ui.input, { borderRadius: 999, backgroundColor: 'rgba(248,239,226,0.7)', borderColor: 'transparent' }]} />
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+        {FILTERS.map((f) => <Chip key={f} label={f} selected={filter === f} onPress={() => setFilter(f)} />)}
+      </ScrollView>
+      {recipes.length ? <Masonry recipes={recipes} /> : (
+        <Empty title="No recipes match" body="Try another search, or ask AI to make one." />
+      )}
+      {!recipes.length && <Button title="Create with AI" kind="primary" onPress={() => router.push('/ai-recipe')} />}
     </Screen>
   );
 }
 
-function Shelf({ title, onAll, children }: { title: string; onAll: () => void; children: React.ReactNode }) {
+function Empty({ title, body }: { title: string; body: string }) {
   return (
-    <View style={{ gap: 10 }}>
-      <Row style={{ justifyContent: 'space-between' }}>
-        <T variant="h3" style={{ fontSize: 19 }}>{title}</T>
-        <Pressable onPress={onAll} hitSlop={8}><T variant="muted" style={{ fontWeight: '600' }}>See all</T></Pressable>
-      </Row>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 14, alignItems: 'flex-start' }} style={{ marginHorizontal: -16, paddingHorizontal: 16 }}>
-        {children}
-        <View style={{ width: 16, borderRadius: Radius.sm }} />
-      </ScrollView>
+    <View style={{ padding: 28, borderRadius: 20, borderWidth: 1.5, borderStyle: 'dashed', borderColor: Colors.line, alignItems: 'center', gap: 6 }}>
+      <T variant="h3">{title}</T>
+      <T variant="muted" style={{ textAlign: 'center' }}>{body}</T>
     </View>
   );
 }

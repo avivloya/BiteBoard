@@ -33,7 +33,7 @@ export default function BoardScreen() {
       )}
       <Row>
         <Button title="Rename" onPress={() => setEditing(true)} />
-        <Button title="Delete board" kind="ghost" onPress={() => Alert.alert('Delete this board?', 'The recipes stay in Discover.', [
+        <Button title="Delete board" kind="ghost" onPress={() => Alert.alert('Delete this board?', 'The recipes stay in Explore.', [
           { text: 'Keep it', style: 'cancel' },
           { text: 'Delete', style: 'destructive', onPress: () => { remove(board.id); router.back(); } },
         ])} />

@@ -48,8 +48,9 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Biteboard uses the camera to snap meals and scan food barcodes.",
-          "recordAudioAndroid": false
+          "cameraPermission": "Biteboard uses the camera to snap meals, scan food barcodes and film your cooking videos.",
+          "microphonePermission": "Biteboard uses the microphone to record sound in your cooking videos.",
+          "recordAudioAndroid": true
         }
       ],
       [

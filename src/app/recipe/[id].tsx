@@ -13,6 +13,7 @@ import { useSocial } from '@/lib/social-store';
 import { findRecipe, useStore } from '@/lib/store';
 import { MEALS, type Meal } from '@/lib/types';
 import { deleteRecipePhoto, pickRecipePhoto, pickRecipeVideo } from '@/lib/photos';
+import { filmVideo } from '@/lib/recorder';
 
 export default function RecipeScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -31,7 +32,7 @@ export default function RecipeScreen() {
   const own = (recipe.ai || recipe.own) && !recipe.by;
 
   const share = async () => {
-    if (!userId) return Alert.alert('Create your recipe page first', 'Open the Friends tab to pick a handle.');
+    if (!userId) return Alert.alert('Create your recipe page first', 'Open the Account tab to pick a handle.');
     try {
       await setShared(userId, recipe, !recipe.shared, useStore.getState().photos[recipe.id]);
       updateRecipe(recipe.id, { shared: !recipe.shared, posted: recipe.shared ? undefined : Date.now() });
@@ -51,8 +52,9 @@ export default function RecipeScreen() {
   };
 
   // Same for the cooking video.
-  const changeVideo = async (add: boolean) => {
-    const uri = add ? await pickRecipeVideo() : null;
+  const changeVideo = async (how: 'film' | 'upload' | null) => {
+    const uri = how === 'film' ? await filmVideo() : how === 'upload' ? await pickRecipeVideo() : null;
+    const add = !!how;
     if (add && !uri) return;
     deleteRecipePhoto(recipe.video ?? undefined);
     updateRecipe(recipe.id, { video: uri });
@@ -131,8 +133,9 @@ export default function RecipeScreen() {
 
         {own && (
           <Row>
-            <Button title={recipe.video ? 'Change cooking video' : '+ Add a cooking video'} onPress={() => changeVideo(true)} />
-            {recipe.video && <Button title="Remove video" kind="ghost" onPress={() => changeVideo(false)} />}
+            <Button title={recipe.video ? 'Film a new video' : 'Film a cooking video'} kind="primary" onPress={() => changeVideo('film')} />
+            <Button title="Upload one" onPress={() => changeVideo('upload')} />
+            {recipe.video && <Button title="Remove video" kind="ghost" onPress={() => changeVideo(null)} />}
           </Row>
         )}
 

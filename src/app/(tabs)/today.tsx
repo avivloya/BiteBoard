@@ -27,13 +27,22 @@ export default function Today() {
   return (
     <Screen>
       <Row style={{ justifyContent: 'space-between' }}>
-        <T variant="title">{label}</T>
+        <View>
+          <T variant="title">{label}</T>
+          <T variant="muted">{streak.current} day streak{streak.best > streak.current ? ` · best ${streak.best}` : ''}</T>
+        </View>
         <Row>
           <Button title="‹" onPress={() => setDay(shiftDay(day, -1))} />
           <Button title="›" disabled={day >= dayKey()} onPress={() => setDay(shiftDay(day, 1))} />
-          <Button title="⚙︎" onPress={() => router.push('/settings')} />
         </Row>
       </Row>
+
+      <Row style={{ flexWrap: 'nowrap' }}>
+        <Button title="Snap meal" kind="primary" style={{ flex: 1.3 }} onPress={() => router.push('/snap')} />
+        <Button title="Barcode" style={{ flex: 1 }} onPress={() => router.push('/scan')} />
+        <Button title={adding ? 'Close' : 'Add'} style={{ flex: 1 }} onPress={() => setAdding((v) => !v)} />
+      </Row>
+      {adding && <Panel><QuickAdd onAdd={(e) => { addEntry({ ...e, src: 'manual' }, day); setAdding(false); }} /></Panel>}
 
       <Panel style={{ alignItems: 'center' }}>
         <Ring value={t.kcal} max={targets.kcal}>
@@ -53,30 +62,10 @@ export default function Today() {
         {editingGoals && <GoalsForm onSave={(g) => { setTargets(g); setEditingGoals(false); }} />}
       </Panel>
 
-      <Panel>
-        <Row style={{ justifyContent: 'space-between' }}>
-          <View>
-            <T variant="label">Daily streak</T>
-            <Row style={{ alignItems: 'baseline' }}>
-              <T style={{ fontSize: 44, fontWeight: '800', color: Colors.ink }}>{streak.current}</T>
-              <T variant="muted">day{streak.current === 1 ? '' : 's'}</T>
-            </Row>
-          </View>
-          <View style={{ alignItems: 'flex-end' }}>
-            <T variant="muted">Best</T>
-            <T variant="num" style={{ fontSize: 18 }}>{streak.best}</T>
-          </View>
-        </Row>
-      </Panel>
-
       <WeightPanel weights={weights} goalKg={profile?.goalKg ?? 0} imperial={profile?.units === 'imperial'} />
 
       <Panel>
-        <Row style={{ justifyContent: 'space-between' }}>
-          <T variant="h3">Food log</T>
-          <Button title={adding ? 'Close' : 'Quick add'} onPress={() => setAdding((v) => !v)} />
-        </Row>
-        {adding && <QuickAdd onAdd={(e) => { addEntry({ ...e, src: 'manual' }, day); setAdding(false); }} />}
+        <T variant="h3">Food log</T>
         {entries.length ? MEALS.map((m) => {
           const xs = entries.filter((e) => e.meal === m);
           if (!xs.length) return null;
@@ -97,7 +86,7 @@ export default function Today() {
               ))}
             </View>
           );
-        }) : <T variant="muted">Nothing logged yet. Snap a photo of your meal, log a recipe from Discover, or quick-add calories.</T>}
+        }) : <T variant="muted">Nothing logged yet. Snap a photo of your meal, log a recipe from Explore, or quick-add calories.</T>}
       </Panel>
     </Screen>
   );

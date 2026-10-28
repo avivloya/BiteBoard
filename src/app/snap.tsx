@@ -64,7 +64,7 @@ export default function Snap() {
   const boxHeight = result ? 140 : Math.min(340, height * 0.42);
 
   return (
-    <Screen style={{ gap: 12 }}>
+    <Screen edges={[]} bg={Colors.surface} style={{ gap: 12 }}>
       {!result && <T variant="title">Snap a meal</T>}
 
       <Pressable onPress={() => pick(true)} style={{ borderRadius: Radius.lg, borderWidth: photo ? 0 : 1.5, borderStyle: 'dashed', borderColor: Colors.line, backgroundColor: Colors.surface2, overflow: 'hidden', height: boxHeight, alignItems: 'center', justifyContent: 'center' }}>
@@ -119,7 +119,7 @@ export default function Snap() {
             <Button title="Add to today" kind="primary" style={{ flex: 1 }} disabled={!items.length} onPress={() => {
               addEntry({ name: result.meal_name || 'Photo meal', ...sum, meal, src: 'photo' });
               setPhoto(null); setResult(null);
-              router.navigate('/today');
+              router.back();
             }} />
           </Row>
         </Panel>

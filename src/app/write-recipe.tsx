@@ -7,6 +7,7 @@ import { Row, Screen } from '@/components/screen';
 import { Button, Field, Segmented, T } from '@/components/ui';
 import { Colors, Radius } from '@/constants/theme';
 import { deleteRecipePhoto, pickRecipePhoto, pickRecipeVideo } from '@/lib/photos';
+import { filmVideo } from '@/lib/recorder';
 import { setShared } from '@/lib/social';
 import { useSocial } from '@/lib/social-store';
 import { useStore } from '@/lib/store';
@@ -55,8 +56,17 @@ export default function WriteRecipe() {
         {photo ? <Image source={{ uri: photo }} style={{ width: '100%', height: '100%' }} contentFit="cover" /> : <T variant="muted">+ Add a photo</T>}
       </Pressable>
       <Row>
-        <Button title={video ? 'Cooking video added ✓' : '+ Add a cooking video'} onPress={async () => { const uri = await pickRecipeVideo(); if (uri) setVideo(uri); }} />
-        {video && <Button title="Remove" kind="ghost" onPress={() => { deleteRecipePhoto(video); setVideo(null); }} />}
+        {video ? (
+          <>
+            <T style={{ fontWeight: '600' }}>Cooking video added ✓</T>
+            <Button title="Remove" kind="ghost" onPress={() => { deleteRecipePhoto(video); setVideo(null); }} />
+          </>
+        ) : (
+          <>
+            <Button title="Film a cooking video" kind="primary" onPress={async () => { const uri = await filmVideo(); if (uri) setVideo(uri); }} />
+            <Button title="Upload one" onPress={async () => { const uri = await pickRecipeVideo(); if (uri) setVideo(uri); }} />
+          </>
+        )}
       </Row>
       <Field label="Recipe name" value={title} onChangeText={setTitle} placeholder="Mom's lentil salad" />
       <Segmented value={cat} onChange={setCat} options={MEALS.map((m) => ({ value: m, label: m }))} />
