@@ -10,7 +10,7 @@ import {
   type PublicProfile, ensureSession, saveProfile, searchPeople, setFriend, setProfilePhoto, socialConfigured,
 } from '@/lib/social';
 import { pickRecipePhoto } from '@/lib/photos';
-import { Avatar, refreshSocial } from '@/components/social';
+import { Avatar, FollowCounts, refreshSocial } from '@/components/social';
 import { useSocial } from '@/lib/social-store';
 import { useStore } from '@/lib/store';
 import { streakInfo } from '@/lib/streak';
@@ -38,11 +38,11 @@ export default function Friends() {
 
   const head = (
     <View style={{ gap: 6 }}>
-      <T variant="title">Friends</T>
-      <T variant="muted">Post your recipes to your own recipe page and see what your friends are cooking.</T>
+      <T variant="title">People</T>
+      <T variant="muted">Follow people to see what they cook.</T>
     </View>
   );
-  if (!socialConfigured) return <Screen>{head}<Panel><T variant="h3">Friends isn't set up yet</T><T variant="muted">Add the Supabase keys from the README to turn on profiles and friends.</T></Panel></Screen>;
+  if (!socialConfigured) return <Screen>{head}<Panel><T variant="h3">People isn't set up yet</T><T variant="muted">Add the Supabase keys from the README to turn on profiles and following.</T></Panel></Screen>;
   if (loading) return <Screen>{head}<ActivityIndicator color={Colors.accent} /></Screen>;
   if (!me || !userId) return <Screen>{head}<CreateProfile userId={userId} defaultName={profile?.name ?? ''} error={error} /></Screen>;
 
@@ -61,7 +61,7 @@ export default function Friends() {
           <T variant="muted">@{p.handle}{p.streak ? ` · ${p.streak} day streak` : ''}</T>
         </View>
       </Pressable>
-      <Button title={ids.includes(p.id) ? 'Friends ✓' : 'Add friend'} kind={ids.includes(p.id) ? 'secondary' : 'primary'} onPress={() => toggle(p.id)} />
+      <Button title={ids.includes(p.id) ? 'Following' : 'Follow'} kind={ids.includes(p.id) ? 'secondary' : 'primary'} onPress={() => toggle(p.id)} />
     </Row>
   );
 
@@ -92,20 +92,21 @@ export default function Friends() {
           <View style={{ flex: 1 }}>
             <T variant="h3">{me.name}</T>
             <T variant="muted">@{me.handle} · {streakInfo(days).current} day streak · {mine.filter((r) => r.shared).length} posted</T>
+            <FollowCounts id={userId} />
           </View>
         </Row>
         {!!me.bio && <T>{me.bio}</T>}
         <Button title="View my recipe page" onPress={() => router.push({ pathname: '/person/[id]', params: { id: userId } })} />
       </Panel>
       <Panel>
-        <T variant="label">Find friends</T>
+        <T variant="label">Find people to follow</T>
         <TextInput value={q} onChangeText={setQ} placeholder="Search by name or @handle" placeholderTextColor={Colors.muted} autoCapitalize="none" style={[ui.input, { borderRadius: 999, backgroundColor: Colors.surface2 }]} />
         {results.length ? results.map(person) : <T variant="muted">{q ? 'No one matches that name yet.' : 'No one else is here yet. Invite a friend to join Biteboard.'}</T>}
       </Panel>
-      {ids.length > 0 && <Panel><T variant="label">Your friends</T>{ids.map((id) => people[id]).filter(Boolean).map(person)}</Panel>}
+      {ids.length > 0 && <Panel><T variant="label">Following</T>{ids.map((id) => people[id]).filter(Boolean).map(person)}</Panel>}
       {!!error && <T style={{ color: Colors.warn }}>{error}</T>}
-      <T variant="h2">From your friends</T>
-      {feed.length ? <Masonry recipes={feed} /> : <T variant="muted">{ids.length ? "Your friends haven't posted recipes yet." : 'Add friends to see their recipes here.'}</T>}
+      <T variant="h2">From people you follow</T>
+      {feed.length ? <Masonry recipes={feed} /> : <T variant="muted">{ids.length ? "People you follow haven't posted yet." : 'Follow people to see their recipes here.'}</T>}
     </Screen>
   );
 }

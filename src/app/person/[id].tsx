@@ -4,7 +4,7 @@ import { View } from 'react-native';
 
 import { Masonry } from '@/components/recipe-card';
 import { Row, Screen } from '@/components/screen';
-import { Avatar, refreshSocial } from '@/components/social';
+import { Avatar, FollowCounts, refreshSocial } from '@/components/social';
 import { Button, T } from '@/components/ui';
 import { Colors } from '@/constants/theme';
 import { type PublicProfile, profilesByIds, recipesBy, setFriend } from '@/lib/social';
@@ -41,11 +41,12 @@ export default function Person() {
         <View style={{ flex: 1 }}>
           <T variant="h2">{p.name}</T>
           <T variant="muted">@{p.handle}{p.streak ? ` · ${p.streak} day streak` : ''}</T>
+          <FollowCounts id={id} />
         </View>
       </Row>
       {!!p.bio && <T>{p.bio}</T>}
       {userId && userId !== id && (
-        <Button title={friend ? 'Friends ✓' : 'Add friend'} kind={friend ? 'secondary' : 'primary'} onPress={async () => { await setFriend(userId, id, !friend); await refreshSocial(userId); }} />
+        <Button title={friend ? 'Following' : 'Follow'} kind={friend ? 'secondary' : 'primary'} onPress={async () => { await setFriend(userId, id, !friend); await refreshSocial(userId); }} />
       )}
       <T variant="label">{recipes.length} posted recipe{recipes.length === 1 ? '' : 's'}</T>
       {recipes.length ? <Masonry recipes={recipes} /> : <T variant="muted">{userId === id ? 'Open a recipe you wrote and tap Post to For you, and it shows up here.' : 'No posts yet.'}</T>}
