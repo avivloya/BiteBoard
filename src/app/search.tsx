@@ -8,7 +8,7 @@ import Svg, { Circle, Path } from 'react-native-svg';
 import { Masonry } from '@/components/recipe-card';
 import { RecipeVideo } from '@/components/recipe-video';
 import { Row } from '@/components/screen';
-import { Avatar } from '@/components/social';
+import { Avatar, Verified } from '@/components/social';
 import { Chip, T } from '@/components/ui';
 import { Colors } from '@/constants/theme';
 import { tr } from '@/lib/i18n';
@@ -80,7 +80,7 @@ export default function Search() {
   const peopleList = (list: PublicProfile[]) => list.map((p) => (
     <Pressable key={p.id} onPress={() => { remember(q); router.push({ pathname: '/person/[id]', params: { id: p.id } }); }} style={s.row} accessibilityRole="button">
       <Avatar p={p} size={48} />
-      <View style={{ flex: 1 }}><T style={{ fontWeight: '700' }}>{p.name || p.handle}</T><T variant="muted">@{p.handle}</T></View>
+      <View style={{ flex: 1 }}><Row style={{ gap: 4 }}><T style={{ fontWeight: '700' }}>{p.name || p.handle}</T><Verified on={p.verified} /></Row><T variant="muted">@{p.handle}</T></View>
       {friendIds.includes(p.id) && <T variant="muted">Following</T>}
     </Pressable>
   ));

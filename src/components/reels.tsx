@@ -4,7 +4,7 @@ import { FlatList, Pressable, View } from 'react-native';
 
 import { RecipeVideo } from '@/components/recipe-video';
 import { Row } from '@/components/screen';
-import { Avatar } from '@/components/social';
+import { Avatar, Verified } from '@/components/social';
 import { Button, T } from '@/components/ui';
 import { Radius } from '@/constants/theme';
 import { useSocial } from '@/lib/social-store';
@@ -32,6 +32,7 @@ export function Reels({ posts }: { posts: Recipe[] }) {
               <Row>
                 {people[r.byId] && <Avatar p={people[r.byId]} size={22} />}
                 <T style={{ color: '#fff', fontWeight: '700' }}>@{r.by}</T>
+                <Verified on={people[r.byId]?.verified} color="#fff" />
               </Row>
             </Pressable>
           )}

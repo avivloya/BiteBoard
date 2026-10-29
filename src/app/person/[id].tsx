@@ -4,7 +4,7 @@ import { View } from 'react-native';
 
 import { Masonry } from '@/components/recipe-card';
 import { Row, Screen } from '@/components/screen';
-import { Avatar, FollowCounts, refreshSocial } from '@/components/social';
+import { Avatar, FollowCounts, refreshSocial, Verified } from '@/components/social';
 import { Button, T } from '@/components/ui';
 import { Colors } from '@/constants/theme';
 import { type PublicProfile, profilesByIds, recipesBy, setFriend } from '@/lib/social';
@@ -39,7 +39,7 @@ export default function Person() {
       <Row style={{ flexWrap: 'nowrap' }}>
         <Avatar p={p} size={72} />
         <View style={{ flex: 1 }}>
-          <T variant="h2">{p.name}</T>
+          <Row style={{ gap: 6 }}><T variant="h2">{p.name}</T><Verified on={p.verified} size={20} /></Row>
           <T variant="muted">@{p.handle}{p.streak ? ` · ${p.streak} day streak` : ''}</T>
           <FollowCounts id={id} />
         </View>

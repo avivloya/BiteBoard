@@ -504,6 +504,36 @@ body.cam-open{overflow:hidden}
 [dir=rtl] .pl-rail{right:auto;left:10px}[dir=rtl] .pl-info{left:84px;right:16px}[dir=rtl] .pl-x{left:auto;right:14px}
 [dir=rtl] .cam-side{right:auto;left:12px}[dir=rtl] .close{right:auto;left:12px}[dir=rtl] .save-fab{right:auto;left:10px}[dir=rtl] .pic-edit{right:auto;left:2px}[dir=rtl] .crop-top{direction:rtl}
 [dir=rtl] .srch-bar svg,[dir=rtl] [data-act=srch-back] svg,[dir=rtl] [data-act=chat-back]{transform:scaleX(-1)}
+.ed-stage{position:absolute;inset:0;container-type:inline-size}
+.v-texts{position:absolute;inset:0;pointer-events:none;container-type:inline-size;overflow:hidden;z-index:1}
+.ed-texts .v-text{pointer-events:auto}
+.v-text{position:absolute;transform:translate(-50%,-50%);color:var(--tc);font-weight:800;line-height:1.15;text-align:center;white-space:pre-wrap;max-width:86%;padding:.15em .45em;border-radius:.4em;letter-spacing:-.01em}
+.v-text.pill{background:rgba(18,12,7,.55)}.v-text.plain{text-shadow:0 1px 8px rgba(0,0,0,.55)}
+.ed-texts .v-text{cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}.ed-texts .v-text.on{outline:2px dashed rgba(255,255,255,.85);outline-offset:3px}
+.rvideo-wrap{position:relative}
+.post-prev{position:relative;overflow:hidden}.post-prev img,.post-prev video{width:100%;height:100%;object-fit:cover;display:block}
+.ed-panel{width:100%;max-width:440px;display:grid;justify-items:center}
+.ed-card{width:100%;box-sizing:border-box;display:grid;gap:10px;padding:12px;border-radius:18px;background:rgba(29,20,13,.62);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
+.ed-strip{position:relative;height:64px;border-radius:10px;overflow:hidden;display:flex;background:#2a1d13}
+.ed-strip>i{flex:1;background-size:cover;background-position:center;opacity:.9}
+.ed-segs{position:absolute;inset:0}
+.ed-seg{position:absolute;top:0;bottom:0;border:0;padding:0;background:transparent;border-left:2px solid rgba(255,255,255,.9);cursor:pointer}
+.ed-seg:first-child{border-left:0}
+.ed-seg.sel{box-shadow:inset 0 0 0 3px var(--bg);background:rgba(226,206,177,.18)}
+.ed-seg.cut{background:repeating-linear-gradient(135deg,rgba(18,12,7,.82) 0 6px,rgba(18,12,7,.6) 6px 12px)}
+.ed-head{position:absolute;top:-3px;bottom:-3px;width:3px;margin-left:-1.5px;background:#fff;border-radius:2px;pointer-events:none;box-shadow:0 0 6px rgba(0,0,0,.5)}
+.ed-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ed-row input{flex:1;min-width:0;border:0;border-radius:999px;padding:10px 14px;font:inherit;font-size:16px;background:rgba(255,255,255,.92);color:var(--ink)}
+.ed-btn{border:0;border-radius:999px;padding:9px 14px;font:inherit;font-weight:700;font-size:13px;color:#fff;background:rgba(255,255,255,.16);cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.ed-btn.strong{background:var(--bg);color:var(--ink)}.ed-btn.danger{background:rgba(255,107,94,.25)}.ed-btn:disabled{opacity:.4}
+.ed-note{margin:0;font-size:12.5px;color:rgba(255,255,255,.8)}
+.ed-sounds{display:grid;gap:6px;max-height:220px;overflow-y:auto}
+.ed-sound{display:flex;align-items:center;gap:10px;border:0;border-radius:12px;padding:8px 10px;background:rgba(255,255,255,.08);color:#fff;font:inherit;text-align:left;cursor:pointer}
+.ed-sound span{display:grid}.ed-sound small{font-size:11px;opacity:.75}.ed-sound.on{background:var(--bg);color:var(--ink)}
+.ed-vol{display:grid;grid-template-columns:84px 1fr 34px;align-items:center;gap:10px;font-size:13px;font-weight:700;color:#fff}.ed-vol input{accent-color:var(--bg)}.ed-vol b{text-align:right;font-variant-numeric:tabular-nums}.ed-vol.off{opacity:.45}
+.ed-colors{gap:10px}.ed-color{width:28px;height:28px;border-radius:50%;border:2px solid rgba(255,255,255,.5);cursor:pointer;padding:0}.ed-color.on{border-color:#fff;box-shadow:0 0 0 2px var(--accent)}
+.ed-cover{grid-template-columns:72px 1fr;align-items:center}.ed-cover img{width:72px;height:128px;object-fit:cover;border-radius:10px;background:#2a1d13}.ed-cover input{width:100%;accent-color:var(--bg)}
+.vbadge{display:inline-block;vertical-align:-.12em;margin-left:.25em;flex:none}
 .cam-shutter{touch-action:none;-webkit-touch-callout:none}
 .cam-clips{display:flex;gap:10px;max-width:100%;overflow-x:auto;padding:8px 4px 2px;scrollbar-width:none}
 .cam-clips::-webkit-scrollbar{display:none}
@@ -711,7 +741,9 @@ loadLocal();
 // Videos: uploaded when signed in on claude.ai, otherwise kept in this browser (IndexedDB).
 const vdb=()=>new Promise((ok,no)=>{try{const r=indexedDB.open("biteboard-videos",1);r.onupgradeneeded=()=>r.result.createObjectStore("v");r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)}catch(e){no(e)}});
 async function storeVideo(r,blob){
-  if(assets){if(blob.size>20*1024*1024)throw new Error("too big");const a=await assets.upload(blob);r.video=a.url;delete r.localVideo;return}
+  if(assets){if(blob.size>20*1024*1024)throw new Error("too big");const a=await assets.upload(blob);r.video=a.url;delete r.localVideo;
+    if(r.cover?.startsWith("data:"))try{r.cover=(await assets.upload(dataUrlBlob(r.cover))).url}catch(e){}
+    return}
   const d=await vdb();await new Promise((ok,no)=>{const t=d.transaction("v","readwrite");t.objectStore("v").put(blob,r.id);t.oncomplete=ok;t.onerror=()=>no(t.error)});
   r.localVideo=true;r.video=URL.createObjectURL(blob);
 }
@@ -772,7 +804,7 @@ function toggleLike(r){const k=pkey(r),mine=SOC.likes[ME()]||[];SOC.likes[ME()]=
 const commentsFor=k=>Object.entries(SOC.comments).flatMap(([u,items])=>items.filter(c=>c.post===k).map(c=>({...c,by:u}))).sort((a,b)=>a.at-b.at);
 function addComment(r,text){const items=SOC.comments[ME()]||[];SOC.comments[ME()]=[...items,{id:uid(),post:pkey(r),text:text.slice(0,300),at:Date.now()}].slice(-300);socSave("comments")}
 function delComment(id){SOC.comments[ME()]=(SOC.comments[ME()]||[]).filter(c=>c.id!==id);socSave("comments")}
-const postCard=r=>({key:pkey(r),id:r.id,byId:r.byId||uidUser||"",by:r.by||S.people[uidUser]?.handle||"",title:r.title||"",caption:r.caption||"",video:r.video||"",speed:r.speed||1,trim:r.trim||null,cuts:r.cuts||null,filter:r.filter||null,mirror:!!r.mirror});
+const postCard=r=>({key:pkey(r),id:r.id,byId:r.byId||uidUser||"",by:r.by||S.people[uidUser]?.handle||"",title:r.title||"",caption:r.caption||"",video:r.video||"",speed:r.speed||1,trim:r.trim||null,cuts:r.cuts||null,filter:r.filter||null,mirror:!!r.mirror,music:r.music||null,mvol:r.mvol,ovol:r.ovol,texts:r.texts||null});
 function sendMsg(to,text,post){if(!uidUser)return;const items=SOC.msgs[uidUser]||[];
   SOC.msgs[uidUser]=[...items,{id:uid(),to,text:(text||"").slice(0,1000),post:post?postCard(post):undefined,at:Date.now()}].slice(-500);socSave("messages");socRefresh()}
 // A conversation is what I sent them plus what they sent me.
@@ -792,8 +824,8 @@ const IC={heart:'<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5
 const PL={open:false,list:[],i:0,obs:null};
 function openPlayer(list,i){PL.list=list;PL.i=i;PL.open=true;document.body.classList.add("cam-open");
   const el=document.createElement("div");el.id="player";el.className="player";el.setAttribute("role","dialog");el.setAttribute("aria-label","Videos");
-  el.innerHTML=`<div class="pl-scroll">${list.map((r,j)=>`<section class="pl-slide" data-i="${j}"><video src="${esc(r.video)}" data-speed="${r.speed||1}" ${vTrim(r.trim,r.cuts)} ${vFilter(r.filter,r.mirror)} playsinline loop preload="${Math.abs(j-i)<2?"auto":"metadata"}"></video>
-    <div class="pl-info">${r.by?`<button class="pl-by" data-pl="person" data-i="${j}">${S.people[r.byId]?avatar(S.people[r.byId],28):""}<b>@${esc(r.by)}</b></button>`:""}${r.title&&r.title!==r.caption?`<h3>${esc(r.title)}</h3>`:""}${r.caption?`<p>${esc(r.caption)}</p>`:""}
+  el.innerHTML=`<div class="pl-scroll">${list.map((r,j)=>`<section class="pl-slide" data-i="${j}"><video src="${esc(r.video)}" ${vAttrs(r)} playsinline loop preload="${Math.abs(j-i)<2?"auto":"metadata"}"></video>${vTexts(r)}
+    <div class="pl-info">${r.by?`<button class="pl-by" data-pl="person" data-i="${j}">${S.people[r.byId]?avatar(S.people[r.byId],28):""}<b>@${esc(r.by)}</b>${vb(r.byId,r.by)}</button>`:""}${r.title&&r.title!==r.caption?`<h3>${esc(r.title)}</h3>`:""}${r.caption?`<p>${esc(r.caption)}</p>`:""}
       ${facts(r,1)?`<div class="pl-facts">${facts(r,1)}</div>`:""}${r.kcal||r.ing?.length?`<button class="pl-recipe" data-pl="recipe" data-i="${j}">View recipe</button>`:""}</div>
     <div class="pl-rail" data-i="${j}"></div><i class="pl-paused" aria-hidden="true">${icon('<path d="M8 5v14l11-7z"/>',54,"currentColor")}</i></section>`).join("")}</div>
     <button class="pl-x" data-pl="close" aria-label="Close">${camSvg("close")}</button><div id="plSheetWrap"></div>`;
@@ -852,13 +884,13 @@ function viewInbox(){
   const back=`<a class="btn ghost sm" href="#account">← Account</a>`;
   if(!uidUser)return `<div class="inbox">${back}<h1>Inbox</h1><div class="empty"><h3>Messages need an account</h3>On this website everything stays on your phone, so there's no one to message yet. In the Biteboard app you can message people you follow and get videos they send you.</div></div>`;
   if(UI.chat&&S.people[UI.chat]){const id=UI.chat,p=S.people[id],c=convo(id);markRead(id);
-    return `<div class="inbox chat"><div class="chat-head"><button class="btn ghost sm" data-act="chat-back">←</button><button class="person-main" data-person="${esc(id)}">${avatar(p,36)}<span><b>${esc(p.name||p.handle)}</b><small>@${esc(p.handle)}</small></span></button></div>
+    return `<div class="inbox chat"><div class="chat-head"><button class="btn ghost sm" data-act="chat-back">←</button><button class="person-main" data-person="${esc(id)}">${avatar(p,36)}<span><b>${esc(p.name||p.handle)}${vb(id,p.handle)}</b><small>@${esc(p.handle)}</small></span></button></div>
       <div class="chat-list" id="chatList">${c.length?c.map(m=>`<div class="bubble ${m.from===uidUser?"me":""}">${m.post?`<button class="dm-post" data-dm-post="${esc(m.id)}" data-from="${esc(m.from)}">${m.post.video?`<video src="${esc(m.post.video)}" muted playsinline preload="metadata" ${vFilter(m.post.filter,m.post.mirror)}></video>`:""}<span><b>@${esc(m.post.by)}</b>${esc(m.post.title||m.post.caption||"Cooking video")}</span></button>`:""}${m.text?`<p>${esc(m.text)}</p>`:""}<small>${ago(m.at)}</small></div>`).join(""):`<p class="note" style="text-align:center">Say hi to @${esc(p.handle)}.</p>`}</div>
       <form class="pl-say" data-dm-form="${esc(id)}"><input id="dmSay" maxlength="1000" placeholder="Message…" autocomplete="off"><button class="btn primary sm">Send</button></form>
       <p class="note" style="text-align:center;font-size:12px">In this preview, messages aren't private. In the Biteboard app only you and @${esc(p.handle)} can read them.</p></div>`}
   const cs=convos(),fr=S.friends.filter(id=>S.people[id]&&!cs.some(c=>c.id===id));
   return `<div class="inbox">${back}<h1>Inbox</h1>
-    ${cs.length?`<div class="dm-list">${cs.map(({id,last})=>{const p=S.people[id],n=unread(id);return `<button class="dm-row ${n?"new":""}" data-chat="${esc(id)}">${avatar(p,48)}<span><b>${esc(p.name||p.handle)}</b><small>${last.from===uidUser?"You: ":""}${esc(last.text||"Sent a video")} · ${ago(last.at)}</small></span>${n?`<i class="dm-dot">${n}</i>`:""}</button>`}).join("")}</div>`:`<div class="empty"><h3>No messages yet</h3>Send someone a video from Watch, or start a chat below.</div>`}
+    ${cs.length?`<div class="dm-list">${cs.map(({id,last})=>{const p=S.people[id],n=unread(id);return `<button class="dm-row ${n?"new":""}" data-chat="${esc(id)}">${avatar(p,48)}<span><b>${esc(p.name||p.handle)}${vb(id,p.handle)}</b><small>${last.from===uidUser?"You: ":""}${esc(last.text||"Sent a video")} · ${ago(last.at)}</small></span>${n?`<i class="dm-dot">${n}</i>`:""}</button>`}).join("")}</div>`:`<div class="empty"><h3>No messages yet</h3>Send someone a video from Watch, or start a chat below.</div>`}
     ${fr.length?`<div class="label">Start a chat</div><div class="pl-people">${fr.map(id=>`<button class="pl-person" data-chat="${esc(id)}">${avatar(S.people[id],52)}<small>${esc(S.people[id].name||S.people[id].handle)}</small></button>`).join("")}</div>`:cs.length?"":`<p class="note">Follow people to message them.</p>`}</div>`;
 }
 document.addEventListener("click",e=>{const c=e.target.closest("[data-chat]");if(c){UI.chat=c.dataset.chat;if(route()!=="inbox")location.hash="#inbox";else render();return}
@@ -894,8 +926,8 @@ function searchBody(){const q=UI.sq||"",tab=UI.stab||"top";
       ${top.length?`<div class="label">Popular hashtags</div><div class="chips">${top.map(([x])=>`<button class="chip" data-sq="#${esc(x)}">#${esc(x)}</button>`).join("")}</div>`:""}
       ${S.mode!=="db"?`<p class="note">On this website you can search recipes and your own posts. Searching other people works in the app.</p>`:""}`}
   const R=searchResults(q);
-  const people=list=>list.length?`<div class="dm-list">${list.map(([id,p])=>`<button class="dm-row" data-person="${esc(id)}">${avatar(p,48)}<span><b>${esc(p.name||p.handle)}</b><small>@${esc(p.handle)} · ${followers(id)} follower${followers(id)===1?"":"s"}</small></span>${S.friends.includes(id)?`<span class="note" style="margin-left:auto">Following</span>`:""}</button>`).join("")}</div>`:"";
-  const vids=list=>list.length?`<div class="srch-grid">${list.map((r,i)=>`<button class="srch-vid" data-svid="${i}"><video src="${esc(r.video)}" muted playsinline preload="metadata" ${vFilter(r.filter,r.mirror)}></video><span>${r.by?`@${esc(r.by)}`:""}<b>${esc(r.caption||r.title||"")}</b></span><i>${icon(IC.heart,13,"currentColor")} ${likeCount(pkey(r))}</i></button>`).join("")}</div>`:"";
+  const people=list=>list.length?`<div class="dm-list">${list.map(([id,p])=>`<button class="dm-row" data-person="${esc(id)}">${avatar(p,48)}<span><b>${esc(p.name||p.handle)}${vb(id,p.handle)}</b><small>@${esc(p.handle)} · ${followers(id)} follower${followers(id)===1?"":"s"}</small></span>${S.friends.includes(id)?`<span class="note" style="margin-left:auto">Following</span>`:""}</button>`).join("")}</div>`:"";
+  const vids=list=>list.length?`<div class="srch-grid">${list.map((r,i)=>`<button class="srch-vid" data-svid="${i}"><video src="${esc(r.video)}" muted playsinline preload="metadata" ${vFilter(r.filter,r.mirror)}${r.cover?` poster="${esc(r.cover)}"`:""}></video><span>${r.by?`@${esc(r.by)}`:""}<b>${esc(r.caption||r.title||"")}</b></span><i>${icon(IC.heart,13,"currentColor")} ${likeCount(pkey(r))}</i></button>`).join("")}</div>`:"";
   const recs=list=>list.length?`<div class="masonry">${list.map(card).join("")}</div>`:"";
   const tags=list=>list.length?`<div class="dm-list">${list.map(([x,n])=>`<button class="dm-row" data-sq="#${esc(x)}"><span class="srch-hash">#</span><span><b>#${esc(x)}</b><small>${n} post${n===1?"":"s"}</small></span></button>`).join("")}</div>`:"";
   UI.sVids=R.videos;
@@ -956,7 +988,7 @@ function card(r,i){
   const hts=[210,290,240,330,260,300];const ht=hts[(hashStr(r.id)+i)%hts.length];
   return `<article class="card" data-open="${esc(r.id)}" tabindex="0" role="button" aria-label="${esc(r.title)}">
     <div class="tile" style="height:${S.photos[r.id]?ht+40:ht}px">${art(r)}${r.kcal?`<span class="kcal num">${r0(r.kcal)} kcal</span>`:""}${r.ai?'<span class="ai">AI</span>':""}</div>
-    <div class="body"><h3>${esc(r.title)}</h3><div class="meta">${r.by?`<span><button class="by" data-person="${esc(r.byId||"")}">${S.people[r.byId]?avatar(S.people[r.byId],16):""}@${esc(r.by)}</button></span>`:""}${r.kcal?`<span class="num">${r0(r.kcal)} kcal</span>`:""}${r.min?`<span>${r.min} min</span>`:""}</div></div>
+    <div class="body"><h3>${esc(r.title)}</h3><div class="meta">${r.by?`<span><button class="by" data-person="${esc(r.byId||"")}">${S.people[r.byId]?avatar(S.people[r.byId],16):""}@${esc(r.by)}${vb(r.byId,r.by,12)}</button></span>`:""}${r.kcal?`<span class="num">${r0(r.kcal)} kcal</span>`:""}${r.min?`<span>${r.min} min</span>`:""}</div></div>
     <button class="save-fab ${isSaved(r.id)?"saved":""}" data-save="${esc(r.id)}" aria-label="Save ${esc(r.title)} to a board"><svg width="14" height="14" viewBox="0 0 24 24" fill="${isSaved(r.id)?"currentColor":"none"}" stroke="currentColor" stroke-width="2.4"><path d="M6 3h12v18l-6-4-6 4z"/></svg>${isSaved(r.id)?"Saved":"Save"}</button>
   </article>`;
 }
@@ -987,8 +1019,8 @@ function viewDiscover(){
   const social=S.mode==="db";
   const feedTabs=`<div class="explore-head"><div class="feed-tabs" role="tablist"><button role="tab" data-act="feed" data-feed="watch" aria-selected="${UI.feed==="watch"}">Watch</button><button role="tab" data-act="feed" data-feed="recipes" aria-selected="${UI.feed!=="watch"}">Recipes</button></div><div class="row" style="gap:8px;flex-wrap:nowrap"><button class="icon-btn srch-btn" data-act="search" aria-label="Search">${icon('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',22)}</button><button class="plus-btn" data-act="add-menu" aria-label="Add a recipe">+</button></div></div>`;
   if(UI.feed==="watch"){const vids=UI.watchList=[...(social?forYou():[]),...S.mine.filter(r=>r.shared||!social).map(r=>({...r,by:S.people[uidUser]?.handle,byId:uidUser}))].filter(r=>r.video);
-    return feedTabs+(vids.length?`<div class="reels">${vids.map((r,j)=>`<section class="reel" data-reel="${j}"><video src="${esc(r.video)}" data-speed="${r.speed||1}" ${vTrim(r.trim,r.cuts)} ${vFilter(r.filter,r.mirror)} playsinline muted loop preload="metadata"></video>
-      <div class="reel-info"><button class="by" data-person="${esc(r.byId||"")}">${S.people[r.byId]?avatar(S.people[r.byId],22):""}@${esc(r.by||"")}</button><h3>${esc(r.title)}</h3>${r.caption?`<p class="reel-cap">${esc(r.caption)}</p>`:""}${facts(r,1)?`<div class="note num">${facts(r,1)}</div>`:""}
+    return feedTabs+(vids.length?`<div class="reels">${vids.map((r,j)=>`<section class="reel" data-reel="${j}"><video src="${esc(r.video)}" ${vAttrs(r)} playsinline muted loop preload="metadata"></video>${vTexts(r)}
+      <div class="reel-info"><button class="by" data-person="${esc(r.byId||"")}">${S.people[r.byId]?avatar(S.people[r.byId],22):""}@${esc(r.by||"")}${vb(r.byId,r.by)}</button><h3>${esc(r.title)}</h3>${r.caption?`<p class="reel-cap">${esc(r.caption)}</p>`:""}${facts(r,1)?`<div class="note num">${facts(r,1)}</div>`:""}
       <div class="row"><button class="btn primary sm" data-open="${esc(r.id)}">View recipe</button><button class="btn sm reel-sound" data-act="reel-sound">Sound on</button></div></div></section>`).join("")}</div>`
       :`<div class="empty"><h3>No cooking videos yet</h3>Tap + to post a recipe and film yourself making it.</div>`)}
   const list=[...(social?forYou():[]),...allRecipes()].filter(r=>(UI.filter==="All"||(r.tags||[]).includes(UI.filter)||r.cat===UI.filter)&&(!q||(r.title+" "+(r.ing||[]).join(" ")+" "+(r.tags||[]).join(" ")+" "+(r.by||"")).toLowerCase().includes(q)));
@@ -1159,7 +1191,7 @@ const counts=id=>{const n=followers(id),m=(S.people[id]?.following||[]).length;r
 const avatar=(pp,size=44)=>`<span class="avatar" style="width:${size}px;height:${size}px;font-size:${size*.42}px">${pp?.photo?`<img src="${esc(pp.photo)}" alt="">`:esc((pp?.name||pp?.handle||"?").trim().charAt(0).toUpperCase())}</span>`;
 const photoField=pp=>assets?`<label class="pfp-pick">${avatar(pp||{},64)}<span class="btn sm">${pp?.photo?"Change profile picture":"Add a profile picture"}</span><input id="pub_photo" type="file" accept="image/jpeg,image/png,image/webp" hidden></label>`:"";
 function personRow(id){const pp=S.people[id],fr=S.friends.includes(id);
-  return `<div class="person"><button class="person-main" data-person="${esc(id)}">${avatar(pp)}<span><b>${esc(pp.name||pp.handle)}</b><small>@${esc(pp.handle)} · ${followers(id)} follower${followers(id)===1?"":"s"} · ${(pp.recipes||[]).length} recipe${(pp.recipes||[]).length===1?"":"s"}</small></span></button>
+  return `<div class="person"><button class="person-main" data-person="${esc(id)}">${avatar(pp)}<span><b>${esc(pp.name||pp.handle)}${vb(id,pp.handle)}</b><small>@${esc(pp.handle)} · ${followers(id)} follower${followers(id)===1?"":"s"} · ${(pp.recipes||[]).length} recipe${(pp.recipes||[]).length===1?"":"s"}</small></span></button>
     <button class="btn sm ${fr?"":"primary"}" data-friend="${esc(id)}">${fr?"Following":"Follow"}</button></div>`}
 // Account: picture, name and bio, then Posts and Saved, which slide sideways.
 function viewAccount(){
@@ -1172,7 +1204,7 @@ function viewAccount(){
   return `<div class="acct-top"><a class="icon-btn inbox-btn" href="#inbox" aria-label="Inbox${nIn?`, ${nIn} new`:""}">${icon(IC.inbox,26)}${nIn?`<i class="dm-dot">${nIn}</i>`:""}</a><button class="icon-btn gear" data-act="settings" aria-label="Settings"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button></div>
     <div class="acct">
       <button class="pic" data-act="edit-profile" aria-label="Change profile picture">${avatar(who,96)}<i class="pic-edit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></i></button>
-      <h1>${esc(who.name||who.handle)}</h1>
+      <h1>${esc(who.name||who.handle)}${vb(uidUser,who.handle,26)}</h1>
       ${who.handle?`<div class="note">@${esc(who.handle)}</div>`:""}${me?`<div class="note follow-counts">${counts(uidUser)}</div>`:""}
       ${bio?`<p class="acct-bio">${esc(bio)}</p>`:`<button class="linkish" data-act="edit-profile">+ Add a bio</button>`}
       <div class="acct-actions"><button class="btn sm" data-act="edit-profile">Edit profile</button>${me?`<a class="btn sm" href="#people">Find people</a>`:""}</div>
@@ -1269,7 +1301,7 @@ function viewFriends(){
   const mine=S.mine.filter(r=>r.shared);
   return head+`<div class="friends-grid">
     <aside style="display:grid;gap:18px;min-width:0;align-content:start">
-      <div class="panel"><div class="row">${avatar(me,56)}<div style="min-width:0;flex:1"><b style="font-size:18px">${esc(me.name)}</b><div class="note">@${esc(me.handle)}</div></div><button class="btn ghost sm" data-act="edit-pub">Edit</button></div>
+      <div class="panel"><div class="row">${avatar(me,56)}<div style="min-width:0;flex:1"><b style="font-size:18px">${esc(me.name)}${vb(uidUser,me.handle,16)}</b><div class="note">@${esc(me.handle)}</div></div><button class="btn ghost sm" data-act="edit-pub">Edit</button></div>
         ${me.bio?`<p style="margin:0">${esc(me.bio)}</p>`:""}
         <div class="row note"><span class="streak on"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c1 3.5 5 6 5 11a5 5 0 0 1-10 0c0-2.2 1-3.8 2.3-5 .2 1.6 1 2.7 2.2 3.2C11 8.6 11.2 5 12 2z"/></svg><b class="num">${streakInfo().n}</b></span> day streak · ${mine.length} posted</div><div class="note follow-counts">${counts(uidUser)}</div>
         <button class="btn sm" data-person="${esc(uidUser)}">View my recipe page</button></div>
@@ -1281,10 +1313,14 @@ function viewFriends(){
       ${feed.length?`<div class="masonry">${feed.map(card).join("")}</div>`:`<div class="empty"><h3>${S.friends.length?"People you follow haven't posted yet":"Follow people to see their recipes here"}</h3>${mine.length?"":"To post your own, tap Post a recipe on Discover."}</div>`}
     </section></div>`;
 }
+// Verified accounts. Only Biteboard can add someone here (see the verification rules), so it can't be faked by editing a profile.
+const VERIFIED_IDS=new Set(["u_t2cf5vLeZ8JgmrSy_KFGBA"]),VERIFIED_HANDLES=new Set(["avivloya"]);
+const isVerified=(id,h)=>VERIFIED_IDS.has(id)||(S.mode!=="db"&&id===uidUser&&VERIFIED_HANDLES.has((h||S.profile?.handle||"").toLowerCase()));
+const vb=(id,h,sz=14)=>isVerified(id,h)?`<svg class="vbadge" width="${sz}" height="${sz}" viewBox="0 0 24 24" role="img" aria-label="Verified"><title>Verified</title><path fill="var(--accent)" d="M12 1.5l2.6 2 3.2-.4 1.2 3 3 1.2-.4 3.2 2 2.6-2 2.6.4 3.2-3 1.2-1.2 3-3.2-.4-2.6 2-2.6-2-3.2.4-1.2-3-3-1.2.4-3.2-2-2.6 2-2.6-.4-3.2 3-1.2 1.2-3 3.2.4z"/><path d="m7.5 12.3 3 3 6-6.3" fill="none" stroke="var(--accent-ink)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`:"";
 function personSheet(id){
   const pp=S.people[id];if(!pp)return;const rs=(pp.recipes||[]).map(r=>({...r,by:pp.handle,byId:id}));const self=id===uidUser;
   openSheet(`<div class="inner"><button class="close" data-act="close" aria-label="Close">✕</button>
-    <div class="row">${avatar(pp,72)}<div style="min-width:0;flex:1"><h2 style="font-size:28px">${esc(pp.name||pp.handle)}</h2><div class="note">@${esc(pp.handle)}${pp.streak?` · ${pp.streak} day streak`:""}</div><div class="note follow-counts">${counts(id)}</div></div>
+    <div class="row">${avatar(pp,72)}<div style="min-width:0;flex:1"><h2 style="font-size:28px">${esc(pp.name||pp.handle)}${vb(id,pp.handle,22)}</h2><div class="note">@${esc(pp.handle)}${pp.streak?` · ${pp.streak} day streak`:""}</div><div class="note follow-counts">${counts(id)}</div></div>
     ${self?"":`<button class="btn ${S.friends.includes(id)?"":"primary"}" data-friend="${esc(id)}">${S.friends.includes(id)?"Following":"Follow"}</button>`}</div>
     ${pp.bio?`<p style="margin:0">${esc(pp.bio)}</p>`:""}
     <div class="label">${rs.length} recipe${rs.length===1?"":"s"}</div>
@@ -1296,12 +1332,12 @@ function pubSheet(){const me=S.people[uidUser];
     <label class="field">Display name<input id="pub_name" required value="${esc(me.name)}"></label>
     <label class="field">Bio<input id="pub_bio" maxlength="120" value="${esc(me.bio||"")}"></label>
     <div class="ob-actions"><button class="btn primary">Save profile</button></div></form></div>`)}
-function writeSheet(v=null){UI.wVideo=v?.blob||null;UI.wSpeed=v?.speed||1;UI.wTrim=v?.trim||null;UI.wCuts=v?.cuts||null;UI.wFilter=v?.filter||"none";UI.wMirror=!!v?.mirror;
+function writeSheet(v=null){UI.wVideo=v?.blob||null;UI.wSpeed=v?.speed||1;UI.wTrim=v?.trim||null;UI.wCuts=v?.cuts||null;UI.wFilter=v?.filter||"none";UI.wMirror=!!v?.mirror;UI.wEdit=v?{music:v.music||undefined,mvol:v.mvol,ovol:v.ovol,texts:v.texts||undefined,cover:v.cover||undefined}:{};
   if(UI.wUrl)URL.revokeObjectURL(UI.wUrl);UI.wUrl=UI.wVideo?URL.createObjectURL(UI.wVideo):null;const req=UI.wUrl?"":"required";
   openSheet(`<div class="inner"><button class="close" data-act="close" aria-label="Close">✕</button><h2 style="font-size:24px">New post</h2>
     <form data-form="write" class="ob-form">
       <div class="post-top"><textarea id="w_caption" maxlength="300" placeholder="Write a caption…"></textarea>
-        ${UI.wUrl?`<video class="post-prev" src="${UI.wUrl}" autoplay muted loop playsinline data-speed="${UI.wSpeed}" ${vTrim(UI.wTrim,UI.wCuts)} ${vFilter(UI.wFilter,UI.wMirror)}></video>`:assets?`<label class="post-prev cover">+ Cover photo<input id="w_photo" type="file" accept="image/jpeg,image/png,image/webp" hidden><span class="note" id="w_pname"></span></label>`:""}</div>
+        ${UI.wUrl?`<div class="post-prev">${UI.wEdit?.cover?`<img src="${UI.wEdit.cover}" alt="Cover">`:`<video src="${UI.wUrl}" autoplay muted loop playsinline data-speed="${UI.wSpeed}" ${vTrim(UI.wTrim,UI.wCuts)} ${vFilter(UI.wFilter,UI.wMirror)}></video>`}${vTexts(UI.wEdit||{})}</div>`:assets?`<label class="post-prev cover">+ Cover photo<input id="w_photo" type="file" accept="image/jpeg,image/png,image/webp" hidden><span class="note" id="w_pname"></span></label>`:""}</div>
       ${UI.wUrl?""
         :`<div class="row"><button type="button" class="btn primary sm" data-act="film-post">Film a video</button><label class="btn sm">Upload one<input class="vpick" data-for="write" type="file" accept="video/mp4,video/quicktime,video/webm" hidden></label><span class="note" id="w_vname"></span></div>`}
       ${UI.wUrl?`<details class="w-more"><summary>Add the recipe <span class="note">(optional)</span></summary><div class="ob-form" style="margin-top:10px">`:`<div class="label" style="margin-top:6px">Recipe</div>`}
@@ -1319,6 +1355,153 @@ function writeSheet(v=null){UI.wVideo=v?.blob||null;UI.wSpeed=v?.speed||1;UI.wTr
 // Biteboard's own video recorder: a record button to start and stop, tools down the side (flip, flash, speed,
 // timer), then an edit step (trim and speed) before posting. `then` gets {blob,speed,trim} or null.
 const CAM={};
+// ---------- sounds ----------
+// Free music made right here in the browser (no one owns it, so anyone can post with it). Each track is built from
+// a few notes and drum hits, the same every time, so a post only needs to store the track's id.
+const SOUNDS=[
+  {id:"sunny",name:"Sunny kitchen",bpm:112,key:0,prog:[0,5,3,4],lead:[0,2,4,7,4,2],drums:"pop"},
+  {id:"lofi",name:"Lo-fi simmer",bpm:78,key:-3,prog:[0,3,5,4],lead:[4,2,0,-1],drums:"lofi"},
+  {id:"upbeat",name:"Meal prep rush",bpm:126,key:2,prog:[0,4,5,3],lead:[0,4,7,9,7,4],drums:"dance"},
+  {id:"chill",name:"Slow Sunday",bpm:88,key:-5,prog:[0,5,1,4],lead:[7,4,2,0],drums:"soft"},
+  {id:"bounce",name:"Snack bounce",bpm:100,key:5,prog:[0,0,3,4],lead:[0,0,7,5,3,2],drums:"hiphop"},
+];
+const SCALE=[0,2,4,5,7,9,11];
+const noteHz=(deg,oct=0,key=0)=>{const o=Math.floor(deg/7),d=((deg%7)+7)%7;return 261.63*Math.pow(2,(SCALE[d]+12*(o+oct)+key)/12)};
+const soundUrls={};
+function soundUrl(id){
+  if(soundUrls[id])return soundUrls[id];
+  const t=SOUNDS.find(x=>x.id===id);if(!t)return Promise.resolve(null);
+  return soundUrls[id]=(async()=>{
+    const sr=22050,beat=60/t.bpm,bars=8,len=bars*4*beat,ctx=new OfflineAudioContext(1,Math.ceil(sr*len),sr);
+    const out=ctx.createGain();out.gain.value=.55;out.connect(ctx.destination);
+    const noise=ctx.createBuffer(1,sr,sr),nd=noise.getChannelData(0);let seed=7;for(let i=0;i<nd.length;i++){seed=(seed*16807)%2147483647;nd[i]=seed/1073741823.5-1}
+    const tone=(hz,at,dur,type,vol,attack=.01)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.type=type;o.frequency.value=hz;
+      g.gain.setValueAtTime(0,at);g.gain.linearRampToValueAtTime(vol,at+attack);g.gain.exponentialRampToValueAtTime(.0001,at+dur);o.connect(g);g.connect(out);o.start(at);o.stop(at+dur+.05)};
+    const kick=at=>{const o=ctx.createOscillator(),g=ctx.createGain();o.frequency.setValueAtTime(140,at);o.frequency.exponentialRampToValueAtTime(40,at+.15);
+      g.gain.setValueAtTime(.9,at);g.gain.exponentialRampToValueAtTime(.001,at+.3);o.connect(g);g.connect(out);o.start(at);o.stop(at+.32)};
+    const hiss=(at,dur,vol,hp)=>{const s=ctx.createBufferSource(),f=ctx.createBiquadFilter(),g=ctx.createGain();s.buffer=noise;f.type="highpass";f.frequency.value=hp;
+      g.gain.setValueAtTime(vol,at);g.gain.exponentialRampToValueAtTime(.001,at+dur);s.connect(f);f.connect(g);g.connect(out);s.start(at,Math.random()*.5,dur+.05)};
+    const D={pop:{k:[0,2],s:[1,3],h:.5},lofi:{k:[0,2.5],s:[1,3],h:.5,swing:.08},dance:{k:[0,1,2,3],s:[1,3],h:.25},soft:{k:[0],s:[2],h:1},hiphop:{k:[0,.75,2.5],s:[1,3],h:.25}}[t.drums];
+    for(let bar=0;bar<bars;bar++){const b0=bar*4*beat,root=t.prog[bar%t.prog.length];
+      for(const k of D.k)kick(b0+k*beat);for(const s of D.s)hiss(b0+s*beat,.18,.35,1500);
+      for(let h=0;h<4;h+=D.h)hiss(b0+(h+(D.swing&&h%.5?D.swing:0))*beat,.05,.12,7000);
+      for(const deg of [0,2,4])tone(noteHz(root+deg,-1,t.key),b0,4*beat*.95,"triangle",.07,.08);
+      tone(noteHz(root,-2,t.key),b0,beat*.9,"sine",.28);tone(noteHz(root,-2,t.key),b0+2*beat,beat*.9,"sine",.24);
+      if(bar>=2){const step=4/t.lead.length;t.lead.forEach((deg,i)=>tone(noteHz(root+deg,0,t.key),b0+i*step*beat,step*beat*.8,"square",.035))}}
+    const buf=await ctx.startRendering(),ch=buf.getChannelData(0),wav=new DataView(new ArrayBuffer(44+ch.length*2));
+    const w=(o,s)=>[...s].forEach((c,i)=>wav.setUint8(o+i,c.charCodeAt(0)));
+    w(0,"RIFF");wav.setUint32(4,36+ch.length*2,true);w(8,"WAVEfmt ");wav.setUint32(16,16,true);wav.setUint16(20,1,true);wav.setUint16(22,1,true);
+    wav.setUint32(24,sr,true);wav.setUint32(28,sr*2,true);wav.setUint16(32,2,true);wav.setUint16(34,16,true);w(36,"data");wav.setUint32(40,ch.length*2,true);
+    for(let i=0;i<ch.length;i++)wav.setInt16(44+i*2,Math.max(-1,Math.min(1,ch[i]))*32767,true);
+    return URL.createObjectURL(new Blob([wav],{type:"audio/wav"}));
+  })();
+}
+// A video with data-music plays its sound alongside, at its own volume, and follows play, pause and seek.
+const musicFor=new WeakMap();
+async function musicStart(v){const id=v.dataset?.music;if(!id)return;let a=musicFor.get(v);
+  if(!a){a=new Audio();a.loop=true;musicFor.set(v,a);const u=await soundUrl(id);if(!u)return;a.src=u}
+  a.volume=Math.max(0,Math.min(1,+(v.dataset.mvol??.8)));a.muted=v.muted;
+  if(!v.paused){try{if(a.duration)a.currentTime=v.currentTime%a.duration}catch(e){}a.play().catch(()=>{})}}
+const musicStop=v=>{const a=musicFor.get(v);if(a)a.pause()};
+document.addEventListener("play",e=>{if(e.target.dataset?.music)musicStart(e.target)},true);
+document.addEventListener("pause",e=>{if(e.target.dataset?.music)musicStop(e.target)},true);
+document.addEventListener("seeked",e=>{const a=musicFor.get(e.target);if(a&&a.duration)a.currentTime=e.target.currentTime%a.duration},true);
+document.addEventListener("volumechange",e=>{const a=musicFor.get(e.target);if(a)a.muted=e.target.muted},true);
+document.addEventListener("loadedmetadata",e=>{const o=e.target.dataset?.ovol;if(o!==undefined)e.target.volume=Math.max(0,Math.min(1,+o))},true);
+// Stop sounds of videos that leave the page.
+new MutationObserver(ms=>ms.forEach(m=>m.removedNodes.forEach(n=>{if(n.nodeType!==1)return;(n.matches?.("video")?[n]:[...n.querySelectorAll?.("video")||[]]).forEach(musicStop)}))).observe(document.documentElement,{childList:true,subtree:true});
+
+// Everything a video needs to play the way it was edited: speed, cuts, filter, sound, volumes and cover.
+const vAttrs=r=>`data-speed="${r.speed||1}" ${vTrim(r.trim,r.cuts)} ${vFilter(r.filter,r.mirror)}${r.music?` data-music="${esc(r.music)}" data-mvol="${r.mvol??.8}"`:""}${r.ovol!==undefined?` data-ovol="${r.ovol}"`:""}${r.cover?` poster="${esc(r.cover)}"`:""}`;
+// Words placed on the video, in % of its width and height so they sit in the same spot on any screen.
+const vTexts=r=>r.texts?.length?`<div class="v-texts" aria-hidden="true">${r.texts.map(t=>`<span class="v-text ${t.style||"pill"}" style="left:${t.x}%;top:${t.y}%;--tc:${esc(t.color||"#fff")};font-size:${t.size||7}cqw" data-notr>${esc(t.text)}</span>`).join("")}</div>`:"";
+
+// ---------- video editor ----------
+// After filming: cut out any part, add a sound and set its volume against your voice, put words on the video and
+// choose the cover. Nothing is re-encoded; the post saves these choices and every player follows them.
+const TEXT_COLORS=["#FFFFFF","#FFF3D6","#4A2E1C","#E2CEB1","#FF6B5E","#FFD54A","#7ED6A5"];
+function edInit(){CAM.ed={tool:CAM.ed?.tool||null,bounds:[],del:[],sel:null,music:CAM.ed?.music||null,mvol:.8,ovol:1,texts:[],cover:null,coverAt:0,thumbs:[],editing:null};
+  // Clips deleted while filming start out as cut parts on the timeline.
+  for(const c of CAM.cuts||[]){CAM.ed.bounds.push(c[0],c[1]);CAM.ed.del.push([c[0],c[1]])}}
+const edSegs=()=>{const dur=CAM.dur||0,b=[...new Set([0,...CAM.ed.bounds.filter(x=>x>0.05&&x<dur-0.05),dur])].sort((a,b)=>a-b);
+  return b.slice(0,-1).map((s,i)=>{const e=b[i+1],m=(s+e)/2;return {s,e,cut:CAM.ed.del.some(d=>m>=d[0]&&m<=d[1])}})};
+const edCuts=()=>{const out=[];for(const g of edSegs())if(g.cut){const l=out[out.length-1];if(l&&Math.abs(l[1]-g.s)<0.06)l[1]=g.e;else out.push([g.s,g.e])}return out.map(c=>c.map(x=>Math.round(x*100)/100))};
+const edKeptLen=()=>edSegs().reduce((n,g)=>n+(g.cut?0:g.e-g.s),0);
+async function edThumbs(){const dur=CAM.dur;if(!dur||CAM.ed.thumbs.length)return;const v=document.createElement("video");v.muted=true;v.playsInline=true;v.src=CAM.url;
+  await new Promise(ok=>{v.onloadeddata=ok;v.onerror=ok;setTimeout(ok,3000)});const n=8,c=document.createElement("canvas");c.width=54;c.height=96;const g=c.getContext("2d"),out=[];
+  for(let i=0;i<n;i++){await new Promise(ok=>{v.onseeked=ok;v.currentTime=Math.min(dur-0.05,(i+.5)*dur/n);setTimeout(ok,800)});
+    try{const r=Math.max(54/v.videoWidth,96/v.videoHeight),w=v.videoWidth*r,h=v.videoHeight*r;g.drawImage(v,(54-w)/2,(96-h)/2,w,h);out.push(c.toDataURL("image/jpeg",.6))}catch(e){out.push("")}}
+  CAM.ed.thumbs=out;v.removeAttribute("src");v.load();if(CAM.phase==="review"&&$("#edStrip"))edPanel()}
+function edCoverAt(t){const v=document.createElement("video");v.muted=true;v.playsInline=true;v.src=CAM.url;
+  v.onloadeddata=()=>{v.currentTime=Math.min(Math.max(0,t),(CAM.dur||1)-0.05)};
+  v.onseeked=()=>{try{const W=270,H=480,c=document.createElement("canvas");c.width=W;c.height=H;const g=c.getContext("2d"),r=Math.max(W/v.videoWidth,H/v.videoHeight),w=v.videoWidth*r,h=v.videoHeight*r;
+    if(CAM.mirror&&CAM.recMirror){g.translate(W,0);g.scale(-1,1)}const fx=CAM_FILTERS.find(z=>z[0]===CAM.filter)?.[2];if(fx)g.filter=fx;g.drawImage(v,(W-w)/2,(H-h)/2,w,h);
+    CAM.ed.cover=c.toDataURL("image/jpeg",.7);CAM.ed.coverAt=t;const im=$("#edCoverImg");if(im)im.src=CAM.ed.cover}catch(e){}v.removeAttribute("src");v.load()}}
+function edRender(el){if(!CAM.ed)edInit();const E=CAM.ed;
+  const tool=(k,icon,label,on)=>camTool("ed-"+k,icon,label,on||E.tool===k);
+  el.innerHTML=`<div class="ed-stage"><video class="full" id="camPlay" src="${CAM.url}" autoplay loop playsinline ${vFilter(CAM.filter,CAM.mirror&&CAM.recMirror)}></video><div class="v-texts ed-texts" id="edTexts"></div></div>
+    <div class="cam-shade top"></div><div class="cam-shade bottom"></div>
+    <div class="cam-top"><button class="cam-x" data-cam="retake" aria-label="Retake">${camSvg("back")}</button><span class="cam-brand">${camSvg("trim",18)} <span id="edLen">${mmss(edKeptLen())}</span></span><span class="cam-spacer"></span></div>
+    <div class="cam-side">${tool("cut","trim","Edit",edCuts().length)}${tool("sound","music",E.music?SOUNDS.find(s=>s.id===E.music)?.name.split(" ")[0]:"Sound",!!E.music)}${tool("volume","volume","Volume",E.ovol!==1||(E.music&&E.mvol!==.8))}${tool("text","text","Text",E.texts.length)}${tool("cover","cover","Cover",!!E.cover)}${tool("speed","speed",speedName(CAM.speed),CAM.speed!==1)}</div>
+    <div class="cam-bottom"><div id="edPanel" class="ed-panel"></div>
+      <div class="cam-review"><button data-cam="retake">Retake</button><button class="go" data-cam="use">${CAM.post?"Next":"Use video"}</button></div></div>`;
+  const v=$("#camPlay");v.playbackRate=CAM.speed;v.volume=E.ovol;if(E.music){v.dataset.music=E.music;v.dataset.mvol=E.mvol}
+  v.onloadedmetadata=()=>{v.classList.toggle("fit",v.videoWidth>v.videoHeight);if(isFinite(v.duration)&&v.duration>0&&Math.abs(v.duration-(CAM.dur||0))>0.3){CAM.dur=Math.round(v.duration*10)/10;edPanel()}};
+  v.ontimeupdate=()=>{const p=$("#edHead");if(p&&CAM.dur)p.style.left=(v.currentTime/CAM.dur*100)+"%"};
+  edApply();edTextsDraw();edPanel();edThumbs();if(!E.cover)edCoverAt(0)}
+// Push the current cuts into the preview so it skips them right away.
+function edApply(){const v=$("#camPlay");if(!v)return;v.dataset.cuts=camCutsAttr(edCuts());delete v.dataset.start;delete v.dataset.end;const l=$("#edLen");if(l)l.textContent=mmss(edKeptLen())}
+function edTextsDraw(){const box=$("#edTexts");if(!box)return;box.innerHTML=CAM.ed.texts.map((t,i)=>`<span class="v-text ${t.style||"pill"} ${CAM.ed.editing===i?"on":""}" data-edtext="${i}" style="left:${t.x}%;top:${t.y}%;--tc:${t.color};font-size:${t.size||7}cqw" data-notr>${esc(t.text)}</span>`).join("")}
+function edPanel(){const P=$("#edPanel");if(!P)return;const E=CAM.ed,dur=CAM.dur||0;
+  if(E.tool==="cut"){const segs=edSegs(),th=E.thumbs;
+    P.innerHTML=`<div class="ed-card"><div class="ed-strip" id="edStrip">${th.length?th.map(u=>`<i style="background-image:url(${u})"></i>`).join(""):`<i></i>`.repeat(8)}
+        <div class="ed-segs">${segs.map((g,i)=>`<button class="ed-seg ${g.cut?"cut":""} ${E.sel===i?"sel":""}" data-edseg="${i}" style="left:${g.s/dur*100}%;width:${(g.e-g.s)/dur*100}%" aria-label="Part ${i+1}"></button>`).join("")}</div><b class="ed-head" id="edHead"></b></div>
+      <div class="ed-row"><button class="ed-btn" data-ed="split">${camSvg("split",18)} Split here</button>
+        ${E.sel!=null&&segs[E.sel]?(segs[E.sel].cut?`<button class="ed-btn" data-ed="restore">Put back</button>`:`<button class="ed-btn danger" data-ed="delseg" ${segs.filter(g=>!g.cut).length<2?"disabled":""}>Delete part</button>`):`<span class="ed-note">Tap a part to select it</span>`}</div></div>`;return}
+  if(E.tool==="sound"){P.innerHTML=`<div class="ed-card"><div class="ed-sounds"><button class="ed-sound ${!E.music?"on":""}" data-edsound="">${camSvg("close",16)}<span><b>No sound</b><small>Just your video</small></span></button>
+      ${SOUNDS.map(s=>`<button class="ed-sound ${E.music===s.id?"on":""}" data-edsound="${s.id}">${camSvg("music",16)}<span><b data-notr>${s.name}</b><small>Biteboard beats · free to use</small></span></button>`).join("")}</div></div>`;return}
+  if(E.tool==="volume"){P.innerHTML=`<div class="ed-card"><label class="ed-vol"><span>Your video</span><input type="range" min="0" max="1" step="0.05" value="${E.ovol}" data-edvol="o" aria-label="Your video volume"><b>${Math.round(E.ovol*100)}</b></label>
+      <label class="ed-vol ${E.music?"":"off"}"><span>Music</span><input type="range" min="0" max="1" step="0.05" value="${E.mvol}" data-edvol="m" ${E.music?"":"disabled"} aria-label="Music volume"><b>${Math.round(E.mvol*100)}</b></label>
+      ${E.music?"":`<p class="ed-note">Add a sound to set the music volume.</p>`}</div>`;return}
+  if(E.tool==="text"){const t=E.editing!=null?E.texts[E.editing]:null;
+    P.innerHTML=`<div class="ed-card"><form class="ed-row" data-ed-form><input id="edTextIn" maxlength="80" placeholder="Type something" value="${esc(t?.text||"")}" autocomplete="off" data-notr-ph><button class="ed-btn strong">${t?"Done":"Add"}</button></form>
+      ${t?`<div class="ed-row ed-colors">${TEXT_COLORS.map(c=>`<button class="ed-color ${t.color===c?"on":""}" data-edcolor="${c}" style="background:${c}" aria-label="Color"></button>`).join("")}</div>
+      <div class="ed-row"><button class="ed-btn" data-ed="tstyle">${t.style==="plain"?"Background":"No background"}</button><button class="ed-btn" data-ed="tsize" data-d="-1">A−</button><button class="ed-btn" data-ed="tsize" data-d="1">A+</button><button class="ed-btn danger" data-ed="tdel">Delete</button></div>`
+      :`<p class="ed-note">${E.texts.length?"Drag words to move them. Tap one to change it.":"Add words, then drag them where you want."}</p>`}</div>`;return}
+  if(E.tool==="cover"){P.innerHTML=`<div class="ed-card ed-cover"><img id="edCoverImg" alt="Cover" src="${E.cover||""}"><div><p class="ed-note">Slide to pick the picture people see before they tap play.</p>
+      <input type="range" min="0" max="${Math.max(0.1,dur-0.1)}" step="0.1" value="${E.coverAt}" data-edcover aria-label="Cover frame"></div></div>`;return}
+  if(E.tool==="speed"){P.innerHTML=`<div class="cam-seg">${[[0.5,"Slow"],[1,"Normal"],[2,"Fast"]].map(([v,l])=>`<button data-cam="setspeed" data-v="${v}" aria-pressed="${CAM.speed===v}">${l}</button>`).join("")}</div>`;return}
+  P.innerHTML="";
+}
+document.addEventListener("click",e=>{if(CAM.phase!=="review"||!$("#cam"))return;const E=CAM.ed;if(!E)return;
+  const t=e.target.closest("[data-cam^='ed-']");if(t){const k=t.dataset.cam.slice(3);E.tool=E.tool===k?null:k;if(k!=="text")E.editing=null;camRender();return}
+  const seg=e.target.closest("[data-edseg]");if(seg){const i=+seg.dataset.edseg;E.sel=E.sel===i?null:i;const v=$("#camPlay"),g=edSegs()[i];if(v&&g&&!g.cut)v.currentTime=g.s;edPanel();return}
+  const b=e.target.closest("[data-ed]");if(b){const a=b.dataset.ed,v=$("#camPlay");
+    if(a==="split"&&v){const at=Math.round(v.currentTime*10)/10;if(at>0.2&&at<(CAM.dur||0)-0.2&&!E.bounds.some(x=>Math.abs(x-at)<0.2)){E.bounds.push(at);E.sel=edSegs().findIndex(g=>g.s<=at+0.01&&g.e>at+0.01)}else toast("Move to a different spot to split");edPanel()}
+    if(a==="delseg"){const g=edSegs()[E.sel];if(g){E.del.push([g.s,g.e]);E.sel=null;edApply();edPanel();toast("Part deleted")}}
+    if(a==="restore"){const g=edSegs()[E.sel];if(g){const m=(g.s+g.e)/2;E.del=E.del.flatMap(d=>m>=d[0]&&m<=d[1]?[[d[0],g.s],[g.e,d[1]]].filter(x=>x[1]-x[0]>0.05):[d]);E.sel=null;edApply();edPanel()}}
+    if(a==="tdel"&&E.editing!=null){E.texts.splice(E.editing,1);E.editing=null;edTextsDraw();edPanel()}
+    if(a==="tstyle"&&E.editing!=null){const x=E.texts[E.editing];x.style=x.style==="plain"?"pill":"plain";edTextsDraw();edPanel()}
+    if(a==="tsize"&&E.editing!=null){const x=E.texts[E.editing];x.size=Math.max(4,Math.min(14,(x.size||7)+ +b.dataset.d));edTextsDraw()}
+    return}
+  const s=e.target.closest("[data-edsound]");if(s){E.music=s.dataset.edsound||null;const v=$("#camPlay");if(v){musicStop(v);musicFor.delete(v);if(E.music){v.dataset.music=E.music;v.dataset.mvol=E.mvol;if(!v.paused)musicStart(v)}else delete v.dataset.music}camRender();return}
+  const c=e.target.closest("[data-edcolor]");if(c&&E.editing!=null){E.texts[E.editing].color=c.dataset.edcolor;edTextsDraw();edPanel();return}
+});
+document.addEventListener("submit",e=>{if(!e.target.closest("[data-ed-form]"))return;e.preventDefault();const E=CAM.ed,val=$("#edTextIn").value.trim();
+  if(E.editing!=null){if(val)E.texts[E.editing].text=val;else E.texts.splice(E.editing,1);E.editing=null}
+  else if(val){E.texts.push({text:val,x:50,y:40+E.texts.length*8%30,color:"#FFFFFF",style:"pill",size:7});E.editing=E.texts.length-1}
+  edTextsDraw();edPanel();if(E.editing==null)$("#edTextIn")?.blur()},true);
+document.addEventListener("input",e=>{if(CAM.phase!=="review"||!CAM.ed)return;const E=CAM.ed,v=$("#camPlay");
+  if(e.target.dataset.edvol){const x=+e.target.value;if(e.target.dataset.edvol==="o"){E.ovol=x;if(v)v.volume=x}else{E.mvol=x;if(v){v.dataset.mvol=x;const a=musicFor.get(v);if(a)a.volume=x}}e.target.nextElementSibling.textContent=Math.round(x*100)}
+  if(e.target.matches("[data-edcover]")){const t=+e.target.value;if(v){v.pause();v.currentTime=t}clearTimeout(window._edc);window._edc=setTimeout(()=>edCoverAt(t),150)}});
+// Drag words around the video; a tap without moving opens them for changes.
+document.addEventListener("pointerdown",e=>{const el=e.target.closest("[data-edtext]");if(!el||!CAM.ed)return;e.preventDefault();const box=$("#edTexts").getBoundingClientRect(),i=+el.dataset.edtext,t=CAM.ed.texts[i];
+  const start={x:e.clientX,y:e.clientY,tx:t.x,ty:t.y},move=ev=>{t.x=Math.max(5,Math.min(95,start.tx+(ev.clientX-start.x)/box.width*100));t.y=Math.max(5,Math.min(92,start.ty+(ev.clientY-start.y)/box.height*100));el.style.left=t.x+"%";el.style.top=t.y+"%"};
+  const up=ev=>{removeEventListener("pointermove",move);removeEventListener("pointerup",up);if(Math.hypot(ev.clientX-start.x,ev.clientY-start.y)<6){CAM.ed.editing=i;CAM.ed.tool="text";camRender();setTimeout(()=>$("#edTextIn")?.focus(),50)}};
+  addEventListener("pointermove",move);addEventListener("pointerup",up)});
+// What the editor hands to the post.
+const edResult=()=>{const E=CAM.ed||{};const cuts=CAM.ed?edCuts():CAM.cuts;return {cuts:cuts?.length?cuts:null,music:E.music||null,mvol:E.music?E.mvol:undefined,ovol:E.ovol!==undefined&&E.ovol!==1?E.ovol:undefined,texts:E.texts?.length?E.texts.map(({text,x,y,color,style,size})=>({text,x:Math.round(x*10)/10,y:Math.round(y*10)/10,color,style,size})):null,cover:E.cover||null}};
+
 async function openCamera(then,{post=false}={}){
   Object.assign(CAM,{then,post,facing:"environment",mirror:(()=>{try{return !!localStorage.getItem("biteboard:mirror")}catch(e){return false}})(),speed:1,filter:"none",limit:60,timer:false,torch:false,chunks:[],rec:null,stream:null,blob:null,secs:0,t:null,phase:"starting",trim:null,dur:0,edit:null,clips:[],cuts:[],acc:0,t0:0});
   const el=document.createElement("div");el.id="cam";el.className="cam";document.body.appendChild(el);document.body.classList.add("cam-open");
@@ -1342,6 +1525,11 @@ const camIcon={
   speed:'<path d="M12 21a9 9 0 1 1 9-9"/><path d="M12 12l5-4"/>',
   mirror:'<path d="M12 3v18"/><path d="M8 7 3 12l5 5V7z"/><path d="M16 7l5 5-5 5V7z"/>',
   clips:'<rect x="3" y="6" width="13" height="13" rx="2.5"/><path d="M8 3h10.5A2.5 2.5 0 0 1 21 5.5V16"/>',
+  music:'<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>',
+  volume:'<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/>',
+  text:'<path d="M5 6V4h14v2M12 4v16M9 20h6"/>',
+  cover:'<rect x="4" y="3" width="16" height="18" rx="3"/><circle cx="9.5" cy="9" r="1.8"/><path d="m20 16-5-5-9 9"/>',
+  split:'<path d="M12 3v18M7 7l-3 5 3 5M17 7l3 5-3 5"/>',
   undo:'<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>',
   timer:'<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/>',
   close:'<path d="M6 6l12 12M18 6L6 18"/>',
@@ -1372,22 +1560,7 @@ function camRender(){
       <div class="cam-blocked-actions"><button class="btn primary" data-cam="retry">Try again</button>
       <label class="btn">Upload a video<input type="file" accept="video/mp4,video/quicktime,video/webm" data-cam-upload hidden></label>
       ${CAM.post?`<button class="btn ghost" data-cam="novideo">Post without a video</button>`:""}</div></div></div>`;return}
-  if(CAM.phase==="review"){
-    const tr=CAM.trim||[0,CAM.dur||0],ed=CAM.edit;
-    el.innerHTML=`<video class="full" id="camPlay" src="${CAM.url}" autoplay loop playsinline ${vFilter(CAM.filter,CAM.mirror&&CAM.recMirror)}></video>
-      <div class="cam-shade top"></div><div class="cam-shade bottom"></div>
-      <div class="cam-top"><button class="cam-x" data-cam="retake" aria-label="Retake">${camSvg("back")}</button>${brand}<span class="cam-spacer"></span></div>
-      <div class="cam-side">${camTool("edit-trim","trim","Trim",ed==="trim"||!!CAM.trim)}${camTool("edit-speed","speed",speedName(CAM.speed),ed==="speed"||CAM.speed!==1)}</div>
-      <div class="cam-bottom">
-        ${ed==="speed"?`<div class="cam-seg">${[[0.5,"Slow"],[1,"Normal"],[2,"Fast"]].map(([v,l])=>`<button data-cam="setspeed" data-v="${v}" aria-pressed="${CAM.speed===v}">${l}</button>`).join("")}</div>`:""}
-        ${ed==="trim"&&CAM.dur?`<div class="cam-trim"><div class="row-sb"><span>Start ${mmss(tr[0])}</span><span>End ${mmss(tr[1])}</span></div>
-          <input type="range" min="0" max="${CAM.dur}" step="0.1" value="${tr[0]}" data-trim="0" aria-label="Start"><input type="range" min="0" max="${CAM.dur}" step="0.1" value="${tr[1]}" data-trim="1" aria-label="End"></div>`:""}
-        <div class="cam-review"><button data-cam="retake">Retake</button><button class="go" data-cam="use">${CAM.post?"Next":"Use video"}</button></div>
-      </div>`;
-    const v=$("#camPlay");v.playbackRate=CAM.speed;
-    v.onloadedmetadata=()=>{v.classList.toggle("fit",v.videoWidth>v.videoHeight);if(isFinite(v.duration)&&!CAM.dur){CAM.dur=Math.round(v.duration*10)/10;if(CAM.edit==="trim")camRender()}};
-    v.dataset.cuts=camCutsAttr(CAM.cuts);if(CAM.trim){v.dataset.start=CAM.trim[0];v.dataset.end=CAM.trim[1]}
-    return}
+  if(CAM.phase==="review")return edRender(el);
   // The live picture is created once and never moved; only the buttons around it are redrawn.
   // (iPhone shrinks a camera picture that gets moved or rebuilt.)
   let lv=el.querySelector(":scope>video.live"),ui=el.querySelector(":scope>.cam-ui");
@@ -1416,7 +1589,7 @@ function camRender(){
 }
 function camTick(){const i=$("#cam .cam-bar i");if(i)i.style.width=Math.min(100,CAM.secs/CAM.limit*100)+"%";const t=$("#cam .cam-time");if(t)t.lastChild.textContent=mmss(CAM.secs)}
 function camRecord(){
-  CAM.recMirror=CAM.facing==="user";CAM.chunks=[];CAM.secs=0;CAM.showSpeed=false;CAM.trim=null;CAM.dur=0;CAM.edit=null;CAM.clips=[];CAM.cuts=[];CAM.acc=0;CAM.t0=0;CAM.discard=false;
+  CAM.recMirror=CAM.facing==="user";CAM.ed=null;CAM.chunks=[];CAM.secs=0;CAM.showSpeed=false;CAM.trim=null;CAM.dur=0;CAM.edit=null;CAM.clips=[];CAM.cuts=[];CAM.acc=0;CAM.t0=0;CAM.discard=false;
   const type=["video/mp4","video/webm;codecs=vp9,opus","video/webm"].find(t=>window.MediaRecorder&&MediaRecorder.isTypeSupported?.(t))||"";
   try{CAM.rec=new MediaRecorder(CAM.stream,{...(type?{mimeType:type}:{}),videoBitsPerSecond:5000000,audioBitsPerSecond:128000})}catch(e){toast("Filming isn't supported in this browser. Try uploading a video.");return}
   CAM.rec.ondataavailable=e=>e.data.size&&CAM.chunks.push(e.data);
@@ -1425,7 +1598,7 @@ function camRecord(){
   CAM.t=setInterval(()=>{if(CAM.phase!=="recording")return;const was=CAM.secs;CAM.secs=camKept();if(CAM.secs>=CAM.limit)CAM.rec.stop();else if(was<0.5&&CAM.secs>=0.5)camRender();else camTick()},250);
   camRender();
 }
-function camReview(file){CAM.recMirror=false;CAM.clips=[];CAM.cuts=[];CAM.blob=file;CAM.url=URL.createObjectURL(file);CAM.dur=0;CAM.trim=null;CAM.phase="review";CAM.stream?.getTracks().forEach(t=>t.stop());CAM.stream=null;camRender()}
+function camReview(file){CAM.recMirror=false;CAM.ed=null;CAM.clips=[];CAM.cuts=[];CAM.blob=file;CAM.url=URL.createObjectURL(file);CAM.dur=0;CAM.trim=null;CAM.phase="review";CAM.stream?.getTracks().forEach(t=>t.stop());CAM.stream=null;camRender()}
 document.addEventListener("click",e=>{const b=e.target.closest("[data-cam]");if(!b)return;const a=b.dataset.cam;
   if(a==="close"){camClose();CAM.then(null)}
   if(a==="retry"){CAM.phase="starting";camRender();camStart()}
@@ -1444,7 +1617,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-cam]");if(
   if(a==="filter"){CAM.showFilter=!CAM.showFilter;CAM.showSpeed=false;camRender()}
   if(a==="setfilter"){CAM.filter=b.dataset.v;camRender()}
   if(a==="retake"){URL.revokeObjectURL(CAM.url);CAM.blob=null;CAM.secs=0;CAM.clips=[];CAM.cuts=[];CAM.phase="starting";camRender();camStart()}
-  if(a==="use"){const v={blob:CAM.blob,speed:CAM.speed,trim:CAM.trim,filter:CAM.filter,mirror:!!(CAM.mirror&&CAM.recMirror),cuts:CAM.cuts.length?CAM.cuts:null};camClose();CAM.then(v)}
+  if(a==="use"){const v={blob:CAM.blob,speed:CAM.speed,trim:null,filter:CAM.filter,mirror:!!(CAM.mirror&&CAM.recMirror),...edResult()};camClose();CAM.then(v)}
   if(a==="novideo"){camClose();CAM.then({blob:null,speed:1})}
 });
 document.addEventListener("input",e=>{if(e.target.id!=="ob_handle")return;const h=e.target.value.trim().replace(/^@/,""),m=$("#ob_handle_msg");if(!m)return;
@@ -1496,7 +1669,7 @@ const facts=(r,protein)=>[r.kcal?`${r0(r.kcal)} kcal`:"",r.min?`${r.min} min`:""
 function recipeSheet(id){
   const r=recipeById(id);if(!r)return;
   openSheet(`${r.video?"":`<div class="tile" style="${S.photos[r.id]?"min-height:380px":""}">${art(r)}${assets&&isOwn(r)?`<label class="btn sm" for="recipePhoto" style="position:absolute;left:16px;bottom:16px;z-index:2">${S.photos[r.id]?"Change photo":"Add a photo"}</label><input type="file" id="recipePhoto" data-id="${esc(r.id)}" accept="image/jpeg,image/png,image/webp" hidden>`:""}</div>`}<button class="close" data-act="close" aria-label="Close" ${r.video?'style="z-index:3;background:var(--surface)"':""}>✕</button>
-   ${r.video?`<video class="rvideo" src="${esc(r.video)}" data-speed="${r.speed||1}" ${vTrim(r.trim,r.cuts)} ${vFilter(r.filter,r.mirror)} controls playsinline preload="metadata"></video>`:""}
+   ${r.video?`<div class="rvideo-wrap"><video class="rvideo" src="${esc(r.video)}" ${vAttrs(r)} controls playsinline preload="metadata"></video>${vTexts(r)}</div>`:""}
    ${isOwn(r)?`<div class="inner" style="padding-bottom:0"><div class="row"><button class="btn primary sm" data-act="film-for" data-id="${esc(r.id)}">${r.video?"Film a new video":"Film a cooking video"}</button><label class="btn sm">Upload one<input type="file" class="recipeVideo" data-id="${esc(r.id)}" accept="video/mp4,video/quicktime,video/webm" hidden></label></div></div>`:""}
    <div class="inner">
     <div><div class="meta">${r.kcal||r.ing.length?`<span>${esc(r.cat)}</span>`:""}${r.min?`<span>${r.min} min</span>`:""}${r.kcal?`<span>${r.serv} serving${r.serv>1?"s":""}</span>`:""}${r.ai?"<span>Created with AI</span>":""}${r.by?`<span>by @${esc(r.by)}</span>`:""}</div>${r.title?`<h2>${esc(r.title)}</h2>`:""}${r.caption&&r.caption!==r.title?`<p style="margin:6px 0 0">${esc(r.caption)}</p>`:""}</div>
@@ -1604,7 +1777,7 @@ document.addEventListener("click",e=>{
   if(a==="settings")settingsSheet();
   if(a==="film-for"){const r=S.mine.find(x=>x.id===el.dataset.id);closeSheet();openCamera(v=>{if(!v?.blob){recipeSheet(r.id);return}
     toast("Saving video…");
-    storeVideo(r,v.blob).then(()=>{r.speed=v.speed;r.filter=v.filter!=="none"?v.filter:undefined;r.mirror=v.mirror||undefined;r.trim=v.trim||undefined;r.cuts=v.cuts||undefined;S.mine=[...S.mine];saveMine();if(r.shared)publishProfile();render();recipeSheet(r.id);toast("Video added")}).catch(()=>toast("That video couldn't be uploaded. Try a shorter one."))})}
+    storeVideo(r,v.blob).then(()=>{r.speed=v.speed;r.filter=v.filter!=="none"?v.filter:undefined;r.mirror=v.mirror||undefined;Object.assign(r,{music:v.music||undefined,mvol:v.mvol,ovol:v.ovol,texts:v.texts||undefined,cover:v.cover||undefined});r.trim=v.trim||undefined;r.cuts=v.cuts||undefined;S.mine=[...S.mine];saveMine();if(r.shared)publishProfile();render();recipeSheet(r.id);toast("Video added")}).catch(()=>toast("That video couldn't be uploaded. Try a shorter one."))})}
   if(a==="edit-profile")editProfileSheet();
   if(a==="acct-page"){UI.acctPage=+el.dataset.page;const sl=$("#acctSlider");sl?.scrollTo({left:UI.acctPage*sl.clientWidth,behavior:"smooth"});document.querySelectorAll(".acct-tabs button").forEach((b,i)=>b.setAttribute("aria-selected",i===UI.acctPage))}
   if(a==="saved-board"){UI.savedBoard=el.dataset.id||null;const sec=$("#acctSlider section:nth-child(2)");if(sec)sec.innerHTML=savedList()}
@@ -1688,7 +1861,7 @@ document.addEventListener("submit",e=>{
   if(f==="local-profile"){const h=$("#lp_handle").value.trim().replace(/^@/,"");if(handleProblem(h)){toast(handleProblem(h));return}
     S.profile={...S.profile,handle:h,name:$("#lp_name").value.trim()||S.profile.name,bio:$("#lp_bio").value.trim(),...(UI.lpPhoto?{photo:UI.lpPhoto}:{})};UI.lpPhoto=null;saveProfile();closeSheet();render();toast("Profile saved");return}
   if(f==="write"){const lines=id=>$(id).value.split("\n").map(x=>x.trim()).filter(Boolean);
-    const r={id:"own-"+uid(),own:true,caption:$("#w_caption")?.value.trim()||undefined,speed:UI.wSpeed||1,trim:UI.wTrim||undefined,cuts:UI.wCuts||undefined,filter:UI.wFilter!=="none"?UI.wFilter:undefined,mirror:UI.wMirror||undefined,title:$("#w_title").value.trim()||($("#w_caption")?.value.trim()||"").split("\n")[0].slice(0,40)||"Cooking video",cat:$("#w_cat").value,min:r0($("#w_min").value),serv:r0($("#w_serv").value)||1,kcal:r0($("#w_kcal").value),p:r0($("#w_p").value),c:r0($("#w_c").value),f:r0($("#w_f").value),ing:lines("#w_ing"),steps:lines("#w_steps"),tags:[]};
+    const r={id:"own-"+uid(),own:true,caption:$("#w_caption")?.value.trim()||undefined,speed:UI.wSpeed||1,trim:UI.wTrim||undefined,cuts:UI.wCuts||undefined,filter:UI.wFilter!=="none"?UI.wFilter:undefined,mirror:UI.wMirror||undefined,...Object.fromEntries(Object.entries(UI.wEdit||{}).filter(([k,x])=>x!==undefined&&x!==null)),title:$("#w_title").value.trim()||($("#w_caption")?.value.trim()||"").split("\n")[0].slice(0,40)||"Cooking video",cat:$("#w_cat").value,min:r0($("#w_min").value),serv:r0($("#w_serv").value)||1,kcal:r0($("#w_kcal").value),p:r0($("#w_p").value),c:r0($("#w_c").value),f:r0($("#w_f").value),ing:lines("#w_ing"),steps:lines("#w_steps"),tags:[]};
     if(r.kcal&&r.kcal<400)r.tags.push("Under 400");if(r.p>=25)r.tags.push("High protein");r.hue=hashStr(r.title||r.id)%360;
     const file=$("#w_photo")?.files?.[0],post=!!$("#w_post")?.checked;if(post){r.shared=true;r.posted=Date.now()}
     const finish=()=>{S.mine=[r,...S.mine];saveMine();if(post)publishProfile();render();recipeSheet(r.id);toast(post?"Posted":r.video?"Saved":"Recipe saved")};

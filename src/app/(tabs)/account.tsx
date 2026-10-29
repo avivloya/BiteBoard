@@ -5,7 +5,7 @@ import Svg, { Circle, Path } from 'react-native-svg';
 
 import { RecipeArt } from '@/components/plate';
 import { Row, Screen } from '@/components/screen';
-import { Avatar, FollowCounts, refreshSocial } from '@/components/social';
+import { Avatar, FollowCounts, refreshSocial, Verified } from '@/components/social';
 import { Button, Chip, Field, Panel, T } from '@/components/ui';
 import { Colors, Radius } from '@/constants/theme';
 import { conversations, ensureSession, saveProfile, socialConfigured } from '@/lib/social';
@@ -69,7 +69,7 @@ export default function Account() {
           <Avatar p={me ?? { name, photo: profile?.photo }} size={92} />
           <View style={styles.camera}><T style={{ color: Colors.bg, fontSize: 13 }}>✎</T></View>
         </Pressable>
-        <T variant="h2" style={{ marginTop: 6 }}>{name}</T>
+        <Row style={{ marginTop: 6, gap: 6 }}><T variant="h2">{name}</T><Verified on={me?.verified} size={22} /></Row>
         {!!(me?.handle || profile?.handle) && <T variant="muted">@{me?.handle ?? profile?.handle}</T>}
         {me && userId && <FollowCounts id={userId} />}
         {bio ? <T style={{ textAlign: 'center', maxWidth: 320 }}>{bio}</T> : (

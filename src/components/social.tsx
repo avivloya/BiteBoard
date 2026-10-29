@@ -1,11 +1,23 @@
 import { Image } from 'expo-image';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 
 import { T } from '@/components/ui';
 import { Colors } from '@/constants/theme';
 import { followCounts, friendIds, myProfile, profilesByIds, recipesBy } from '@/lib/social';
 import { useSocial } from '@/lib/social-store';
+
+// The verified badge. `verified` is set only by Biteboard on the server (migration 0008).
+export function Verified({ on, size = 14, color = Colors.accent }: { on?: boolean; size?: number; color?: string }) {
+  if (!on) return null;
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" accessibilityLabel="Verified" accessibilityRole="image">
+      <Path fill={color} d="M12 1.5l2.6 2 3.2-.4 1.2 3 3 1.2-.4 3.2 2 2.6-2 2.6.4 3.2-3 1.2-1.2 3-3.2-.4-2.6 2-2.6-2-3.2.4-1.2-3-3-1.2.4-3.2-2-2.6 2-2.6-.4-3.2 3-1.2 1.2-3 3.2.4z" />
+      <Path d="m7.5 12.3 3 3 6-6.3" fill="none" stroke={color === Colors.accent ? Colors.accentInk : Colors.accent} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
 
 export function Avatar({ p, size = 44 }: { p: { name?: string; handle?: string; photo?: string | null }; size?: number }) {
   if (p.photo) return <Image source={{ uri: p.photo }} style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: Colors.tile }} contentFit="cover" accessibilityLabel={`${p.name || p.handle} profile picture`} />;

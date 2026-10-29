@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { RecipeVideo } from '@/components/recipe-video';
 import { Row } from '@/components/screen';
-import { Avatar } from '@/components/social';
+import { Avatar, Verified } from '@/components/social';
 import { Button, T } from '@/components/ui';
 import { Colors } from '@/constants/theme';
 import { tr } from '@/lib/i18n';
@@ -50,7 +50,7 @@ export default function Chat() {
         {p && (
           <Pressable onPress={() => router.push({ pathname: '/person/[id]', params: { id } })} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }} accessibilityRole="link">
             <Avatar p={p} size={36} />
-            <View><T style={{ fontWeight: '700' }}>{p.name || p.handle}</T><T variant="muted" style={{ fontSize: 12 }}>@{p.handle}</T></View>
+            <View><Row style={{ gap: 4 }}><T style={{ fontWeight: '700' }}>{p.name || p.handle}</T><Verified on={p.verified} /></Row><T variant="muted" style={{ fontSize: 12 }}>@{p.handle}</T></View>
           </Pressable>
         )}
       </Row>

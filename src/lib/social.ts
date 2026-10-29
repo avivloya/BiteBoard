@@ -15,7 +15,7 @@ export const supabase = socialConfigured
   ? createClient(url!, anonKey!, { auth: { storage: AsyncStorage, persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } })
   : null;
 
-export type PublicProfile = { id: string; handle: string; name: string; bio: string; streak: number; photo?: string | null };
+export type PublicProfile = { id: string; handle: string; name: string; bio: string; streak: number; photo?: string | null; verified?: boolean };
 
 function db() {
   if (!supabase) throw new Error('Friends needs Supabase. Add EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY to your .env file.');

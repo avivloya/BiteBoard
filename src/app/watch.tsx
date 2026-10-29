@@ -6,7 +6,7 @@ import Svg, { Path } from 'react-native-svg';
 
 import { RecipeVideo } from '@/components/recipe-video';
 import { Row } from '@/components/screen';
-import { Avatar } from '@/components/social';
+import { Avatar, Verified } from '@/components/social';
 import { Button, T } from '@/components/ui';
 import { Colors } from '@/constants/theme';
 import { tr } from '@/lib/i18n';
@@ -73,7 +73,7 @@ export default function Watch() {
         <SafeAreaView edges={['bottom']} style={s.info} pointerEvents="box-none">
           {!!r.by && (
             <Pressable onPress={() => { router.back(); if (r.byId) router.push({ pathname: '/person/[id]', params: { id: r.byId } }); }} accessibilityRole="link">
-              <Row>{author && <Avatar p={author} size={28} />}<T style={{ color: '#fff', fontWeight: '800' }}>@{r.by}</T></Row>
+              <Row>{author && <Avatar p={author} size={28} />}<T style={{ color: '#fff', fontWeight: '800' }}>@{r.by}</T><Verified on={author?.verified} color="#fff" /></Row>
             </Pressable>
           )}
           {!!r.title && r.title !== r.caption && <T variant="h3" style={{ color: '#fff' }}>{r.title}</T>}

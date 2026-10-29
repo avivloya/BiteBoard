@@ -4,7 +4,7 @@ import { Pressable, TextInput, View } from 'react-native';
 
 import { Masonry } from '@/components/recipe-card';
 import { Row, Screen } from '@/components/screen';
-import { Avatar, refreshSocial } from '@/components/social';
+import { Avatar, refreshSocial, Verified } from '@/components/social';
 import { Button, T, styles as ui } from '@/components/ui';
 import { Colors } from '@/constants/theme';
 import { tr } from '@/lib/i18n';
@@ -37,7 +37,7 @@ export default function People() {
       <Pressable style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 }} onPress={() => router.push({ pathname: '/person/[id]', params: { id: p.id } })}>
         <Avatar p={p} />
         <View style={{ flex: 1 }}>
-          <T style={{ fontWeight: '700' }} numberOfLines={1}>{p.name}</T>
+          <Row style={{ gap: 4, flexWrap: 'nowrap' }}><T style={{ fontWeight: '700', flexShrink: 1 }} numberOfLines={1}>{p.name}</T><Verified on={p.verified} /></Row>
           <T variant="muted">@{p.handle}</T>
         </View>
       </Pressable>
