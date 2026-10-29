@@ -49,16 +49,31 @@ export async function myProfile(userId: string) {
 }
 
 export async function saveProfile(userId: string, p: { handle: string; name: string; bio: string; streak: number; photo?: string | null }) {
+  const isNew = !(await myProfile(userId));
   const { error } = await db().from('profiles').upsert({ id: userId, ...p, updated_at: new Date().toISOString() });
   if (error) throw new Error(error.code === '23505' ? `@${p.handle} is taken. Try another one.` : error.message);
+  // New accounts follow @biteboard to start, like TikTok does with its own account. They can unfollow any time.
+  if (isNew) {
+    const o = await officialAccount().catch(() => null);
+    if (o && o.id !== userId) await setFriend(userId, o.id, true).catch(() => {});
+  }
+}
+
+/** The official @biteboard account, once it exists. Only a verified profile can hold the name (migration 0008). */
+export async function officialAccount() {
+  const { data } = await db().from('profiles').select('*').eq('verified', true).ilike('handle', 'biteboard').maybeSingle();
+  return (data as PublicProfile | null) ?? null;
 }
 
 export async function searchPeople(q: string, userId: string) {
   const term = q.replace(/^@/, '').replace(/[%,]/g, '').trim();
   let query = db().from('profiles').select('*').neq('id', userId).limit(20);
   if (term) query = query.or(`handle.ilike.%${term}%,name.ilike.%${term}%`);
-  const { data } = await query;
-  return (data as PublicProfile[]) ?? [];
+  const [{ data }, o] = await Promise.all([query, officialAccount().catch(() => null)]);
+  const list = (data as PublicProfile[]) ?? [];
+  // @biteboard always comes first: in suggestions, and in results when it matches.
+  const fits = o && o.id !== userId && (!term || `${o.handle} ${o.name}`.toLowerCase().includes(term.toLowerCase()));
+  return fits ? [o, ...list.filter((x) => x.id !== o.id)] : list;
 }
 
 export async function friendIds(userId: string) {

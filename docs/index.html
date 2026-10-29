@@ -919,7 +919,7 @@ function searchResults(q){
   const raw=q.trim(),tagOnly=raw.startsWith("#"),atOnly=raw.startsWith("@"),t=raw.replace(/^[#@]/,"").toLowerCase();
   const pool=searchPool();
   const people=tagOnly?[]:Object.entries(S.people).filter(([id,p])=>id!==uidUser&&t&&((p.handle||"").toLowerCase().includes(t)||(p.name||"").toLowerCase().includes(t)))
-    .sort(([a,p],[b,q2])=>(S.friends.includes(b)-S.friends.includes(a))||(followers(b)-followers(a))).slice(0,30);
+    .sort(([a,p],[b,q2])=>((b===officialId())-(a===officialId()))||(S.friends.includes(b)-S.friends.includes(a))||(followers(b)-followers(a))).slice(0,30);
   const hit=r=>!t?false:tagOnly?tagsOf(r).some(x=>x.startsWith(t)):((r.title||"")+" "+(r.caption||"")+" "+(r.by||"")+" "+(r.ing||[]).join(" ")+" "+tagsOf(r).join(" ")).toLowerCase().includes(t);
   const found=atOnly?[]:pool.filter(hit);
   const tags={};if(!atOnly&&t)pool.forEach(r=>tagsOf(r).forEach(x=>{if(x.includes(t))tags[x]=(tags[x]||0)+1}));
@@ -1336,7 +1336,7 @@ function viewFriends(){
     <div class="ob-actions"><button class="btn primary">Create profile</button></div></form></div>`;
   const q=(UI.fq||"").toLowerCase().replace(/^@/,"");
   const others=Object.keys(S.people).filter(id=>id!==uidUser&&S.people[id]?.handle);
-  const results=q?others.filter(id=>(S.people[id].handle+" "+(S.people[id].name||"")).toLowerCase().includes(q)):others.filter(id=>!S.friends.includes(id)).slice(0,6);
+  const results=officialFirst(q?others.filter(id=>(S.people[id].handle+" "+(S.people[id].name||"")).toLowerCase().includes(q)):[...new Set([officialId(),...others.filter(id=>!S.friends.includes(id))])].filter(id=>id&&others.includes(id)).slice(0,6));
   const feed=friendRecipes().sort((a,b)=>(S.people[b.byId]?.updated||0)-(S.people[a.byId]?.updated||0));
   const mine=S.mine.filter(r=>r.shared);
   return head+`<div class="friends-grid">
@@ -1357,6 +1357,11 @@ function viewFriends(){
 const VERIFIED_IDS=new Set(["u_t2cf5vLeZ8JgmrSy_KFGBA"]),VERIFIED_HANDLES=new Set(["avivloya","biteboard"]);
 // @biteboard is the official account: only an already verified account can take the name.
 const RESERVED_HANDLES=new Set(["biteboard"]);
+// The official @biteboard account, once it exists (only a verified account can hold the name).
+const officialId=()=>Object.keys(S.people).find(id=>VERIFIED_IDS.has(id)&&RESERVED_HANDLES.has((S.people[id]?.handle||"").toLowerCase()))||null;
+// New accounts follow @biteboard to start, like TikTok does with its own account. They can unfollow any time.
+function followOfficial(){const o=officialId();if(S.mode!=="db"||!o||o===uidUser||S.friends.includes(o))return;S.friends=[...S.friends,o];saveFriends()}
+const officialFirst=ids=>{const o=officialId();return o&&ids.includes(o)?[o,...ids.filter(x=>x!==o)]:ids};
 const isVerified=(id,h)=>VERIFIED_IDS.has(id)||(S.mode!=="db"&&id===uidUser&&VERIFIED_HANDLES.has((h||S.profile?.handle||"").toLowerCase()));
 const vb=(id,h,sz=14)=>isVerified(id,h)?`<svg class="vbadge" width="${sz}" height="${sz}" viewBox="0 0 24 24" role="img" aria-label="Verified"><title>Verified</title><path fill="var(--accent)" d="M12 1.5l2.6 2 3.2-.4 1.2 3 3 1.2-.4 3.2 2 2.6-2 2.6.4 3.2-3 1.2-1.2 3-3.2-.4-2.6 2-2.6-2-3.2.4-1.2-3-3-1.2.4-3.2-2-2.6 2-2.6-.4-3.2 3-1.2 1.2-3 3.2.4z"/><path d="m7.5 12.3 3 3 6-6.3" fill="none" stroke="var(--accent-ink)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`:"";
 function personSheet(id){
@@ -1842,7 +1847,7 @@ document.addEventListener("click",e=>{
   if(a==="ob-provider"){const d=UI.ob.d;d.name=d.name||$("#ob_name").value.trim();UI.ob.step=1;render();scrollTo(0,0)}
   if(a==="ob-finish"){const d=UI.ob.d,pl=calcPlan(d);S.profile={...d,updated:Date.now()};S.settings={kcal:pl.kcal,p:pl.p,c:pl.c,f:pl.f};saveProfile();saveSettings();
     // Signed in: the username becomes your public recipe page right away.
-    if(S.mode==="db"&&!S.people[uidUser]&&d.handle&&!handleProblem(d.handle)){S.people[uidUser]={handle:d.handle,name:d.name||d.handle,bio:"",photo:null};publishProfile()}
+    if(S.mode==="db"&&!S.people[uidUser]&&d.handle&&!handleProblem(d.handle)){S.people[uidUser]={handle:d.handle,name:d.name||d.handle,bio:"",photo:null};followOfficial();publishProfile()}
     const wasEdit=UI.ob.editing;UI.ob=null;if(!wasEdit)location.hash="#home";render();scrollTo(0,0);toast(wasEdit?"Plan updated":`Welcome, ${d.name||"friend"}`)}
   if(a==="ai-recipe")aiRecipeSheet();
   if(a==="goals")goalsSheet();
@@ -1899,7 +1904,7 @@ document.addEventListener("submit",e=>{
   if(f==="pub"){const handle=$("#pub_handle").value.trim().replace(/^@/,"");
     if(handleProblem(handle)){toast(handleProblem(handle));return}
     const patch={handle,name:$("#pub_name").value.trim(),bio:$("#pub_bio").value.trim()},file=UI.pubPhoto||null;UI.pubPhoto=null;
-    const finish=()=>{S.people[uidUser]={...(S.people[uidUser]||{}),...patch};publishProfile();closeSheet();render();toast("Profile saved")};
+    const finish=()=>{const isNew=!S.people[uidUser];S.people[uidUser]={...(S.people[uidUser]||{}),...patch};if(isNew)followOfficial();publishProfile();closeSheet();render();toast("Profile saved")};
     if(file&&assets){toast("Uploading picture…");assets.upload(file).then(a=>{patch.photo=a.url;finish()}).catch(()=>{toast("That picture couldn't be uploaded. Try a JPG or PNG.");finish()})}else finish();return}
   if(f==="local-profile"){const h=$("#lp_handle").value.trim().replace(/^@/,"");if(handleProblem(h)){toast(handleProblem(h));return}
     S.profile={...S.profile,handle:h,name:$("#lp_name").value.trim()||S.profile.name,bio:$("#lp_bio").value.trim(),...(UI.lpPhoto?{photo:UI.lpPhoto}:{})};UI.lpPhoto=null;saveProfile();closeSheet();render();toast("Profile saved");return}
