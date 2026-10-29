@@ -172,7 +172,7 @@ function CreateProfile({ userId, defaultName, error: initialError }: { userId: s
     <Panel>
       <T variant="h3">Create your recipe page</T>
       <T variant="muted">People find you by your handle. Only recipes you post appear on it. Your weight and food log stay private on your phone.</T>
-      <Field label="Handle" value={handle} onChangeText={setHandle} autoCapitalize="none" placeholder="aviv.cooks" />
+      <Field label="Handle" value={handle} onChangeText={setHandle} autoCapitalize="none" placeholder="john.doe" />
       <Field label="Display name" value={name} onChangeText={setName} />
       <Field label="Bio" value={bio} onChangeText={setBio} maxLength={120} placeholder="Cooking my way to my goal weight" />
       {!!error && <T style={{ color: Colors.warn }}>{error}</T>}

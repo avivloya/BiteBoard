@@ -791,7 +791,7 @@ function viewOnboard(){
   if(o.step===0) return `<div class="ob-wrap">${steps}
     <div><h1>Lose weight, one plate at a time.</h1><p class="lead">Create your account to get a calorie plan built around your body and your goal.</p></div>
     <form class="ob-form" data-form="ob-0">
-      <label class="field">First name<input id="ob_name" autocomplete="given-name" required value="${esc(d.name||"")}" placeholder="Aviv"></label>
+      <label class="field">First name<input id="ob_name" autocomplete="given-name" required value="${esc(d.name||"")}" placeholder="John Doe"></label>
       <label class="field">Email<input id="ob_email" type="email" autocomplete="email" required value="${esc(d.email||"")}" placeholder="you@example.com"></label>
       <label class="field">Password<input id="ob_pw" type="password" autocomplete="new-password" minlength="8" required placeholder="At least 8 characters"></label>
       <div class="ob-actions"><button class="btn primary">Create account</button></div>
@@ -909,7 +909,7 @@ function viewFriends(){
   if(S.mode!=="db")return head+`<div class="empty"><h3>Sign in to use Friends</h3>Friends and public profiles need you to be signed in, so your profile can be shared.</div>`;
   const me=S.people[uidUser];
   if(!me)return head+`<div class="panel" style="max-width:520px"><h3 style="font-size:22px">Create your public profile</h3><p class="note" style="margin:0">Friends find you by your handle. Only the recipes you choose to share appear on it. Your weight and food log stay private.</p>
-    <form data-form="pub" class="ob-form">${photoField(null)}<label class="field">Handle<input id="pub_handle" required pattern="[A-Za-z0-9_.]{3,20}" placeholder="aviv.cooks" value="${esc((S.profile?.name||"").toLowerCase().replace(/[^a-z0-9_.]/g,""))}"></label>
+    <form data-form="pub" class="ob-form">${photoField(null)}<label class="field">Handle<input id="pub_handle" required pattern="[A-Za-z0-9_.]{3,20}" placeholder="john.doe" value="${esc((S.profile?.name||"").toLowerCase().replace(/[^a-z0-9_.]/g,""))}"></label>
     <label class="field">Display name<input id="pub_name" required value="${esc(S.profile?.name||"")}"></label>
     <label class="field">Bio<input id="pub_bio" maxlength="120" placeholder="Cooking my way to my goal weight"></label>
     <div class="ob-actions"><button class="btn primary">Create profile</button></div></form></div>`;

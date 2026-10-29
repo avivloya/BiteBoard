@@ -66,7 +66,7 @@ export default function Onboarding() {
           <T variant="title">Lose weight, one plate at a time.</T>
           <T variant="muted" style={{ fontSize: 16 }}>Create your account to get a calorie plan built around your body and your goal.</T>
         </View>
-        <Field label="First name" value={d.name ?? ''} onChangeText={(name) => setD({ ...d, name })} autoComplete="given-name" placeholder="Aviv" />
+        <Field label="First name" value={d.name ?? ''} onChangeText={(name) => setD({ ...d, name })} autoComplete="given-name" placeholder="John Doe" />
         <Field label="Email" value={d.email ?? ''} onChangeText={(email) => setD({ ...d, email })} autoComplete="email" keyboardType="email-address" autoCapitalize="none" placeholder="you@example.com" />
         {err}
         {nav('Continue', () => {
