@@ -423,7 +423,15 @@ body.cam-open{overflow:hidden}
 .cam-trim{width:100%;max-width:420px;display:grid;gap:6px;padding:12px 14px;border-radius:18px;background:rgba(255,255,255,.14);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);font-size:13px;font-weight:700}
 .cam-trim .row-sb{display:flex;justify-content:space-between}.cam-trim input{width:100%;accent-color:var(--bg)}
 .cam-round.done svg{background:var(--bg);color:var(--ink)}
+.w-more summary{cursor:pointer;font-weight:700;color:var(--ink);padding:10px 0}
 .cam-shutter{touch-action:none;-webkit-touch-callout:none}
+.cam-clips{display:flex;gap:10px;max-width:100%;overflow-x:auto;padding:8px 4px 2px;scrollbar-width:none}
+.cam-clips::-webkit-scrollbar{display:none}
+.cam-clip{position:relative;flex:none;width:52px;height:84px;border-radius:12px;overflow:hidden;background:rgba(255,255,255,.16);box-shadow:0 0 0 2px var(--bg)}
+.cam-clip img{width:100%;height:100%;object-fit:cover;display:block}
+.cam-clip-n{position:absolute;inset:0;display:grid;place-items:center;font-weight:800;font-size:18px}
+.cam-clip small{position:absolute;left:0;right:0;bottom:0;padding:3px 0;text-align:center;font-size:10.5px;font-weight:700;background:linear-gradient(transparent,rgba(29,20,13,.7))}
+.cam-clip button{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;border:0;padding:0;display:grid;place-items:center;background:var(--bg);color:var(--ink);cursor:pointer}
 .cam-review{display:flex;gap:12px;width:100%;max-width:420px}
 .cam-review button{flex:1;height:54px;border-radius:999px;border:0;font:inherit;font-weight:800;font-size:16px;cursor:pointer;color:#fff;background:rgba(255,255,255,.16);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
 .cam-review .go{flex:1.5;background:var(--bg);color:var(--ink)}
@@ -652,8 +660,8 @@ function renderPill(){
 function card(r,i){
   const hts=[210,290,240,330,260,300];const ht=hts[(hashStr(r.id)+i)%hts.length];
   return `<article class="card" data-open="${esc(r.id)}" tabindex="0" role="button" aria-label="${esc(r.title)}">
-    <div class="tile" style="height:${S.photos[r.id]?ht+40:ht}px">${art(r)}<span class="kcal num">${r0(r.kcal)} kcal</span>${r.ai?'<span class="ai">AI</span>':""}</div>
-    <div class="body"><h3>${esc(r.title)}</h3><div class="meta">${r.by?`<span><button class="by" data-person="${esc(r.byId||"")}">${S.people[r.byId]?avatar(S.people[r.byId],16):""}@${esc(r.by)}</button></span>`:""}<span class="num">${r0(r.kcal)} kcal</span><span>${r.min} min</span></div></div>
+    <div class="tile" style="height:${S.photos[r.id]?ht+40:ht}px">${art(r)}${r.kcal?`<span class="kcal num">${r0(r.kcal)} kcal</span>`:""}${r.ai?'<span class="ai">AI</span>':""}</div>
+    <div class="body"><h3>${esc(r.title)}</h3><div class="meta">${r.by?`<span><button class="by" data-person="${esc(r.byId||"")}">${S.people[r.byId]?avatar(S.people[r.byId],16):""}@${esc(r.by)}</button></span>`:""}${r.kcal?`<span class="num">${r0(r.kcal)} kcal</span>`:""}${r.min?`<span>${r.min} min</span>`:""}</div></div>
     <button class="save-fab ${isSaved(r.id)?"saved":""}" data-save="${esc(r.id)}" aria-label="Save ${esc(r.title)} to a board"><svg width="14" height="14" viewBox="0 0 24 24" fill="${isSaved(r.id)?"currentColor":"none"}" stroke="currentColor" stroke-width="2.4"><path d="M6 3h12v18l-6-4-6 4z"/></svg>${isSaved(r.id)?"Saved":"Save"}</button>
   </article>`;
 }
@@ -685,7 +693,7 @@ function viewDiscover(){
   const feedTabs=`<div class="explore-head"><div class="feed-tabs" role="tablist"><button role="tab" data-act="feed" data-feed="watch" aria-selected="${UI.feed==="watch"}">Watch</button><button role="tab" data-act="feed" data-feed="recipes" aria-selected="${UI.feed!=="watch"}">Recipes</button></div><button class="plus-btn" data-act="add-menu" aria-label="Add a recipe">+</button></div>`;
   if(UI.feed==="watch"){const vids=[...(social?forYou():[]),...S.mine.filter(r=>r.shared||!social).map(r=>({...r,by:S.people[uidUser]?.handle,byId:uidUser}))].filter(r=>r.video);
     return feedTabs+(vids.length?`<div class="reels">${vids.map(r=>`<section class="reel"><video src="${esc(r.video)}" data-speed="${r.speed||1}" ${vTrim(r.trim,r.cuts)} ${vFilter(r.filter,r.mirror)} playsinline muted loop preload="metadata"></video>
-      <div class="reel-info"><button class="by" data-person="${esc(r.byId||"")}">${S.people[r.byId]?avatar(S.people[r.byId],22):""}@${esc(r.by||"")}</button><h3>${esc(r.title)}</h3>${r.caption?`<p class="reel-cap">${esc(r.caption)}</p>`:""}<div class="note num">${r0(r.kcal)} kcal · ${r.min} min · ${r0(r.p)}g protein</div>
+      <div class="reel-info"><button class="by" data-person="${esc(r.byId||"")}">${S.people[r.byId]?avatar(S.people[r.byId],22):""}@${esc(r.by||"")}</button><h3>${esc(r.title)}</h3>${r.caption?`<p class="reel-cap">${esc(r.caption)}</p>`:""}${facts(r,1)?`<div class="note num">${facts(r,1)}</div>`:""}
       <div class="row"><button class="btn primary sm" data-open="${esc(r.id)}">View recipe</button><button class="btn sm reel-sound" data-act="reel-sound">Sound on</button></div></div></section>`).join("")}</div>`
       :`<div class="empty"><h3>No cooking videos yet</h3>Tap + to post a recipe and film yourself making it.</div>`)}
   const list=[...(social?forYou():[]),...allRecipes()].filter(r=>(UI.filter==="All"||(r.tags||[]).includes(UI.filter)||r.cat===UI.filter)&&(!q||(r.title+" "+(r.ing||[]).join(" ")+" "+(r.tags||[]).join(" ")+" "+(r.by||"")).toLowerCase().includes(q)));
@@ -885,7 +893,7 @@ function savedList(){
   const ids=[...new Set(boards.flatMap(x=>x.ids))],rs=ids.map(recipeById).filter(Boolean);
   const where=id=>S.boards.filter(x=>x.ids.includes(id)).map(x=>x.name).join(", ");
   return `<div class="chips" role="group" aria-label="Boards"><button class="chip" data-act="saved-board" data-id="" aria-pressed="${!b}">All</button>${S.boards.map(x=>`<button class="chip" data-act="saved-board" data-id="${esc(x.id)}" aria-pressed="${b===x.id}">${esc(x.name)}</button>`).join("")}<button class="chip" data-act="new-board">+ New</button></div>
-    ${rs.length?`<div class="saved-list">${rs.map(r=>`<button class="saved-row" data-open="${esc(r.id)}"><span class="th">${art(r)}</span><span class="tx"><b>${esc(r.title)}</b><small class="note">${r0(r.kcal)} kcal · ${r.min} min${b?"":` · ${esc(where(r.id))}`}</small></span><span class="note">›</span></button>`).join("")}</div>`
+    ${rs.length?`<div class="saved-list">${rs.map(r=>`<button class="saved-row" data-open="${esc(r.id)}"><span class="th">${art(r)}</span><span class="tx"><b>${esc(r.title)}</b><small class="note">${[facts(r),b?"":esc(where(r.id))].filter(Boolean).join(" · ")}</small></span><span class="note">›</span></button>`).join("")}</div>`
       :`<p class="note">Tap the bookmark on any recipe to save it here.</p>`}
     ${b?`<div class="row" style="margin-top:12px"><button class="btn ghost sm" data-board="${esc(b)}">Open board</button></div>`:""}`;
 }
@@ -963,20 +971,20 @@ function pubSheet(){const me=S.people[uidUser];
     <label class="field">Bio<input id="pub_bio" maxlength="120" value="${esc(me.bio||"")}"></label>
     <div class="ob-actions"><button class="btn primary">Save profile</button></div></form></div>`)}
 function writeSheet(v=null){UI.wVideo=v?.blob||null;UI.wSpeed=v?.speed||1;UI.wTrim=v?.trim||null;UI.wCuts=v?.cuts||null;UI.wFilter=v?.filter||"none";UI.wMirror=!!v?.mirror;
-  if(UI.wUrl)URL.revokeObjectURL(UI.wUrl);UI.wUrl=UI.wVideo?URL.createObjectURL(UI.wVideo):null;
+  if(UI.wUrl)URL.revokeObjectURL(UI.wUrl);UI.wUrl=UI.wVideo?URL.createObjectURL(UI.wVideo):null;const req=UI.wUrl?"":"required";
   openSheet(`<div class="inner"><button class="close" data-act="close" aria-label="Close">✕</button><h2 style="font-size:24px">New post</h2>
     <form data-form="write" class="ob-form">
       <div class="post-top"><textarea id="w_caption" maxlength="300" placeholder="Write a caption…"></textarea>
         ${UI.wUrl?`<video class="post-prev" src="${UI.wUrl}" autoplay muted loop playsinline data-speed="${UI.wSpeed}" ${vTrim(UI.wTrim,UI.wCuts)} ${vFilter(UI.wFilter,UI.wMirror)}></video>`:assets?`<label class="post-prev cover">+ Cover photo<input id="w_photo" type="file" accept="image/jpeg,image/png,image/webp" hidden><span class="note" id="w_pname"></span></label>`:""}</div>
-      ${UI.wUrl?(assets?`<label class="btn ghost sm" style="justify-self:start">+ Cover photo (optional)<input id="w_photo" type="file" accept="image/jpeg,image/png,image/webp" hidden></label><span class="note" id="w_pname"></span>`:"")
+      ${UI.wUrl?""
         :`<div class="row"><button type="button" class="btn primary sm" data-act="film-post">Film a video</button><label class="btn sm">Upload one<input class="vpick" data-for="write" type="file" accept="video/mp4,video/quicktime,video/webm" hidden></label><span class="note" id="w_vname"></span></div>`}
-      <div class="label" style="margin-top:6px">Recipe</div>
-      <label class="field">Recipe name<input id="w_title" required placeholder="Mom's lentil salad"></label>
-      <div class="two"><label class="field">Meal<select id="w_cat">${MEALS.map(m=>`<option>${m}</option>`).join("")}</select></label><label class="field">Minutes<input id="w_min" type="number" min="1" value="20" required></label></div>
-      <div class="two"><label class="field">Servings<input id="w_serv" type="number" min="1" value="2" required></label><label class="field">Calories per serving<input id="w_kcal" type="number" min="0" required></label></div>
+      ${UI.wUrl?`<details class="w-more"><summary>Add the recipe <span class="note">(optional)</span></summary><div class="ob-form" style="margin-top:10px">`:`<div class="label" style="margin-top:6px">Recipe</div>`}
+      <label class="field">Recipe name<input id="w_title" ${req} placeholder="Mom's lentil salad"></label>
+      <div class="two"><label class="field">Meal<select id="w_cat">${MEALS.map(m=>`<option>${m}</option>`).join("")}</select></label><label class="field">Minutes<input id="w_min" type="number" min="1" ${UI.wUrl?"":`value="20" required`}></label></div>
+      <div class="two"><label class="field">Servings<input id="w_serv" type="number" min="1" value="2" ${req}></label><label class="field">Calories per serving<input id="w_kcal" type="number" min="0" ${req}></label></div>
       <div class="plan-grid" style="gap:10px;padding:0;border:0;background:none">${[["p","Protein g"],["c","Carbs g"],["f","Fat g"]].map(([k,l])=>`<label class="field">${l}<input id="w_${k}" type="number" min="0" value="0"></label>`).join("")}</div>
-      <label class="field">Ingredients, one per line<textarea id="w_ing" rows="4" required style="border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:10px 12px"></textarea></label>
-      <label class="field">Steps, one per line<textarea id="w_steps" rows="4" required style="border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:10px 12px"></textarea></label>
+      <label class="field">Ingredients, one per line<textarea id="w_ing" rows="4" ${req} style="border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:10px 12px"></textarea></label>
+      <label class="field">Steps, one per line<textarea id="w_steps" rows="4" ${req} style="border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:10px 12px"></textarea></label>${UI.wUrl?"</div></details>":""}
       ${S.mode==="db"&&S.people[uidUser]?`<label class="row" style="font-size:14px;color:var(--ink)"><input id="w_post" type="checkbox" checked style="accent-color:var(--accent)"> Post to Explore and my account</label>`:""}
       <div class="ob-actions"><button class="btn primary">${S.mode==="db"&&S.people[uidUser]?"Post":"Save"}</button></div></form></div>`)}
 
@@ -1007,6 +1015,7 @@ const camIcon={
   flash:'<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
   speed:'<path d="M12 21a9 9 0 1 1 9-9"/><path d="M12 12l5-4"/>',
   mirror:'<path d="M12 3v18"/><path d="M8 7 3 12l5 5V7z"/><path d="M16 7l5 5-5 5V7z"/>',
+  clips:'<rect x="3" y="6" width="13" height="13" rx="2.5"/><path d="M8 3h10.5A2.5 2.5 0 0 1 21 5.5V16"/>',
   undo:'<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>',
   timer:'<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/>',
   close:'<path d="M6 6l12 12M18 6L6 18"/>',
@@ -1062,12 +1071,13 @@ function camRender(){
     <div class="cam-top">${live?`<span class="cam-spacer"></span>`:`<button class="cam-x" data-cam="close" aria-label="Close">${camSvg("close")}</button>`}
       ${live?`<span class="cam-time ${CAM.phase}"><i></i>${mmss(CAM.secs)}</span>`:brand}<span class="cam-spacer"></span></div>
     ${live?`<div class="cam-bar"><i style="width:${Math.min(100,CAM.secs/CAM.limit*100)}%"></i></div>`:""}
-    <div class="cam-side">${CAM.phase==="paused"&&CAM.clips.length?camTool("undo","undo","Delete"):""}${live?"":camTool("flip","flip","Flip")}${!live&&CAM.facing==="user"?camTool("mirror","mirror","Mirror",CAM.mirror):""}${CAM.facing==="environment"?camTool("flash","flash","Flash",CAM.torch):""}${live?"":camTool("speed","speed",speedName(CAM.speed),CAM.speed!==1)}${live?"":camTool("filter","filter",CAM.filter==="none"?"Filter":CAM_FILTERS.find(z=>z[0]===CAM.filter)[1],CAM.filter!=="none")}${live?"":camTool("timer","timer",CAM.timer?"3s":"Timer",CAM.timer)}</div>
+    <div class="cam-side">${CAM.phase==="paused"&&CAM.clips.length?camTool("clips","clips","Clips",CAM.showClips):""}${live?"":camTool("flip","flip","Flip")}${!live&&CAM.facing==="user"?camTool("mirror","mirror","Mirror",CAM.mirror):""}${CAM.facing==="environment"?camTool("flash","flash","Flash",CAM.torch):""}${live?"":camTool("speed","speed",speedName(CAM.speed),CAM.speed!==1)}${live?"":camTool("filter","filter",CAM.filter==="none"?"Filter":CAM_FILTERS.find(z=>z[0]===CAM.filter)[1],CAM.filter!=="none")}${live?"":camTool("timer","timer",CAM.timer?"3s":"Timer",CAM.timer)}</div>
     ${CAM.phase==="countdown"?`<div class="cam-count">${CAM.count}</div>`:""}
     ${CAM.phase==="starting"?`<div class="cam-count small"><span class="spinner"></span></div>`:""}
     <div class="cam-bottom">
       ${CAM.showSpeed&&!live?`<div class="cam-seg">${[[0.5,"Slow"],[1,"Normal"],[2,"Fast"]].map(([v,l])=>`<button data-cam="setspeed" data-v="${v}" aria-pressed="${CAM.speed===v}">${l}</button>`).join("")}</div>`:""}
       ${CAM.showFilter&&!live?`<div class="cam-seg">${CAM_FILTERS.map(([k,l])=>`<button data-cam="setfilter" data-v="${k}" aria-pressed="${CAM.filter===k}">${l}</button>`).join("")}</div>`:""}
+      ${CAM.phase==="paused"&&CAM.showClips&&CAM.clips.length?`<div class="cam-clips">${CAM.clips.map((c,i)=>`<div class="cam-clip">${c[2]?`<img src="${c[2]}" alt="">`:`<span class="cam-clip-n">${i+1}</span>`}<small>${(Math.max(0,(c[1]??c[0])-c[0])).toFixed(1)}s</small><button data-cam="delclip" data-i="${i}" aria-label="Delete clip ${i+1}">${camSvg("close",14)}</button></div>`).join("")}</div>`:""}
       <div class="cam-ctrls">
         <span>${live?"":`<label class="cam-round" aria-label="Upload a video">${camSvg("upload")}<small>Upload</small><input type="file" accept="video/mp4,video/quicktime,video/webm" data-cam-upload hidden></label>`}</span>
         <button class="cam-shutter ${CAM.phase}" data-cam-shutter aria-label="${CAM.phase==="recording"?"Pause recording":"Record"}" ${CAM.phase==="starting"||CAM.phase==="countdown"?"disabled":""}><i></i></button>
@@ -1097,7 +1107,8 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-cam]");if(
   if(a==="flash"){CAM.torch=!CAM.torch;const t=CAM.stream?.getVideoTracks()[0];t?.applyConstraints({advanced:[{torch:CAM.torch}]}).catch(()=>{CAM.torch=false;toast("This camera doesn't have a flash.");camRender()});camRender()}
   if(a==="speed"){CAM.showSpeed=!CAM.showSpeed;CAM.showFilter=false;camRender()}
   if(a==="setspeed"){CAM.speed=+b.dataset.v;const v=$("#camPlay");if(v)v.playbackRate=CAM.speed;camRender()}
-  if(a==="undo")camUndo();
+  if(a==="clips"){CAM.showClips=!CAM.showClips;camRender()}
+  if(a==="delclip")camDelete(+b.dataset.i);
   if(a==="mirror"){CAM.mirror=!CAM.mirror;try{localStorage.setItem("biteboard:mirror",CAM.mirror?"1":"")}catch(e){}camRender()}
   if(a==="timer"){CAM.timer=!CAM.timer;camRender()}
   if(a==="limit"){CAM.limit=+b.dataset.v;camRender()}
@@ -1121,13 +1132,16 @@ document.addEventListener("change",e=>{
 // Record button: hold to film and let go to pause, or tap to start and tap to pause. Pausing keeps the video; ✓ finishes it.
 // Each hold is a clip. The file keeps everything, deleted clips are skipped on playback.
 const camFileTime=()=>(CAM.acc+(CAM.t0?performance.now()-CAM.t0:0))/1000;
-function camClipStart(){CAM.t0=performance.now();CAM.clips.push([CAM.acc/1000,null])}
+function camThumb(){try{const v=$("#cam video.live");if(!v||!v.videoWidth)return null;const c=document.createElement("canvas");c.width=72;c.height=128;const g=c.getContext("2d");
+  const r=Math.max(72/v.videoWidth,128/v.videoHeight),w=v.videoWidth*r,h=v.videoHeight*r;if(CAM.facing==="user"&&CAM.mirror){g.translate(72,0);g.scale(-1,1)}g.drawImage(v,(72-w)/2,(128-h)/2,w,h);return c.toDataURL("image/jpeg",.6)}catch(e){return null}}
+function camClipStart(){CAM.t0=performance.now();CAM.clips.push([CAM.acc/1000,null,camThumb()]);CAM.showClips=false}
 function camClipEnd(){if(!CAM.t0)return;CAM.acc+=performance.now()-CAM.t0;CAM.t0=0;const c=CAM.clips[CAM.clips.length-1];if(c)c[1]=CAM.acc/1000}
 const camKept=()=>{const now=camFileTime();return Math.floor(CAM.clips.reduce((n,c)=>n+((c[1]??now)-c[0]),0)*4)/4};
-function camUndo(){if(CAM.phase!=="paused"||!CAM.clips.length)return;const c=CAM.clips.pop();
-  if(!CAM.clips.length){CAM.discard=true;try{CAM.rec.stop()}catch(e){CAM.discard=false;CAM.phase="ready";camRender()}return}
-  CAM.cuts.push([Math.round(c[0]*100)/100,Math.round(c[1]*100)/100]);CAM.secs=camKept();toast("Last clip deleted");camRender()}
-function camPause(){if(CAM.phase!=="recording")return;try{CAM.rec.pause()}catch(e){}camClipEnd();CAM.secs=camKept();CAM.phase="paused";camRender()}
+// Delete any clip while paused. Deleting the only clip starts over.
+function camDelete(i){if(CAM.phase!=="paused"||!CAM.clips[i])return;const c=CAM.clips.splice(i,1)[0];
+  if(!CAM.clips.length){CAM.discard=true;CAM.showClips=false;try{CAM.rec.stop()}catch(e){CAM.discard=false;CAM.phase="ready";camRender()}return}
+  CAM.cuts.push([Math.round(c[0]*100)/100,Math.round(c[1]*100)/100]);CAM.cuts.sort((a,b)=>a[0]-b[0]);CAM.secs=camKept();toast(`Clip ${i+1} deleted`);camRender()}
+function camPause(){if(CAM.phase!=="recording")return;try{CAM.rec.pause()}catch(e){}camClipEnd();CAM.secs=camKept();CAM.showClips=true;CAM.phase="paused";camRender()}
 function camGo(){
   if(CAM.phase==="paused"){try{CAM.rec.resume()}catch(e){}camClipStart();CAM.phase="recording";camRender();return}
   if(CAM.phase!=="ready")return;
@@ -1151,21 +1165,23 @@ const filmPost=()=>openCamera(v=>{if(v)writeSheet(v)},{post:true});
 
 function openSheet(html){$("#layer").innerHTML=`<div class="scrim" data-scrim><div class="sheet" role="dialog" aria-modal="true" style="position:relative">${html}</div></div>`;const f=$("#layer .sheet input, #layer .sheet button");f&&f.focus()}
 function closeSheet(){$("#layer").innerHTML=""}
+// Video posts can skip the recipe, so only show the facts that were filled in.
+const facts=(r,protein)=>[r.kcal?`${r0(r.kcal)} kcal`:"",r.min?`${r.min} min`:"",protein&&r.p?`${r0(r.p)}g protein`:""].filter(Boolean).join(" · ");
 function recipeSheet(id){
   const r=recipeById(id);if(!r)return;
-  openSheet(`<div class="tile" style="${S.photos[r.id]?"min-height:380px":""}">${art(r)}${assets&&isOwn(r)?`<label class="btn sm" for="recipePhoto" style="position:absolute;left:16px;bottom:16px;z-index:2">${S.photos[r.id]?"Change photo":"Add a photo"}</label><input type="file" id="recipePhoto" data-id="${esc(r.id)}" accept="image/jpeg,image/png,image/webp" hidden>`:""}</div><button class="close" data-act="close" aria-label="Close">✕</button>
+  openSheet(`${r.video?"":`<div class="tile" style="${S.photos[r.id]?"min-height:380px":""}">${art(r)}${assets&&isOwn(r)?`<label class="btn sm" for="recipePhoto" style="position:absolute;left:16px;bottom:16px;z-index:2">${S.photos[r.id]?"Change photo":"Add a photo"}</label><input type="file" id="recipePhoto" data-id="${esc(r.id)}" accept="image/jpeg,image/png,image/webp" hidden>`:""}</div>`}<button class="close" data-act="close" aria-label="Close" ${r.video?'style="z-index:3;background:var(--surface)"':""}>✕</button>
    ${r.video?`<video class="rvideo" src="${esc(r.video)}" data-speed="${r.speed||1}" ${vTrim(r.trim,r.cuts)} ${vFilter(r.filter,r.mirror)} controls playsinline preload="metadata"></video>`:""}
    ${isOwn(r)?`<div class="inner" style="padding-bottom:0"><div class="row"><button class="btn primary sm" data-act="film-for" data-id="${esc(r.id)}">${r.video?"Film a new video":"Film a cooking video"}</button><label class="btn sm">Upload one<input type="file" class="recipeVideo" data-id="${esc(r.id)}" accept="video/mp4,video/quicktime,video/webm" hidden></label></div></div>`:""}
    <div class="inner">
-    <div><div class="meta"><span>${esc(r.cat)}</span><span>${r.min} min</span><span>${r.serv} serving${r.serv>1?"s":""}</span>${r.ai?"<span>Created with AI</span>":""}${r.by?`<span>by @${esc(r.by)}</span>`:""}</div><h2>${esc(r.title)}</h2>${r.caption?`<p style="margin:6px 0 0">${esc(r.caption)}</p>`:""}</div>
-    <div><div class="label">Per serving</div><div class="macro-strip"><div><b>${r0(r.kcal)}</b><small>kcal</small></div><div><b>${r0(r.p)}g</b><small><i class="dot p"></i> protein</small></div><div><b>${r0(r.c)}g</b><small><i class="dot c"></i> carbs</small></div><div><b>${r0(r.f)}g</b><small><i class="dot f"></i> fat</small></div></div></div>
+    <div><div class="meta">${r.kcal||r.ing.length?`<span>${esc(r.cat)}</span>`:""}${r.min?`<span>${r.min} min</span>`:""}${r.kcal?`<span>${r.serv} serving${r.serv>1?"s":""}</span>`:""}${r.ai?"<span>Created with AI</span>":""}${r.by?`<span>by @${esc(r.by)}</span>`:""}</div>${r.title?`<h2>${esc(r.title)}</h2>`:""}${r.caption&&r.caption!==r.title?`<p style="margin:6px 0 0">${esc(r.caption)}</p>`:""}</div>
+    ${r.kcal?`<div><div class="label">Per serving</div><div class="macro-strip"><div><b>${r0(r.kcal)}</b><small>kcal</small></div><div><b>${r0(r.p)}g</b><small><i class="dot p"></i> protein</small></div><div><b>${r0(r.c)}g</b><small><i class="dot c"></i> carbs</small></div><div><b>${r0(r.f)}g</b><small><i class="dot f"></i> fat</small></div></div></div>`:""}
     <div class="row" style="background:var(--surface);border-radius:14px;padding:12px">
-      <label class="field">Servings eaten<input id="qty" type="number" min="0.25" step="0.25" value="1" style="width:90px"></label>
-      <label class="field">Meal<select id="meal">${MEALS.map(m=>`<option ${m===(r.cat==="Snack"?"Snack":r.cat===guessMeal()?r.cat:guessMeal())?"selected":""}>${m}</option>`).join("")}</select></label>
-      <div class="row" style="margin-left:auto"><button class="btn" data-save="${esc(r.id)}">${isSaved(r.id)?"Saved to a board":"Save to board"}</button><button class="btn primary" data-act="log-recipe" data-id="${esc(r.id)}">Log meal</button></div>
+      ${r.kcal?`<label class="field">Servings eaten<input id="qty" type="number" min="0.25" step="0.25" value="1" style="width:90px"></label>
+      <label class="field">Meal<select id="meal">${MEALS.map(m=>`<option ${m===(r.cat==="Snack"?"Snack":r.cat===guessMeal()?r.cat:guessMeal())?"selected":""}>${m}</option>`).join("")}</select></label>`:""}
+      <div class="row" style="margin-left:auto"><button class="btn" data-save="${esc(r.id)}">${isSaved(r.id)?"Saved to a board":"Save to board"}</button>${r.kcal?`<button class="btn primary" data-act="log-recipe" data-id="${esc(r.id)}">Log meal</button>`:""}</div>
     </div>
-    <div class="cols"><div><div class="label">Ingredients</div><ul class="ing">${r.ing.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>
-      <div><div class="label">Method</div><ol class="steps">${r.steps.map(x=>`<li>${esc(x)}</li>`).join("")}</ol></div></div>
+    ${r.ing.length||r.steps.length?`<div class="cols">${r.ing.length?`<div><div class="label">Ingredients</div><ul class="ing">${r.ing.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
+      ${r.steps.length?`<div><div class="label">Method</div><ol class="steps">${r.steps.map(x=>`<li>${esc(x)}</li>`).join("")}</ol></div>`:""}</div>`:""}
     <div class="row">${r.tags.map(t=>`<span class="badge">${esc(t)}</span>`).join("")}${isOwn(r)?`<span style="margin-left:auto" class="row">${S.mode==="db"&&S.people[uidUser]?`<button class="btn sm" data-act="toggle-share" data-id="${esc(r.id)}">${r.shared?"Posted ✓":"Post to For you"}</button>`:""}<button class="btn ghost sm" data-act="delete-mine" data-id="${esc(r.id)}">Delete this recipe</button></span>`:""}</div>
    </div>`);
 }
@@ -1346,10 +1362,10 @@ document.addEventListener("submit",e=>{
   if(f==="local-profile"){const h=$("#lp_handle").value.trim().replace(/^@/,"");if(handleProblem(h)){toast(handleProblem(h));return}
     S.profile={...S.profile,handle:h,name:$("#lp_name").value.trim()||S.profile.name,bio:$("#lp_bio").value.trim(),...(UI.lpPhoto?{photo:UI.lpPhoto}:{})};UI.lpPhoto=null;saveProfile();closeSheet();render();toast("Profile saved");return}
   if(f==="write"){const lines=id=>$(id).value.split("\n").map(x=>x.trim()).filter(Boolean);
-    const r={id:"own-"+uid(),own:true,caption:$("#w_caption")?.value.trim()||undefined,speed:UI.wSpeed||1,trim:UI.wTrim||undefined,cuts:UI.wCuts||undefined,filter:UI.wFilter!=="none"?UI.wFilter:undefined,mirror:UI.wMirror||undefined,title:$("#w_title").value.trim(),cat:$("#w_cat").value,min:r0($("#w_min").value),serv:r0($("#w_serv").value)||1,kcal:r0($("#w_kcal").value),p:r0($("#w_p").value),c:r0($("#w_c").value),f:r0($("#w_f").value),ing:lines("#w_ing"),steps:lines("#w_steps"),tags:[]};
-    if(r.kcal<400)r.tags.push("Under 400");if(r.p>=25)r.tags.push("High protein");r.hue=hashStr(r.title)%360;
+    const r={id:"own-"+uid(),own:true,caption:$("#w_caption")?.value.trim()||undefined,speed:UI.wSpeed||1,trim:UI.wTrim||undefined,cuts:UI.wCuts||undefined,filter:UI.wFilter!=="none"?UI.wFilter:undefined,mirror:UI.wMirror||undefined,title:$("#w_title").value.trim()||($("#w_caption")?.value.trim()||"").split("\n")[0].slice(0,40)||"Cooking video",cat:$("#w_cat").value,min:r0($("#w_min").value),serv:r0($("#w_serv").value)||1,kcal:r0($("#w_kcal").value),p:r0($("#w_p").value),c:r0($("#w_c").value),f:r0($("#w_f").value),ing:lines("#w_ing"),steps:lines("#w_steps"),tags:[]};
+    if(r.kcal&&r.kcal<400)r.tags.push("Under 400");if(r.p>=25)r.tags.push("High protein");r.hue=hashStr(r.title||r.id)%360;
     const file=$("#w_photo")?.files?.[0],post=!!$("#w_post")?.checked;if(post){r.shared=true;r.posted=Date.now()}
-    const finish=()=>{S.mine=[r,...S.mine];saveMine();if(post)publishProfile();render();recipeSheet(r.id);toast(post?"Posted":"Recipe saved")};
+    const finish=()=>{S.mine=[r,...S.mine];saveMine();if(post)publishProfile();render();recipeSheet(r.id);toast(post?"Posted":r.video?"Saved":"Recipe saved")};
     const vid=UI.wVideo;UI.wVideo=null;
     if(vid&&vid.size>20*1024*1024){toast("That video is over 20 MB. Try a shorter clip.");return}
     const up=async()=>{

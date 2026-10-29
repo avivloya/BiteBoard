@@ -63,9 +63,14 @@ export default function RecipeScreen() {
     }
   };
 
+  // Video posts can skip the recipe, so only show what was filled in.
+  const hasRecipe = recipe.kcal > 0;
+  const facts = [hasRecipe && recipe.cat, recipe.min > 0 && `${recipe.min} min`, hasRecipe && `${recipe.serv} serving${recipe.serv > 1 ? 's' : ''}`, recipe.ai && 'Created with AI'].filter(Boolean).join(' · ');
+
   return (
     <Screen edges={[]} bg={Colors.surface} style={{ padding: 0, gap: 0 }}>
-      <View>
+      {/* A video post shows the video at the top, with no picture above it. */}
+      {!recipe.video && <View>
         <RecipeArt recipe={recipe} style={{ height: 300 }} />
         {own && (
           <Row style={{ position: 'absolute', left: 16, bottom: 16 }}>
@@ -73,20 +78,21 @@ export default function RecipeScreen() {
             {hasPhoto && <Button title="Remove" onPress={() => changePhoto(false)} />}
           </Row>
         )}
-      </View>
+      </View>}
       {recipe.video && <RecipeVideo uri={recipe.video} speed={recipe.speed} trim={recipe.trim} cuts={recipe.cuts} filter={recipe.filter} style={{ height: 420 }} />}
       <View style={{ padding: 20, gap: 18 }}>
         <View style={{ gap: 4 }}>
-          <T variant="muted">{recipe.cat} · {recipe.min} min · {recipe.serv} serving{recipe.serv > 1 ? 's' : ''}{recipe.ai ? ' · Created with AI' : ''}</T>
+          {!!facts && <T variant="muted">{facts}</T>}
           {recipe.by && recipe.byId && (
             <Pressable onPress={() => router.push({ pathname: '/person/[id]', params: { id: recipe.byId! } })} accessibilityRole="link">
               <T style={{ fontWeight: '700' }}>@{recipe.by}</T>
             </Pressable>
           )}
           <T variant="title" style={{ fontSize: 30 }}>{recipe.title}</T>
-          {!!recipe.caption && <T>{recipe.caption}</T>}
+          {!!recipe.caption && recipe.caption !== recipe.title && <T>{recipe.caption}</T>}
         </View>
 
+        {hasRecipe && <>
         <Row style={{ flexWrap: 'nowrap' }}>
           {[['kcal', recipe.kcal, ''], ['protein', recipe.p, 'g'], ['carbs', recipe.c, 'g'], ['fat', recipe.f, 'g']].map(([l, v, u]) => (
             <View key={l as string} style={{ flex: 1, backgroundColor: Colors.surface2, borderRadius: 14, padding: 10 }}>
@@ -111,6 +117,7 @@ export default function RecipeScreen() {
             router.back();
           }} />
         </Panel>
+        </>}
 
         <View style={{ gap: 8 }}>
           <T variant="label">Save to a board</T>
@@ -123,14 +130,14 @@ export default function RecipeScreen() {
           </Row>
         </View>
 
-        <View style={{ gap: 8 }}>
+        {recipe.ing.length > 0 && <View style={{ gap: 8 }}>
           <T variant="label">Ingredients</T>
           {recipe.ing.map((x, i) => <T key={i} style={{ borderBottomWidth: 1, borderBottomColor: Colors.line, paddingBottom: 6 }}>{x}</T>)}
-        </View>
-        <View style={{ gap: 8 }}>
+        </View>}
+        {recipe.steps.length > 0 && <View style={{ gap: 8 }}>
           <T variant="label">Method</T>
           {recipe.steps.map((x, i) => <T key={i}>{i + 1}. {x}</T>)}
-        </View>
+        </View>}
 
         {own && (
           <Row>

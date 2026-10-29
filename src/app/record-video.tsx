@@ -22,7 +22,7 @@ const GLASS = 'rgba(255,255,255,0.16)';
 const RED = '#FF5A4F';
 
 type Phase = 'ready' | 'countdown' | 'recording' | 'paused' | 'review';
-type Icon = 'flip' | 'flash' | 'speed' | 'timer' | 'close' | 'back' | 'trim' | 'upload' | 'pause' | 'play' | 'filter' | 'check' | 'undo' | 'mirror';
+type Icon = 'flip' | 'flash' | 'speed' | 'timer' | 'close' | 'back' | 'trim' | 'upload' | 'pause' | 'play' | 'filter' | 'check' | 'undo' | 'mirror' | 'clips';
 
 function Glyph({ name, color = '#fff', size = 22 }: { name: Icon; color?: string; size?: number }) {
   const p = { stroke: color, strokeWidth: 1.9, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, fill: 'none' };
@@ -40,6 +40,7 @@ function Glyph({ name, color = '#fff', size = 22 }: { name: Icon; color?: string
       {name === 'play' && <Path {...p} d="M7 5l12 7-12 7z" />}
       {name === 'filter' && <><Circle {...p} cx={12} cy={12} r={9} /><Path {...p} d="M12 3a9 9 0 0 1 0 18M8 7l2 2M6 12h3" /></>}
       {name === 'mirror' && <Path {...p} d="M12 3v18M8 7l-5 5 5 5zM16 7l5 5-5 5z" />}
+      {name === 'clips' && <><Rect {...p} x={3} y={6} width={13} height={13} rx={2.5} /><Path {...p} d="M8 3h10.5A2.5 2.5 0 0 1 21 5.5V16" /></>}
       {name === 'undo' && <Path {...p} d="M9 14L4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11" />}
       {name === 'check' && <Path {...p} d="M5 12.5l4.5 4.5L19 7" />}
     </Svg>
@@ -74,6 +75,7 @@ export default function RecordVideo() {
   const [cuts, setCuts] = useState<[number, number][]>([]);
   const fileSecs = useRef(0);
   const discard = useRef(false);
+  const [showClips, setShowClips] = useState(false);
   const done = useRef(false);
 
   // If the screen is swiped away, tell whoever opened it that nothing was filmed.
@@ -123,20 +125,21 @@ export default function RecordVideo() {
     if (!canPause) return ref.current?.stopRecording();
     await ref.current?.toggleRecordingAsync();
     setClips((c) => c.map((x, i) => (i === c.length - 1 ? [x[0], fileSecs.current] : x)));
+    setShowClips(true);
     setPhase('paused');
   };
-  // Delete the last clip. Deleting the only clip starts over.
-  const undo = () => {
-    if (phase !== 'paused' || !clips.length) return;
-    const last = clips[clips.length - 1];
-    if (clips.length === 1) { discard.current = true; ref.current?.stopRecording(); return; }
-    setCuts((c) => [...c, [last[0], last[1] ?? fileSecs.current]]);
-    setClips(clips.slice(0, -1));
+  // Delete any clip while paused. Deleting the only clip starts over.
+  const removeClip = (i: number) => {
+    if (phase !== 'paused' || !clips[i]) return;
+    const c = clips[i];
+    if (clips.length === 1) { discard.current = true; setShowClips(false); ref.current?.stopRecording(); return; }
+    setCuts((x) => [...x, [c[0], c[1] ?? fileSecs.current] as [number, number]].sort((a, b) => a[0] - b[0]));
+    setClips(clips.filter((_, j) => j !== i));
   };
   const kept = clips.reduce((n, [a, b]) => n + ((b ?? fileSecs.current) - a), 0);
   const pressIn = async () => {
     pressRef.current = { t: Date.now(), was: phase };
-    if (phase === 'paused') { await ref.current?.toggleRecordingAsync(); setClips((c) => [...c, [fileSecs.current, null]]); setPhase('recording'); return; }
+    if (phase === 'paused') { setShowClips(false); await ref.current?.toggleRecordingAsync(); setClips((c) => [...c, [fileSecs.current, null]]); setPhase('recording'); return; }
     if (phase === 'ready') press();
   };
   const pressOut = () => {
@@ -261,7 +264,7 @@ export default function RecordVideo() {
 
       {/* Tools down the right side, like TikTok. */}
       <SafeAreaView edges={['top']} style={s.side}>
-        {phase === 'paused' && clips.length > 0 && <Tool icon="undo" label="Delete" onPress={undo} />}
+        {phase === 'paused' && clips.length > 0 && <Tool icon="clips" label="Clips" on={showClips} onPress={() => setShowClips(!showClips)} />}
         {!live && <Tool icon="flip" label="Flip" onPress={() => setFacing(facing === 'back' ? 'front' : 'back')} />}
         {!live && facing === 'front' && <Tool icon="mirror" label="Mirror" on={mirror} onPress={() => setMirror(!mirror)} />}
         {facing === 'back' && <Tool icon="flash" label="Flash" on={torch} onPress={() => setTorch(!torch)} />}
@@ -282,6 +285,19 @@ export default function RecordVideo() {
               </Pressable>
             ))}
           </View>
+        )}
+        {phase === 'paused' && showClips && clips.length > 0 && (
+          <Row style={{ gap: 10, flexWrap: 'wrap', justifyContent: 'center', paddingHorizontal: 20 }}>
+            {clips.map(([a, b], i) => (
+              <View key={`${a}`} style={s.clip}>
+                <T style={s.clipN}>{i + 1}</T>
+                <T style={s.clipLen}>{Math.max(0, (b ?? a) - a).toFixed(1)}s</T>
+                <Pressable onPress={() => removeClip(i)} style={s.clipX} hitSlop={8} accessibilityRole="button" accessibilityLabel={`Delete clip ${i + 1}`}>
+                  <Glyph name="close" color={Colors.ink} size={14} />
+                </Pressable>
+              </View>
+            ))}
+          </Row>
         )}
         <View style={s.ctrls}>
           <View style={s.side3}>
@@ -391,6 +407,10 @@ const s = StyleSheet.create({
   side3: { flex: 1, alignItems: 'center' },
   shutter: { width: 88, height: 88, borderRadius: 44, borderWidth: 4, borderColor: Colors.bg, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' },
   dot: { width: 66, height: 66, borderRadius: 33, backgroundColor: Colors.accent },
+  clip: { width: 52, height: 76, borderRadius: 12, borderWidth: 2, borderColor: Colors.bg, backgroundColor: GLASS, alignItems: 'center', justifyContent: 'center' },
+  clipN: { color: '#fff', fontWeight: '800', fontSize: 18 },
+  clipLen: { color: '#fff', fontWeight: '700', fontSize: 10.5 },
+  clipX: { position: 'absolute', top: 4, right: 4, width: 20, height: 20, borderRadius: 10, backgroundColor: Colors.bg, alignItems: 'center', justifyContent: 'center' },
   spin: { position: 'absolute', top: -11, left: -11, right: -11, bottom: -11, borderRadius: 999, borderWidth: 4, borderColor: 'transparent', borderTopColor: Colors.bg, borderRightColor: 'rgba(226,206,177,0.45)' },
   square: { width: 48, height: 48, borderRadius: 14, backgroundColor: GLASS, alignItems: 'center', justifyContent: 'center' },
   squareLabel: { color: '#fff', fontSize: 11, fontWeight: '700' },

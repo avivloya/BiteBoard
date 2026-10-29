@@ -26,19 +26,22 @@ export default function WriteRecipe() {
   const [caption, setCaption] = useState('');
   const [title, setTitle] = useState('');
   const [cat, setCat] = useState<Meal>('Dinner');
-  const [n, setN] = useState({ min: '20', serv: '2', kcal: '', p: '', c: '', f: '' });
+  const [n, setN] = useState({ min: params.video ? '' : '20', serv: '2', kcal: '', p: '', c: '', f: '' });
   const [ing, setIng] = useState('');
   const [steps, setSteps] = useState('');
   const lines = (s: string) => s.split('\n').map((x) => x.trim()).filter(Boolean);
-  const valid = title.trim() && Number(n.kcal) > 0 && lines(ing).length && lines(steps).length;
+  // A video post only needs the video; the recipe is optional. A recipe without a video needs the basics.
+  const valid = video ? true : title.trim() && Number(n.kcal) > 0 && lines(ing).length && lines(steps).length;
+  const [more, setMore] = useState(false);
 
   const save = () => {
-    const kcal = Number(n.kcal), p = Number(n.p) || 0;
-    const tags = [kcal < 400 && 'Under 400', p >= 25 && 'High protein'].filter((x): x is string => !!x);
+    const kcal = Number(n.kcal) || 0, p = Number(n.p) || 0;
+    const name = title.trim() || caption.trim().split('\n')[0].slice(0, 40) || 'Cooking video';
+    const tags = [kcal > 0 && kcal < 400 && 'Under 400', p >= 25 && 'High protein'].filter((x): x is string => !!x);
     const shared = canPost && post;
     const id = addRecipe({
-      own: true, shared, posted: shared ? Date.now() : undefined, title: title.trim(), caption: caption.trim() || undefined, cat,
-      min: Number(n.min) || 20, serv: Number(n.serv) || 1, kcal, p, c: Number(n.c) || 0, f: Number(n.f) || 0, tags, ing: lines(ing), steps: lines(steps),
+      own: true, shared, posted: shared ? Date.now() : undefined, title: name, caption: caption.trim() || undefined, cat,
+      min: Number(n.min) || (video ? 0 : 20), serv: Number(n.serv) || 1, kcal, p, c: Number(n.c) || 0, f: Number(n.f) || 0, tags, ing: lines(ing), steps: lines(steps),
       video: video?.uri, speed: video?.speed, trim: video?.trim, cuts: video?.cuts, filter: video?.filter,
     });
     if (photo) setPhoto(id, photo);
@@ -86,8 +89,9 @@ export default function WriteRecipe() {
           <Button title="Upload one" onPress={async () => { const uri = await pickRecipeVideo(); if (uri) setVideo({ uri, speed: 1 }); }} />
         </Row>
       )}
-      {video && <Button title={photo ? 'Change cover photo' : '+ Cover photo (optional)'} kind="ghost" onPress={choosePhoto} />}
+      {video && !more && <Button title="+ Add the recipe (optional)" kind="ghost" onPress={() => setMore(true)} />}
 
+      {(!video || more) && <>
       <T variant="label">Recipe</T>
       <Field label="Recipe name" value={title} onChangeText={setTitle} placeholder="Mom's lentil salad" />
       <Segmented value={cat} onChange={setCat} options={MEALS.map((m) => ({ value: m, label: m }))} />
@@ -95,6 +99,7 @@ export default function WriteRecipe() {
       <Row style={{ flexWrap: 'nowrap' }}>{num('p', 'Protein g')}{num('c', 'Carbs g')}{num('f', 'Fat g')}</Row>
       <Field label="Ingredients, one per line" value={ing} onChangeText={setIng} multiline />
       <Field label="Steps, one per line" value={steps} onChangeText={setSteps} multiline />
+      </>}
       {canPost && (
         <Row style={{ justifyContent: 'space-between', flexWrap: 'nowrap' }}>
           <T style={{ flex: 1 }}>Post to Explore and my account</T>

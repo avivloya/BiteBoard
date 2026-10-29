@@ -19,7 +19,7 @@ export function RecipeCard({ recipe, index, height }: { recipe: Recipe; index: n
         {recipe.by && (
           <Text style={styles.by} onPress={recipe.byId ? () => router.push({ pathname: '/person/[id]', params: { id: recipe.byId! } }) : undefined}>@{recipe.by} · </Text>
         )}
-        {Math.round(recipe.kcal)} kcal · {recipe.min} min
+        {[recipe.kcal > 0 && `${Math.round(recipe.kcal)} kcal`, recipe.min > 0 && `${recipe.min} min`].filter(Boolean).join(' · ')}
       </Text>
     </Pressable>
   );

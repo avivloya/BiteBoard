@@ -34,7 +34,7 @@ export function Reels({ posts }: { posts: Recipe[] }) {
           )}
           <T variant="h3" style={{ color: '#fff' }}>{r.title}</T>
           {!!r.caption && <T style={{ color: '#fff' }} numberOfLines={2}>{r.caption}</T>}
-          <T style={{ color: 'rgba(255,255,255,0.85)', fontSize: 13 }}>{Math.round(r.kcal)} kcal · {r.min} min · {Math.round(r.p)}g protein</T>
+          <T style={{ color: 'rgba(255,255,255,0.85)', fontSize: 13 }}>{[r.kcal > 0 && `${Math.round(r.kcal)} kcal`, r.min > 0 && `${r.min} min`, r.p > 0 && `${Math.round(r.p)}g protein`].filter(Boolean).join(' · ')}</T>
           <Row>
             <Button title="View recipe" kind="primary" onPress={() => router.push({ pathname: '/recipe/[id]', params: { id: r.id } })} />
             <Button title={muted ? 'Sound on' : 'Sound off'} onPress={() => setMuted(!muted)} />
