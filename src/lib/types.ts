@@ -21,6 +21,8 @@ export type Recipe = {
   speed?: number;
   /** part of the video to play, in seconds: [start, end] */
   trim?: [number, number];
+  /** Deleted clips: parts of the file skipped on playback. */
+  cuts?: [number, number][];
   /** look picked in the camera: beauty, warm, bright */
   filter?: 'none' | 'beauty' | 'warm' | 'bright' | 'mono';
   /** short text shown with the post, like a TikTok caption */

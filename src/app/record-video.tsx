@@ -1,7 +1,7 @@
 import { CameraView, useCameraPermissions, useMicrophonePermissions, type CameraType } from 'expo-camera';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Animated, Easing, Linking, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
@@ -11,7 +11,7 @@ import { Row } from '@/components/screen';
 import { Button, T } from '@/components/ui';
 import { Colors } from '@/constants/theme';
 import { keepVideo, pickRecipeVideo } from '@/lib/photos';
-import { type Filmed, finishFilming } from '@/lib/recorder';
+import { cutsToParam, type Filmed, finishFilming } from '@/lib/recorder';
 
 const LIMITS = [15, 60, 180];
 const FILTERS: { v: VideoFilter; label: string }[] = [{ v: 'none', label: 'None' }, { v: 'beauty', label: 'Beauty' }, { v: 'warm', label: 'Warm' }, { v: 'bright', label: 'Bright' }];
@@ -22,7 +22,7 @@ const GLASS = 'rgba(255,255,255,0.16)';
 const RED = '#FF5A4F';
 
 type Phase = 'ready' | 'countdown' | 'recording' | 'paused' | 'review';
-type Icon = 'flip' | 'flash' | 'speed' | 'timer' | 'close' | 'back' | 'trim' | 'upload' | 'pause' | 'play' | 'filter' | 'check';
+type Icon = 'flip' | 'flash' | 'speed' | 'timer' | 'close' | 'back' | 'trim' | 'upload' | 'pause' | 'play' | 'filter' | 'check' | 'undo';
 
 function Glyph({ name, color = '#fff', size = 22 }: { name: Icon; color?: string; size?: number }) {
   const p = { stroke: color, strokeWidth: 1.9, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, fill: 'none' };
@@ -39,6 +39,7 @@ function Glyph({ name, color = '#fff', size = 22 }: { name: Icon; color?: string
       {name === 'pause' && <Path {...p} d="M9 5v14M15 5v14" />}
       {name === 'play' && <Path {...p} d="M7 5l12 7-12 7z" />}
       {name === 'filter' && <><Circle {...p} cx={12} cy={12} r={9} /><Path {...p} d="M12 3a9 9 0 0 1 0 18M8 7l2 2M6 12h3" /></>}
+      {name === 'undo' && <Path {...p} d="M9 14L4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11" />}
       {name === 'check' && <Path {...p} d="M5 12.5l4.5 4.5L19 7" />}
     </Svg>
   );
@@ -65,6 +66,11 @@ export default function RecordVideo() {
   const [duration, setDuration] = useState(0);
   const [trim, setTrim] = useState<[number, number] | null>(null);
   const [saving, setSaving] = useState(false);
+  // Each hold is a clip, in seconds of the file. Deleting a clip skips it on playback.
+  const [clips, setClips] = useState<[number, number | null][]>([]);
+  const [cuts, setCuts] = useState<[number, number][]>([]);
+  const fileSecs = useRef(0);
+  const discard = useRef(false);
   const done = useRef(false);
 
   // If the screen is swiped away, tell whoever opened it that nothing was filmed.
@@ -79,10 +85,11 @@ export default function RecordVideo() {
       const params: Record<string, string> = video ? { video: video.uri, speed: String(video.speed) } : {};
       if (video?.trim) { params.start = String(video.trim[0]); params.end = String(video.trim[1]); }
       if (video?.filter && video.filter !== 'none') params.filter = video.filter;
+      if (video?.cuts?.length) params.cuts = cutsToParam(video.cuts);
       router.replace({ pathname: '/write-recipe', params });
     } else router.back();
   };
-  const review = (u: string, secs: number) => { setUri(u); setDuration(secs); setTrim(null); setPanel(null); setPhase('review'); };
+  const review = (u: string, secs: number) => { if (!secs) { setClips([]); setCuts([]); } setUri(u); setDuration(secs); setTrim(null); setPanel(null); setPhase('review'); };
   const upload = async () => { const u = await pickRecipeVideo(); if (u) review(u, 0); };
 
   const canPause = !!ref.current?.getSupportedFeatures().toggleRecordingAsyncAvailable;
@@ -92,10 +99,15 @@ export default function RecordVideo() {
     if (!ref.current || !ready) return;
     setSeconds(0);
     setPanel(null);
+    fileSecs.current = 0;
+    discard.current = false;
+    setClips([[0, null]]);
+    setCuts([]);
     setPhase('recording');
     try {
       const res = await ref.current.recordAsync({ maxDuration: limit, progressUpdateInterval: 0.2 });
-      if (res?.uri) review(res.uri, 0); else setPhase('ready');
+      if (discard.current) { discard.current = false; setClips([]); setSeconds(0); setPhase('ready'); return; }
+      if (res?.uri) { setUri(res.uri); setDuration(0); setTrim(null); setPanel(null); setPhase('review'); } else setPhase('ready');
     } catch {
       setPhase('ready');
     }
@@ -107,11 +119,21 @@ export default function RecordVideo() {
   const pause = async () => {
     if (!canPause) return ref.current?.stopRecording();
     await ref.current?.toggleRecordingAsync();
+    setClips((c) => c.map((x, i) => (i === c.length - 1 ? [x[0], fileSecs.current] : x)));
     setPhase('paused');
   };
+  // Delete the last clip. Deleting the only clip starts over.
+  const undo = () => {
+    if (phase !== 'paused' || !clips.length) return;
+    const last = clips[clips.length - 1];
+    if (clips.length === 1) { discard.current = true; ref.current?.stopRecording(); return; }
+    setCuts((c) => [...c, [last[0], last[1] ?? fileSecs.current]]);
+    setClips(clips.slice(0, -1));
+  };
+  const kept = clips.reduce((n, [a, b]) => n + ((b ?? fileSecs.current) - a), 0);
   const pressIn = async () => {
     pressRef.current = { t: Date.now(), was: phase };
-    if (phase === 'paused') { await ref.current?.toggleRecordingAsync(); setPhase('recording'); return; }
+    if (phase === 'paused') { await ref.current?.toggleRecordingAsync(); setClips((c) => [...c, [fileSecs.current, null]]); setPhase('recording'); return; }
     if (phase === 'ready') press();
   };
   const pressOut = () => {
@@ -146,11 +168,11 @@ export default function RecordVideo() {
       if (!uri) return;
       setSaving(true);
       const kept = await keepVideo(uri).catch(() => uri);
-      next({ uri: kept, speed, trim: trim ?? undefined, filter });
+      next({ uri: kept, speed, trim: trim ?? undefined, filter, cuts: cuts.length ? cuts : undefined });
     };
     return (
       <View style={s.black}>
-        <RecipeVideo uri={uri!} autoPlay controls={false} speed={speed} filter={filter} trim={trim ?? undefined} onDuration={(d) => { if (!duration) setDuration(Math.round(d * 10) / 10); }} style={StyleSheet.absoluteFill} />
+        <RecipeVideo uri={uri!} autoPlay controls={false} speed={speed} filter={filter} trim={trim ?? undefined} cuts={cuts} onDuration={(d) => { if (!duration) setDuration(Math.round(d * 10) / 10); }} style={StyleSheet.absoluteFill} />
         <Shade />
         <SafeAreaView edges={['top']} style={s.top}>
           <Pressable onPress={() => { setUri(null); setPhase('ready'); }} style={s.round} accessibilityLabel="Retake"><Glyph name="back" /></Pressable>
@@ -221,21 +243,22 @@ export default function RecordVideo() {
   return (
     <View style={s.black}>
       <CameraView ref={ref} style={StyleSheet.absoluteFill} mode="video" facing={facing} enableTorch={torch} videoQuality="1080p" videoBitrate={8_000_000}
-        mirror={facing === 'front'} onCameraReady={() => setReady(true)} onRecordingProgress={(e) => setSeconds(e.duration)} />
+        mirror={facing === 'front'} onCameraReady={() => setReady(true)} onRecordingProgress={(e) => { fileSecs.current = e.duration; setSeconds(e.duration); }} />
       {FILTER_TINT[filter] && <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: FILTER_TINT[filter] }]} />}
       <Shade />
 
-      {live && <SafeAreaView edges={['top']} style={s.barWrap}><View style={s.bar}><View style={[s.fill, { width: `${Math.min(100, (seconds / limit) * 100)}%` }]} /></View></SafeAreaView>}
+      {live && <SafeAreaView edges={['top']} style={s.barWrap}><View style={s.bar}><View style={[s.fill, { width: `${Math.min(100, (kept / limit) * 100)}%` }]} /></View></SafeAreaView>}
       <SafeAreaView edges={['top']} style={s.top}>
         {live ? <View style={{ width: 42 }} /> : <Pressable onPress={close} style={s.round} accessibilityLabel="Close"><Glyph name="close" /></Pressable>}
         {live ? (
-          <View style={s.time}><View style={[s.dotSmall, phase === 'paused' && { backgroundColor: Colors.bg }]} /><T style={s.timeText}>{mmss(seconds)}</T></View>
+          <View style={s.time}><View style={[s.dotSmall, phase === 'paused' && { backgroundColor: Colors.bg }]} /><T style={s.timeText}>{mmss(kept)}</T></View>
         ) : <Brand />}
         <View style={{ width: 42 }} />
       </SafeAreaView>
 
       {/* Tools down the right side, like TikTok. */}
       <SafeAreaView edges={['top']} style={s.side}>
+        {phase === 'paused' && clips.length > 0 && <Tool icon="undo" label="Delete" onPress={undo} />}
         {!live && <Tool icon="flip" label="Flip" onPress={() => setFacing(facing === 'back' ? 'front' : 'back')} />}
         {facing === 'back' && <Tool icon="flash" label="Flash" on={torch} onPress={() => setTorch(!torch)} />}
         {!live && <Tool icon="speed" label={speedName(speed)} on={speed !== 1} onPress={() => setPanel(panel === 'speed' ? null : 'speed')} />}
@@ -262,10 +285,11 @@ export default function RecordVideo() {
           </View>
           <Pressable onPressIn={pressIn} onPressOut={pressOut} disabled={!ready || phase === 'countdown'} accessibilityRole="button"
             accessibilityLabel={phase === 'recording' ? 'Pause recording' : 'Record'} style={[s.shutter, !ready && { opacity: 0.5 }]}>
-            <View style={phase === 'recording' ? s.stop : s.dot} />
+            <View style={s.dot} />
+            <Spinner on={phase === 'recording'} />
           </Pressable>
           <View style={s.side3}>
-            {live && seconds >= 0.5 && (
+            {live && kept >= 0.5 && (
               <Pressable onPress={() => ref.current?.stopRecording()} style={{ alignItems: 'center', gap: 4 }} accessibilityRole="button" accessibilityLabel="Done filming">
                 <View style={[s.square, { backgroundColor: Colors.bg }]}><Glyph name="check" color={Colors.ink} size={24} /></View>
                 <T style={s.squareLabel}>Done</T>
@@ -294,6 +318,20 @@ export default function RecordVideo() {
       </SafeAreaView>
     </View>
   );
+}
+
+/** A thin arc that spins around the record button while filming. */
+function Spinner({ on }: { on: boolean }) {
+  const turn = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (!on) { turn.stopAnimation(); return; }
+    const loop = Animated.loop(Animated.timing(turn, { toValue: 1, duration: 1100, easing: Easing.linear, useNativeDriver: true }));
+    turn.setValue(0);
+    loop.start();
+    return () => loop.stop();
+  }, [on, turn]);
+  const rotate = turn.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
+  return <Animated.View pointerEvents="none" style={[s.spin, { opacity: on ? 1 : 0, transform: [{ rotate }] }]} />;
 }
 
 const Brand = () => (
@@ -349,7 +387,7 @@ const s = StyleSheet.create({
   side3: { flex: 1, alignItems: 'center' },
   shutter: { width: 88, height: 88, borderRadius: 44, borderWidth: 4, borderColor: Colors.bg, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' },
   dot: { width: 66, height: 66, borderRadius: 33, backgroundColor: Colors.accent },
-  stop: { width: 30, height: 30, borderRadius: 9, backgroundColor: RED },
+  spin: { position: 'absolute', top: -11, left: -11, right: -11, bottom: -11, borderRadius: 999, borderWidth: 4, borderColor: 'transparent', borderTopColor: Colors.bg, borderRightColor: 'rgba(226,206,177,0.45)' },
   square: { width: 48, height: 48, borderRadius: 14, backgroundColor: GLASS, alignItems: 'center', justifyContent: 'center' },
   squareLabel: { color: '#fff', fontSize: 11, fontWeight: '700' },
   hint: { color: '#fff', fontSize: 13, fontWeight: '600', opacity: 0.85 },

@@ -2,7 +2,14 @@ import { router } from 'expo-router';
 
 import type { VideoFilter } from '@/components/recipe-video';
 
-export type Filmed = { uri: string; speed: number; trim?: [number, number]; filter?: VideoFilter };
+export type Filmed = { uri: string; speed: number; trim?: [number, number]; filter?: VideoFilter; cuts?: [number, number][] };
+
+/** Deleted clips travel between screens as "1.5-2.7,4-5". */
+export const cutsToParam = (c?: [number, number][]) => (c ?? []).map((x) => x.join('-')).join(',');
+export const cutsFromParam = (s?: string): [number, number][] | undefined => {
+  const c = (s ?? '').split(',').filter(Boolean).map((x) => x.split('-').map(Number) as [number, number]).filter(([a, b]) => b > a);
+  return c.length ? c : undefined;
+};
 
 let pending: ((v: Filmed | null) => void) | null = null;
 

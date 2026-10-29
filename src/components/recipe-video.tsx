@@ -13,8 +13,8 @@ export const FILTER_TINT: Record<VideoFilter, string | null> = {
 };
 
 /** A cooking video. With `autoPlay` it plays muted on a loop, like a reel; `active` pauses it when scrolled away. */
-export function RecipeVideo({ uri, style, autoPlay = false, active = true, muted = false, controls = true, speed = 1, trim, onDuration, filter }: {
-  uri: string; style?: ViewStyle; autoPlay?: boolean; active?: boolean; muted?: boolean; controls?: boolean; speed?: number; trim?: [number, number]; onDuration?: (seconds: number) => void; filter?: VideoFilter;
+export function RecipeVideo({ uri, style, autoPlay = false, active = true, muted = false, controls = true, speed = 1, trim, cuts, onDuration, filter }: {
+  uri: string; style?: ViewStyle; autoPlay?: boolean; active?: boolean; muted?: boolean; controls?: boolean; speed?: number; trim?: [number, number]; cuts?: [number, number][]; onDuration?: (seconds: number) => void; filter?: VideoFilter;
 }) {
   const player = useVideoPlayer(uri, (p) => {
     p.loop = true;
@@ -39,6 +39,20 @@ export function RecipeVideo({ uri, style, autoPlay = false, active = true, muted
     });
     return () => sub.remove();
   }, [player, trim?.[0], trim?.[1]]);
+
+  // Skip clips that were deleted while filming.
+  const cutKey = cuts?.map((c) => c.join('-')).join(',');
+  useEffect(() => {
+    if (!cuts?.length) return;
+    player.timeUpdateEventInterval = 0.1;
+    const sub = player.addListener('timeUpdate', ({ currentTime }) => {
+      const c = cuts.find(([a, b]) => currentTime >= a - 0.05 && currentTime < b);
+      if (!c) return;
+      const end = trim ? trim[1] : player.duration;
+      player.currentTime = end && c[1] >= end - 0.1 ? (trim?.[0] ?? 0) : c[1];
+    });
+    return () => sub.remove();
+  }, [player, cutKey, trim?.[0], trim?.[1]]);
 
   useEffect(() => { player.muted = muted; }, [player, muted]);
   useEffect(() => {

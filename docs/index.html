@@ -411,8 +411,8 @@ body.cam-open{overflow:hidden}
 .cam-shutter{width:88px;height:88px;border-radius:50%;border:0;padding:0;cursor:pointer;display:grid;place-items:center;background:rgba(255,255,255,.18);box-shadow:inset 0 0 0 4px var(--bg);transition:transform .15s}
 .cam-shutter:active{transform:scale(.94)}.cam-shutter:disabled{opacity:.5}
 .cam-shutter i{width:66px;height:66px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px rgba(226,206,177,.35);transition:all .2s ease}
-.cam-shutter.recording i{width:30px;height:30px;border-radius:9px;background:#ff5a4f;box-shadow:none}
-.cam-shutter.recording{animation:campulse 1.6s ease-in-out infinite}
+.cam-shutter{position:relative}.cam-shutter::after{content:"";position:absolute;inset:-7px;border-radius:50%;background:conic-gradient(from 0deg,transparent 0 55%,var(--bg) 100%);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 4px));mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 4px));opacity:0;transition:opacity .3s ease;pointer-events:none}.cam-shutter.recording::after{opacity:1;animation:camspin 1.1s linear infinite}@keyframes camspin{to{transform:rotate(360deg)}}
+
 @keyframes campulse{50%{box-shadow:inset 0 0 0 4px var(--bg),0 0 0 8px rgba(226,206,177,.25)}}
 .cam-limits{display:flex;gap:6px;padding:4px;border-radius:999px;background:rgba(255,255,255,.12);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
 .cam-limits button{background:none;border:0;color:rgba(255,255,255,.8);font:inherit;font-weight:700;font-size:13px;padding:6px 14px;border-radius:999px;cursor:pointer}
@@ -684,7 +684,7 @@ function viewDiscover(){
   const social=S.mode==="db";
   const feedTabs=`<div class="explore-head"><div class="feed-tabs" role="tablist"><button role="tab" data-act="feed" data-feed="watch" aria-selected="${UI.feed==="watch"}">Watch</button><button role="tab" data-act="feed" data-feed="recipes" aria-selected="${UI.feed!=="watch"}">Recipes</button></div><button class="plus-btn" data-act="add-menu" aria-label="Add a recipe">+</button></div>`;
   if(UI.feed==="watch"){const vids=[...(social?forYou():[]),...S.mine.filter(r=>r.shared||!social).map(r=>({...r,by:S.people[uidUser]?.handle,byId:uidUser}))].filter(r=>r.video);
-    return feedTabs+(vids.length?`<div class="reels">${vids.map(r=>`<section class="reel"><video src="${esc(r.video)}" data-speed="${r.speed||1}" ${vTrim(r.trim)} ${vFilter(r.filter)} playsinline muted loop preload="metadata"></video>
+    return feedTabs+(vids.length?`<div class="reels">${vids.map(r=>`<section class="reel"><video src="${esc(r.video)}" data-speed="${r.speed||1}" ${vTrim(r.trim,r.cuts)} ${vFilter(r.filter)} playsinline muted loop preload="metadata"></video>
       <div class="reel-info"><button class="by" data-person="${esc(r.byId||"")}">${S.people[r.byId]?avatar(S.people[r.byId],22):""}@${esc(r.by||"")}</button><h3>${esc(r.title)}</h3>${r.caption?`<p class="reel-cap">${esc(r.caption)}</p>`:""}<div class="note num">${r0(r.kcal)} kcal · ${r.min} min · ${r0(r.p)}g protein</div>
       <div class="row"><button class="btn primary sm" data-open="${esc(r.id)}">View recipe</button><button class="btn sm reel-sound" data-act="reel-sound">Sound on</button></div></div></section>`).join("")}</div>`
       :`<div class="empty"><h3>No cooking videos yet</h3>Tap + to post a recipe and film yourself making it.</div>`)}
@@ -962,12 +962,12 @@ function pubSheet(){const me=S.people[uidUser];
     <label class="field">Display name<input id="pub_name" required value="${esc(me.name)}"></label>
     <label class="field">Bio<input id="pub_bio" maxlength="120" value="${esc(me.bio||"")}"></label>
     <div class="ob-actions"><button class="btn primary">Save profile</button></div></form></div>`)}
-function writeSheet(v=null){UI.wVideo=v?.blob||null;UI.wSpeed=v?.speed||1;UI.wTrim=v?.trim||null;UI.wFilter=v?.filter||"none";
+function writeSheet(v=null){UI.wVideo=v?.blob||null;UI.wSpeed=v?.speed||1;UI.wTrim=v?.trim||null;UI.wCuts=v?.cuts||null;UI.wFilter=v?.filter||"none";
   if(UI.wUrl)URL.revokeObjectURL(UI.wUrl);UI.wUrl=UI.wVideo?URL.createObjectURL(UI.wVideo):null;
   openSheet(`<div class="inner"><button class="close" data-act="close" aria-label="Close">✕</button><h2 style="font-size:24px">New post</h2>
     <form data-form="write" class="ob-form">
       <div class="post-top"><textarea id="w_caption" maxlength="300" placeholder="Write a caption…"></textarea>
-        ${UI.wUrl?`<video class="post-prev" src="${UI.wUrl}" autoplay muted loop playsinline data-speed="${UI.wSpeed}" ${vTrim(UI.wTrim)} ${vFilter(UI.wFilter)}></video>`:assets?`<label class="post-prev cover">+ Cover photo<input id="w_photo" type="file" accept="image/jpeg,image/png,image/webp" hidden><span class="note" id="w_pname"></span></label>`:""}</div>
+        ${UI.wUrl?`<video class="post-prev" src="${UI.wUrl}" autoplay muted loop playsinline data-speed="${UI.wSpeed}" ${vTrim(UI.wTrim,UI.wCuts)} ${vFilter(UI.wFilter)}></video>`:assets?`<label class="post-prev cover">+ Cover photo<input id="w_photo" type="file" accept="image/jpeg,image/png,image/webp" hidden><span class="note" id="w_pname"></span></label>`:""}</div>
       ${UI.wUrl?(assets?`<label class="btn ghost sm" style="justify-self:start">+ Cover photo (optional)<input id="w_photo" type="file" accept="image/jpeg,image/png,image/webp" hidden></label><span class="note" id="w_pname"></span>`:"")
         :`<div class="row"><button type="button" class="btn primary sm" data-act="film-post">Film a video</button><label class="btn sm">Upload one<input class="vpick" data-for="write" type="file" accept="video/mp4,video/quicktime,video/webm" hidden></label><span class="note" id="w_vname"></span></div>`}
       <div class="label" style="margin-top:6px">Recipe</div>
@@ -986,7 +986,7 @@ function writeSheet(v=null){UI.wVideo=v?.blob||null;UI.wSpeed=v?.speed||1;UI.wTr
 // timer), then an edit step (trim and speed) before posting. `then` gets {blob,speed,trim} or null.
 const CAM={};
 async function openCamera(then,{post=false}={}){
-  Object.assign(CAM,{then,post,facing:"environment",speed:1,filter:"none",limit:60,timer:false,torch:false,chunks:[],rec:null,stream:null,blob:null,secs:0,t:null,phase:"starting",trim:null,dur:0,edit:null});
+  Object.assign(CAM,{then,post,facing:"environment",speed:1,filter:"none",limit:60,timer:false,torch:false,chunks:[],rec:null,stream:null,blob:null,secs:0,t:null,phase:"starting",trim:null,dur:0,edit:null,clips:[],cuts:[],acc:0,t0:0});
   const el=document.createElement("div");el.id="cam";el.className="cam";document.body.appendChild(el);document.body.classList.add("cam-open");
   camRender();await camStart();
 }
@@ -1006,6 +1006,7 @@ const camIcon={
   flip:'<path d="M3 12a9 9 0 0 1 15.5-6.2L21 8M21 3v5h-5M21 12a9 9 0 0 1-15.5 6.2L3 16M3 21v-5h5"/>',
   flash:'<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
   speed:'<path d="M12 21a9 9 0 1 1 9-9"/><path d="M12 12l5-4"/>',
+  undo:'<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>',
   timer:'<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/>',
   close:'<path d="M6 6l12 12M18 6L6 18"/>',
   back:'<path d="M15 5l-7 7 7 7"/>',
@@ -1049,7 +1050,7 @@ function camRender(){
       </div>`;
     const v=$("#camPlay");v.playbackRate=CAM.speed;
     v.onloadedmetadata=()=>{v.classList.toggle("fit",v.videoWidth>v.videoHeight);if(isFinite(v.duration)&&!CAM.dur){CAM.dur=Math.round(v.duration*10)/10;if(CAM.edit==="trim")camRender()}};
-    v.ontimeupdate=()=>{const t=CAM.trim;if(t&&(v.currentTime<t[0]||v.currentTime>t[1]))v.currentTime=t[0]};
+    v.dataset.cuts=camCutsAttr(CAM.cuts);if(CAM.trim){v.dataset.start=CAM.trim[0];v.dataset.end=CAM.trim[1]}
     return}
   const keep=$("#cam video.live");
   el.innerHTML=`<video class="live full" autoplay muted playsinline style="${camFilterCss(CAM.filter)}"></video>
@@ -1057,7 +1058,7 @@ function camRender(){
     <div class="cam-top">${live?`<span class="cam-spacer"></span>`:`<button class="cam-x" data-cam="close" aria-label="Close">${camSvg("close")}</button>`}
       ${live?`<span class="cam-time ${CAM.phase}"><i></i>${mmss(CAM.secs)}</span>`:brand}<span class="cam-spacer"></span></div>
     ${live?`<div class="cam-bar"><i style="width:${Math.min(100,CAM.secs/CAM.limit*100)}%"></i></div>`:""}
-    <div class="cam-side">${live?"":camTool("flip","flip","Flip")}${CAM.facing==="environment"?camTool("flash","flash","Flash",CAM.torch):""}${live?"":camTool("speed","speed",speedName(CAM.speed),CAM.speed!==1)}${live?"":camTool("filter","filter",CAM.filter==="none"?"Filter":CAM_FILTERS.find(z=>z[0]===CAM.filter)[1],CAM.filter!=="none")}${live?"":camTool("timer","timer",CAM.timer?"3s":"Timer",CAM.timer)}</div>
+    <div class="cam-side">${CAM.phase==="paused"&&CAM.clips.length?camTool("undo","undo","Delete"):""}${live?"":camTool("flip","flip","Flip")}${CAM.facing==="environment"?camTool("flash","flash","Flash",CAM.torch):""}${live?"":camTool("speed","speed",speedName(CAM.speed),CAM.speed!==1)}${live?"":camTool("filter","filter",CAM.filter==="none"?"Filter":CAM_FILTERS.find(z=>z[0]===CAM.filter)[1],CAM.filter!=="none")}${live?"":camTool("timer","timer",CAM.timer?"3s":"Timer",CAM.timer)}</div>
     ${CAM.phase==="countdown"?`<div class="cam-count">${CAM.count}</div>`:""}
     ${CAM.phase==="starting"?`<div class="cam-count small"><span class="spinner"></span></div>`:""}
     <div class="cam-bottom">
@@ -1073,20 +1074,20 @@ function camRender(){
     </div>`;
   // Keep the same live preview between redraws so it never flashes black.
   if(keep&&keep.srcObject===CAM.stream&&CAM.stream){const nv=$("#cam video.live");keep.setAttribute("style",camFilterCss(CAM.filter));nv.replaceWith(keep);return}
-  const v=$("#cam video.live");if(v&&CAM.stream){v.srcObject=CAM.stream;v.onloadedmetadata=()=>v.classList.toggle("fit",v.videoWidth>v.videoHeight);v.play().catch(()=>{})}
+  const v=$("#cam video.live");if(v&&CAM.stream){v.srcObject=CAM.stream;v.play().catch(()=>{})}
 }
 function camTick(){const i=$("#cam .cam-bar i");if(i)i.style.width=Math.min(100,CAM.secs/CAM.limit*100)+"%";const t=$("#cam .cam-time");if(t)t.lastChild.textContent=mmss(CAM.secs)}
 function camRecord(){
-  CAM.chunks=[];CAM.secs=0;CAM.showSpeed=false;CAM.trim=null;CAM.dur=0;CAM.edit=null;
+  CAM.chunks=[];CAM.secs=0;CAM.showSpeed=false;CAM.trim=null;CAM.dur=0;CAM.edit=null;CAM.clips=[];CAM.cuts=[];CAM.acc=0;CAM.t0=0;CAM.discard=false;
   const type=["video/mp4","video/webm;codecs=vp9,opus","video/webm"].find(t=>window.MediaRecorder&&MediaRecorder.isTypeSupported?.(t))||"";
   try{CAM.rec=new MediaRecorder(CAM.stream,{...(type?{mimeType:type}:{}),videoBitsPerSecond:5000000,audioBitsPerSecond:128000})}catch(e){toast("Filming isn't supported in this browser. Try uploading a video.");return}
   CAM.rec.ondataavailable=e=>e.data.size&&CAM.chunks.push(e.data);
-  CAM.rec.onstop=()=>{clearInterval(CAM.t);CAM.blob=new Blob(CAM.chunks,{type:CAM.rec.mimeType||"video/webm"});CAM.url=URL.createObjectURL(CAM.blob);CAM.dur=Math.round(CAM.secs*10)/10;CAM.phase="review";camRender()};
-  CAM.rec.start(250);CAM.phase="recording";
-  CAM.t=setInterval(()=>{if(CAM.phase!=="recording")return;CAM.secs+=0.25;if(CAM.secs>=CAM.limit)CAM.rec.stop();else if(CAM.secs===0.5)camRender();else camTick()},250);
+  CAM.rec.onstop=()=>{clearInterval(CAM.t);if(CAM.discard){CAM.discard=false;CAM.chunks=[];CAM.secs=0;CAM.clips=[];CAM.cuts=[];CAM.phase="ready";camRender();return}camClipEnd();CAM.blob=new Blob(CAM.chunks,{type:CAM.rec.mimeType||"video/webm"});CAM.url=URL.createObjectURL(CAM.blob);CAM.dur=Math.round(CAM.acc/100)/10;CAM.phase="review";camRender()};
+  CAM.rec.start(250);CAM.phase="recording";camClipStart();
+  CAM.t=setInterval(()=>{if(CAM.phase!=="recording")return;const was=CAM.secs;CAM.secs=camKept();if(CAM.secs>=CAM.limit)CAM.rec.stop();else if(was<0.5&&CAM.secs>=0.5)camRender();else camTick()},250);
   camRender();
 }
-function camReview(file){CAM.blob=file;CAM.url=URL.createObjectURL(file);CAM.dur=0;CAM.trim=null;CAM.phase="review";CAM.stream?.getTracks().forEach(t=>t.stop());CAM.stream=null;camRender()}
+function camReview(file){CAM.clips=[];CAM.cuts=[];CAM.blob=file;CAM.url=URL.createObjectURL(file);CAM.dur=0;CAM.trim=null;CAM.phase="review";CAM.stream?.getTracks().forEach(t=>t.stop());CAM.stream=null;camRender()}
 document.addEventListener("click",e=>{const b=e.target.closest("[data-cam]");if(!b)return;const a=b.dataset.cam;
   if(a==="close"){camClose();CAM.then(null)}
   if(a==="retry"){CAM.phase="starting";camRender();camStart()}
@@ -1094,6 +1095,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-cam]");if(
   if(a==="flash"){CAM.torch=!CAM.torch;const t=CAM.stream?.getVideoTracks()[0];t?.applyConstraints({advanced:[{torch:CAM.torch}]}).catch(()=>{CAM.torch=false;toast("This camera doesn't have a flash.");camRender()});camRender()}
   if(a==="speed"){CAM.showSpeed=!CAM.showSpeed;CAM.showFilter=false;camRender()}
   if(a==="setspeed"){CAM.speed=+b.dataset.v;const v=$("#camPlay");if(v)v.playbackRate=CAM.speed;camRender()}
+  if(a==="undo")camUndo();
   if(a==="timer"){CAM.timer=!CAM.timer;camRender()}
   if(a==="limit"){CAM.limit=+b.dataset.v;camRender()}
   if(a==="edit-trim"){CAM.edit=CAM.edit==="trim"?null:"trim";camRender()}
@@ -1101,8 +1103,8 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-cam]");if(
   if(a==="done"){if(CAM.rec&&CAM.rec.state!=="inactive")CAM.rec.stop()}
   if(a==="filter"){CAM.showFilter=!CAM.showFilter;CAM.showSpeed=false;camRender()}
   if(a==="setfilter"){CAM.filter=b.dataset.v;camRender()}
-  if(a==="retake"){URL.revokeObjectURL(CAM.url);CAM.blob=null;CAM.secs=0;CAM.phase="starting";camRender();camStart()}
-  if(a==="use"){const v={blob:CAM.blob,speed:CAM.speed,trim:CAM.trim,filter:CAM.filter};camClose();CAM.then(v)}
+  if(a==="retake"){URL.revokeObjectURL(CAM.url);CAM.blob=null;CAM.secs=0;CAM.clips=[];CAM.cuts=[];CAM.phase="starting";camRender();camStart()}
+  if(a==="use"){const v={blob:CAM.blob,speed:CAM.speed,trim:CAM.trim,filter:CAM.filter,cuts:CAM.cuts.length?CAM.cuts:null};camClose();CAM.then(v)}
   if(a==="novideo"){camClose();CAM.then({blob:null,speed:1})}
 });
 document.addEventListener("input",e=>{if(e.target.id!=="ob_handle")return;const h=e.target.value.trim().replace(/^@/,""),m=$("#ob_handle_msg");if(!m)return;
@@ -1114,9 +1116,17 @@ document.addEventListener("change",e=>{
     if(i===0)x=Math.min(x,t[1]-0.5);else x=Math.max(x,t[0]+0.5);t[i]=Math.max(0,Math.min(CAM.dur,x));CAM.trim=t;const v=$("#camPlay");if(v)v.currentTime=t[0];camRender()}
 });
 // Record button: hold to film and let go to pause, or tap to start and tap to pause. Pausing keeps the video; ✓ finishes it.
-function camPause(){if(CAM.phase!=="recording")return;try{CAM.rec.pause()}catch(e){}CAM.phase="paused";camRender()}
+// Each hold is a clip. The file keeps everything, deleted clips are skipped on playback.
+const camFileTime=()=>(CAM.acc+(CAM.t0?performance.now()-CAM.t0:0))/1000;
+function camClipStart(){CAM.t0=performance.now();CAM.clips.push([CAM.acc/1000,null])}
+function camClipEnd(){if(!CAM.t0)return;CAM.acc+=performance.now()-CAM.t0;CAM.t0=0;const c=CAM.clips[CAM.clips.length-1];if(c)c[1]=CAM.acc/1000}
+const camKept=()=>{const now=camFileTime();return Math.floor(CAM.clips.reduce((n,c)=>n+((c[1]??now)-c[0]),0)*4)/4};
+function camUndo(){if(CAM.phase!=="paused"||!CAM.clips.length)return;const c=CAM.clips.pop();
+  if(!CAM.clips.length){CAM.discard=true;try{CAM.rec.stop()}catch(e){CAM.discard=false;CAM.phase="ready";camRender()}return}
+  CAM.cuts.push([Math.round(c[0]*100)/100,Math.round(c[1]*100)/100]);CAM.secs=camKept();toast("Last clip deleted");camRender()}
+function camPause(){if(CAM.phase!=="recording")return;try{CAM.rec.pause()}catch(e){}camClipEnd();CAM.secs=camKept();CAM.phase="paused";camRender()}
 function camGo(){
-  if(CAM.phase==="paused"){try{CAM.rec.resume()}catch(e){}CAM.phase="recording";camRender();return}
+  if(CAM.phase==="paused"){try{CAM.rec.resume()}catch(e){}camClipStart();CAM.phase="recording";camRender();return}
   if(CAM.phase!=="ready")return;
   if(!CAM.timer)return camRecord();
   CAM.phase="countdown";CAM.count=3;camRender();const t=setInterval(()=>{CAM.count--;if(CAM.count===0){clearInterval(t);camRecord()}else camRender()},1000)}
@@ -1129,8 +1139,11 @@ document.addEventListener("contextmenu",e=>{if(e.target.closest?.("[data-cam-shu
 // Videos play at the speed they were filmed for, and only the trimmed part.
 document.addEventListener("loadedmetadata",e=>{const sp=+e.target.dataset?.speed;if(sp)e.target.playbackRate=sp;const s0=+e.target.dataset?.start;if(s0)e.target.currentTime=s0},true);
 document.addEventListener("play",e=>{const sp=+e.target.dataset?.speed;if(sp)e.target.playbackRate=sp},true);
-document.addEventListener("timeupdate",e=>{const v=e.target,a=+v.dataset?.start||0,b=+v.dataset?.end||0;if(b&&(v.currentTime>b||v.currentTime<a))v.currentTime=a},true);
-const vTrim=t=>t?`data-start="${t[0]}" data-end="${t[1]}"`:"";
+const camCutsAttr=c=>(c||[]).map(x=>x.join("-")).join(",");
+document.addEventListener("timeupdate",e=>{const v=e.target,a=+v.dataset?.start||0,b=+v.dataset?.end||0,t=v.currentTime;
+  if(b&&(t>b||t<a)){v.currentTime=a;return}
+  for(const c of (v.dataset?.cuts||"").split(",")){if(!c)continue;const[x,y]=c.split("-").map(Number);if(t>=x-0.05&&t<y){if(y>=(v.duration||1e9)-0.1||(b&&y>=b)){v.currentTime=a;if(!v.loop)v.pause()}else v.currentTime=y;return}}},true);
+const vTrim=(t,c)=>(t?`data-start="${t[0]}" data-end="${t[1]}" `:"")+(c&&c.length?`data-cuts="${camCutsAttr(c)}"`:"");
 const filmPost=()=>openCamera(v=>{if(v)writeSheet(v)},{post:true});
 
 function openSheet(html){$("#layer").innerHTML=`<div class="scrim" data-scrim><div class="sheet" role="dialog" aria-modal="true" style="position:relative">${html}</div></div>`;const f=$("#layer .sheet input, #layer .sheet button");f&&f.focus()}
@@ -1138,7 +1151,7 @@ function closeSheet(){$("#layer").innerHTML=""}
 function recipeSheet(id){
   const r=recipeById(id);if(!r)return;
   openSheet(`<div class="tile" style="${S.photos[r.id]?"min-height:380px":""}">${art(r)}${assets&&isOwn(r)?`<label class="btn sm" for="recipePhoto" style="position:absolute;left:16px;bottom:16px;z-index:2">${S.photos[r.id]?"Change photo":"Add a photo"}</label><input type="file" id="recipePhoto" data-id="${esc(r.id)}" accept="image/jpeg,image/png,image/webp" hidden>`:""}</div><button class="close" data-act="close" aria-label="Close">✕</button>
-   ${r.video?`<video class="rvideo" src="${esc(r.video)}" data-speed="${r.speed||1}" ${vTrim(r.trim)} ${vFilter(r.filter)} controls playsinline preload="metadata"></video>`:""}
+   ${r.video?`<video class="rvideo" src="${esc(r.video)}" data-speed="${r.speed||1}" ${vTrim(r.trim,r.cuts)} ${vFilter(r.filter)} controls playsinline preload="metadata"></video>`:""}
    ${isOwn(r)?`<div class="inner" style="padding-bottom:0"><div class="row"><button class="btn primary sm" data-act="film-for" data-id="${esc(r.id)}">${r.video?"Film a new video":"Film a cooking video"}</button><label class="btn sm">Upload one<input type="file" class="recipeVideo" data-id="${esc(r.id)}" accept="video/mp4,video/quicktime,video/webm" hidden></label></div></div>`:""}
    <div class="inner">
     <div><div class="meta"><span>${esc(r.cat)}</span><span>${r.min} min</span><span>${r.serv} serving${r.serv>1?"s":""}</span>${r.ai?"<span>Created with AI</span>":""}${r.by?`<span>by @${esc(r.by)}</span>`:""}</div><h2>${esc(r.title)}</h2>${r.caption?`<p style="margin:6px 0 0">${esc(r.caption)}</p>`:""}</div>
@@ -1246,7 +1259,7 @@ document.addEventListener("click",e=>{
   if(a==="settings")settingsSheet();
   if(a==="film-for"){const r=S.mine.find(x=>x.id===el.dataset.id);closeSheet();openCamera(v=>{if(!v?.blob){recipeSheet(r.id);return}
     toast("Saving video…");
-    storeVideo(r,v.blob).then(()=>{r.speed=v.speed;r.filter=v.filter!=="none"?v.filter:undefined;r.trim=v.trim||undefined;S.mine=[...S.mine];saveMine();if(r.shared)publishProfile();render();recipeSheet(r.id);toast("Video added")}).catch(()=>toast("That video couldn't be uploaded. Try a shorter one."))})}
+    storeVideo(r,v.blob).then(()=>{r.speed=v.speed;r.filter=v.filter!=="none"?v.filter:undefined;r.trim=v.trim||undefined;r.cuts=v.cuts||undefined;S.mine=[...S.mine];saveMine();if(r.shared)publishProfile();render();recipeSheet(r.id);toast("Video added")}).catch(()=>toast("That video couldn't be uploaded. Try a shorter one."))})}
   if(a==="edit-profile")editProfileSheet();
   if(a==="acct-page"){UI.acctPage=+el.dataset.page;const sl=$("#acctSlider");sl?.scrollTo({left:UI.acctPage*sl.clientWidth,behavior:"smooth"});document.querySelectorAll(".acct-tabs button").forEach((b,i)=>b.setAttribute("aria-selected",i===UI.acctPage))}
   if(a==="saved-board"){UI.savedBoard=el.dataset.id||null;const sec=$("#acctSlider section:nth-child(2)");if(sec)sec.innerHTML=savedList()}
@@ -1330,7 +1343,7 @@ document.addEventListener("submit",e=>{
   if(f==="local-profile"){const h=$("#lp_handle").value.trim().replace(/^@/,"");if(handleProblem(h)){toast(handleProblem(h));return}
     S.profile={...S.profile,handle:h,name:$("#lp_name").value.trim()||S.profile.name,bio:$("#lp_bio").value.trim(),...(UI.lpPhoto?{photo:UI.lpPhoto}:{})};UI.lpPhoto=null;saveProfile();closeSheet();render();toast("Profile saved");return}
   if(f==="write"){const lines=id=>$(id).value.split("\n").map(x=>x.trim()).filter(Boolean);
-    const r={id:"own-"+uid(),own:true,caption:$("#w_caption")?.value.trim()||undefined,speed:UI.wSpeed||1,trim:UI.wTrim||undefined,filter:UI.wFilter!=="none"?UI.wFilter:undefined,title:$("#w_title").value.trim(),cat:$("#w_cat").value,min:r0($("#w_min").value),serv:r0($("#w_serv").value)||1,kcal:r0($("#w_kcal").value),p:r0($("#w_p").value),c:r0($("#w_c").value),f:r0($("#w_f").value),ing:lines("#w_ing"),steps:lines("#w_steps"),tags:[]};
+    const r={id:"own-"+uid(),own:true,caption:$("#w_caption")?.value.trim()||undefined,speed:UI.wSpeed||1,trim:UI.wTrim||undefined,cuts:UI.wCuts||undefined,filter:UI.wFilter!=="none"?UI.wFilter:undefined,title:$("#w_title").value.trim(),cat:$("#w_cat").value,min:r0($("#w_min").value),serv:r0($("#w_serv").value)||1,kcal:r0($("#w_kcal").value),p:r0($("#w_p").value),c:r0($("#w_c").value),f:r0($("#w_f").value),ing:lines("#w_ing"),steps:lines("#w_steps"),tags:[]};
     if(r.kcal<400)r.tags.push("Under 400");if(r.p>=25)r.tags.push("High protein");r.hue=hashStr(r.title)%360;
     const file=$("#w_photo")?.files?.[0],post=!!$("#w_post")?.checked;if(post){r.shared=true;r.posted=Date.now()}
     const finish=()=>{S.mine=[r,...S.mine];saveMine();if(post)publishProfile();render();recipeSheet(r.id);toast(post?"Posted":"Recipe saved")};
