@@ -1,3 +1,8 @@
+<!doctype html>
+<html lang="en">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#E2CEB1">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <meta charset="utf-8">
 <title>Biteboard</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -423,6 +428,8 @@ body.cam-open{overflow:hidden}
 .cam-blocked{position:absolute;inset:0;background:var(--bg);color:var(--ink);display:grid;place-items:center;padding:24px}
 .cam-blocked-body{max-width:360px;display:grid;gap:12px;text-align:left}.cam-blocked-body h2{font-size:30px;letter-spacing:-.03em}.cam-blocked-body p{margin:0}
 .cam-blocked-actions{display:grid;gap:10px;margin-top:8px}.cam-blocked-actions>*{justify-content:center}
+/* Phones: 16px fields so iPhone Safari never zooms in, and nothing wider than the screen. */
+@media (max-width:760px){input,select,textarea{font-size:16px!important}html,body{overflow-x:hidden}}
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><mask id="biteM"><rect width="64" height="64" fill="#fff"/><circle cx="51" cy="12" r="11"/><circle cx="61" cy="27" r="8.5"/><circle cx="38" cy="3" r="8"/></mask><symbol id="biteLogo" viewBox="0 0 64 64"><g mask="url(#biteM)"><circle cx="32" cy="32" r="28" fill="currentColor"/></g></symbol></defs></svg>
