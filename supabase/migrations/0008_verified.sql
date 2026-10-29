@@ -16,3 +16,16 @@ create trigger profiles_keep_verified before insert or update on public.profiles
 
 -- The founder's account.
 update public.profiles set verified = true where lower(handle) = 'avivloya';
+
+-- @biteboard is the official account. Only a verified profile can use the name.
+create function public.reserved_handles() returns trigger language plpgsql as $$
+begin
+  if lower(new.handle) in ('biteboard') and not new.verified then
+    raise exception 'That username is saved for the official Biteboard account.' using errcode = 'P0001';
+  end if;
+  return new;
+end $$;
+
+-- Runs after profiles_keep_verified (triggers run in name order), so a user can't sneak verified = true past it.
+create trigger profiles_reserved_handles before insert or update on public.profiles
+  for each row execute function public.reserved_handles();

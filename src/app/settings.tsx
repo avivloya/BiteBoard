@@ -94,6 +94,10 @@ export default function Settings() {
         }} />}
       </Section>
 
+      <Section title="Verification">
+        <Item title="Verification rules" sub={me?.verified ? 'Your account is verified' : 'Who can get the badge and how'} onPress={() => router.push('/verification')} />
+      </Section>
+
       <Section title="Notifications">
         {REMINDERS.map((it) => (
           <Item key={it.key} title={it.title} sub={it.sub}

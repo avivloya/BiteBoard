@@ -37,6 +37,7 @@ export const HANDLE_RULE = /^[A-Za-z0-9_.]{3,20}$/;
 /** A reason the username can't be used, or '' if it's free. Usernames ignore capitals, so "Aviv" and "aviv" clash. */
 export async function handleProblem(handle: string, userId?: string | null) {
   if (!HANDLE_RULE.test(handle)) return 'Use 3 to 20 letters, numbers, dots or underscores.';
+  if (handle.toLowerCase() === 'biteboard') return ''; // reserved; the server only lets the verified official account take it
   if (!supabase) return '';
   const { data } = await supabase.from('profiles').select('id').ilike('handle', handle.replace(/[%_\\]/g, (c) => `\\${c}`)).limit(1);
   return data?.length && data[0].id !== userId ? `@${handle} is taken. Try another one.` : '';

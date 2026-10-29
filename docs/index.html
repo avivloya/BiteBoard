@@ -533,6 +533,7 @@ body.cam-open{overflow:hidden}
 .ed-vol{display:grid;grid-template-columns:84px 1fr 34px;align-items:center;gap:10px;font-size:13px;font-weight:700;color:#fff}.ed-vol input{accent-color:var(--bg)}.ed-vol b{text-align:right;font-variant-numeric:tabular-nums}.ed-vol.off{opacity:.45}
 .ed-colors{gap:10px}.ed-color{width:28px;height:28px;border-radius:50%;border:2px solid rgba(255,255,255,.5);cursor:pointer;padding:0}.ed-color.on{border-color:#fff;box-shadow:0 0 0 2px var(--accent)}
 .ed-cover{grid-template-columns:72px 1fr;align-items:center}.ed-cover img{width:72px;height:128px;object-fit:cover;border-radius:10px;background:#2a1d13}.ed-cover input{width:100%;accent-color:var(--bg)}
+.vr{display:grid;gap:10px}.vr .label{margin-top:8px}.vr-list{margin:0;padding-left:20px;display:grid;gap:6px}.vr-you{display:flex;align-items:center;gap:6px;padding:10px 12px;border-radius:12px;background:var(--surface,rgba(255,255,255,.5))}
 .vbadge{display:inline-block;vertical-align:-.12em;margin-left:.25em;flex:none}
 .cam-shutter{touch-action:none;-webkit-touch-callout:none}
 .cam-clips{display:flex;gap:10px;max-width:100%;overflow-x:auto;padding:8px 4px 2px;scrollbar-width:none}
@@ -712,7 +713,7 @@ const saveProfile=()=>persist("profile",{...S.profile});
 const saveFriends=()=>persist("friends",{ids:S.friends});
 // Usernames are unique, ignoring capitals: "Aviv" and "aviv" count as the same name.
 function handleTaken(h){const x=h.toLowerCase();return Object.entries(S.people).some(([id,pp])=>id!==uidUser&&pp?.handle?.toLowerCase()===x)}
-function handleProblem(h){if(!/^[A-Za-z0-9_.]{3,20}$/.test(h))return "Use 3 to 20 letters, numbers, dots or underscores.";if(handleTaken(h))return `@${h} is taken. Try another one.`;return ""}
+function handleProblem(h){if(!/^[A-Za-z0-9_.]{3,20}$/.test(h))return "Use 3 to 20 letters, numbers, dots or underscores.";if(handleTaken(h))return `@${h} is taken. Try another one.`;if(S.mode==="db"&&RESERVED_HANDLES.has(h.toLowerCase())&&!VERIFIED_IDS.has(uidUser))return "That username is saved for the official Biteboard account.";return ""}
 function publishProfile(){
   const me=S.people[uidUser];if(S.mode!=="db"||!me)return;
   const body={handle:me.handle,name:me.name,bio:me.bio||"",photo:me.photo||null,following:S.friends,streak:streakInfo().n,recipes:S.mine.filter(r=>r.shared).map(r=>({...r,photo:S.photos[r.id]||r.photo||null,shared:undefined})),updated:Date.now()};
@@ -1226,6 +1227,25 @@ function savedList(){
     ${b?`<div class="row" style="margin-top:12px"><button class="btn ghost sm" data-board="${esc(b)}">Open board</button></div>`:""}`;
 }
 // Settings: everything an account needs, grouped like a phone's own Settings.
+// The verification rules, the same as the Biteboard verification rules doc.
+const VERIFY_RULES={
+  means:"The badge means Biteboard checked that the account really belongs to the person or brand it names. It isn't a reward for being popular, and it doesn't mean Biteboard approves every recipe or health claim the account posts.",
+  need:["The account is a real person, a registered business or a real brand. No fan, parody or joke accounts.","Only one account per person or brand.","A profile picture, a name, a bio and at least 5 public posts.","Posted at least once in the last 30 days.","The owner is 18 or older.","2-step sign-in is on, and no rule strikes in the last 6 months."],
+  reasons:["Well-known food creator with 10,000 or more followers on Biteboard or another app","Registered dietitian, nutritionist or doctor, with a license number we can check","Working chef, restaurant or cooking school","Food brand or company posting official recipes","Founders and staff of Biteboard"],
+  apply:["Pick your reason and add proof: a photo ID, a business document, a license number, or links to your other accounts.","Biteboard reviews it within 7 days and answers in your Inbox.","If you're turned down, you can apply again after 30 days.","Your proof is only used for the check and is deleted within 30 days. Nobody can buy the badge, and Biteboard will never ask for your password or a payment."],
+  keep:["No made-up calories or macros.","No unsafe weight-loss advice, like eating under 1,200 kcal a day, fasting for days, or diet pills.","Label paid posts and free products as an ad or a partnership.","No pretending to be someone else, and no selling or lending the account.","Changing your name or username sends the badge back for a new review."],
+  lose:["One serious break (scams, pretending to be someone, dangerous health advice): the badge is removed right away.","Two strikes for other rules in 6 months: the badge is removed.","Inactive for 6 months: the badge is removed, and you can apply again any time.","Removed for breaking a rule: you can apply again after 6 months."]};
+function verifySheet(){const R=VERIFY_RULES,ul=a=>`<ul class="vr-list">${a.map(x=>`<li>${x}</li>`).join("")}</ul>`;
+  openSheet(`<div class="inner vr"><button class="close" data-act="close" aria-label="Close">✕</button><h2 style="font-size:24px">Verification rules</h2>
+    <p style="margin:0">${R.means}</p>
+    ${isVerified(uidUser)?`<div class="vr-you">${vb(uidUser,null,18)} <b>Your account is verified.</b></div>`:""}
+    <div class="label">You need all of these</div>${ul(R.need)}
+    <div class="label">And one of these reasons</div>${ul(R.reasons)}
+    <div class="label">How to apply</div>${ul(R.apply)}
+    <div class="label">Keeping the badge</div>${ul(R.keep)}
+    <div class="label">When it's removed</div>${ul(R.lose)}
+    <p class="note">Think it was removed by mistake? Reply to the Inbox message within 30 days.</p>
+    ${isVerified(uidUser)?"":`<button class="btn primary" data-act="soon">Request verification</button>`}</div>`)}
 function settingsSheet(){
   const me=S.mode==="db"?S.people[uidUser]:null,imp=S.profile?.units==="imperial";
   const item=(act,title,sub="",cls="")=>`<button class="set-item ${cls}" data-act="${act}"><span><b>${title}</b>${sub?`<small class="note">${sub}</small>`:""}</span><span class="note">›</span></button>`;
@@ -1237,6 +1257,7 @@ function settingsSheet(){
       <div class="set-item set-lang"><span><b>Language</b></span>${langPicker()}</div>
       <div class="set-item"><span><b>Units</b></span><span class="seg"><button data-act="units" data-u="metric" aria-pressed="${!imp}">kg, cm</button><button data-act="units" data-u="imperial" aria-pressed="${imp}">lb, ft</button></span></div>
     </div></div>
+    <div class="set-group"><div class="label">Verification</div><div class="set-card">${item("verify-rules","Verification rules",isVerified(uidUser)?"Your account is verified":"Who can get the badge and how")}</div></div>
     <div class="set-group"><div class="label">Notifications</div><div class="set-card"><div class="set-item"><span><b>Reminders</b><small class="note">Meal, streak and weigh-in reminders are in the phone app.</small></span></div></div></div>
     <div class="set-group"><div class="label">Privacy</div><div class="set-card"><div class="set-item"><span><small class="note" style="font-size:14px">Your recipe page, posts, videos and who you follow are public. Your weight, food log and goals are private to you.</small></span></div>
       ${item("soon","Privacy policy")}${item("soon","Terms of use")}</div></div>
@@ -1314,7 +1335,9 @@ function viewFriends(){
     </section></div>`;
 }
 // Verified accounts. Only Biteboard can add someone here (see the verification rules), so it can't be faked by editing a profile.
-const VERIFIED_IDS=new Set(["u_t2cf5vLeZ8JgmrSy_KFGBA"]),VERIFIED_HANDLES=new Set(["avivloya"]);
+const VERIFIED_IDS=new Set(["u_t2cf5vLeZ8JgmrSy_KFGBA"]),VERIFIED_HANDLES=new Set(["avivloya","biteboard"]);
+// @biteboard is the official account: only an already verified account can take the name.
+const RESERVED_HANDLES=new Set(["biteboard"]);
 const isVerified=(id,h)=>VERIFIED_IDS.has(id)||(S.mode!=="db"&&id===uidUser&&VERIFIED_HANDLES.has((h||S.profile?.handle||"").toLowerCase()));
 const vb=(id,h,sz=14)=>isVerified(id,h)?`<svg class="vbadge" width="${sz}" height="${sz}" viewBox="0 0 24 24" role="img" aria-label="Verified"><title>Verified</title><path fill="var(--accent)" d="M12 1.5l2.6 2 3.2-.4 1.2 3 3 1.2-.4 3.2 2 2.6-2 2.6.4 3.2-3 1.2-1.2 3-3.2-.4-2.6 2-2.6-2-3.2.4-1.2-3-3-1.2.4-3.2-2-2.6 2-2.6-.4-3.2 3-1.2 1.2-3 3.2.4z"/><path d="m7.5 12.3 3 3 6-6.3" fill="none" stroke="var(--accent-ink)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`:"";
 function personSheet(id){
@@ -1782,6 +1805,7 @@ document.addEventListener("click",e=>{
   if(a==="acct-page"){UI.acctPage=+el.dataset.page;const sl=$("#acctSlider");sl?.scrollTo({left:UI.acctPage*sl.clientWidth,behavior:"smooth"});document.querySelectorAll(".acct-tabs button").forEach((b,i)=>b.setAttribute("aria-selected",i===UI.acctPage))}
   if(a==="saved-board"){UI.savedBoard=el.dataset.id||null;const sec=$("#acctSlider section:nth-child(2)");if(sec)sec.innerHTML=savedList()}
   if(a==="units"){S.profile={...S.profile,units:el.dataset.u};saveProfile();settingsSheet();render()}
+  if(a==="verify-rules"){verifySheet();return}
   if(a==="soon")toast("This will be added before Biteboard is in the App Store.");
   if(a==="share-app"){const t="I'm using Biteboard to cook healthy and track calories.";if(navigator.share)navigator.share({text:t}).catch(()=>{});else{navigator.clipboard?.writeText(t);toast("Copied to share")}}
   if(a==="clear-data")openSheet(`<div class="inner"><h2 style="font-size:22px">Clear your data?</h2><p class="note">Your food log, weight, boards and recipes are erased. This can't be undone.</p><div class="row"><button class="btn" data-act="close">Cancel</button><button class="btn primary" data-act="clear-data-yes">Clear</button></div></div>`);
