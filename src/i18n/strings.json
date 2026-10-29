@@ -667,7 +667,10 @@
   "You're on the Verified plan. Your badge turns on once your ID is checked.": "יש לך מנוי Verified. התג יופעל אחרי שהתעודה שלך תיבדק.",
   "You're subscribed": "המנוי הופעל",
   "Next we'll check your photo ID. You'll hear back in your Inbox within {n} days.": "עכשיו נבדוק את התעודה המזהה שלך. התשובה תגיע לתיבת ההודעות תוך {n} ימים.",
-  "That username is saved for the official Biteboard account.": "שם המשתמש הזה שמור לחשבון הרשמי של Biteboard."
+  "That username is saved for the official Biteboard account.": "שם המשתמש הזה שמור לחשבון הרשמי של Biteboard.",
+  "Followers": "עוקבים",
+  "Follower": "עוקב",
+  "Likes": "לייקים"
  },
  "zh": {
   "({n} weeks).": "（{n} 周）。",
@@ -1337,7 +1340,10 @@
   "You're on the Verified plan. Your badge turns on once your ID is checked.": "你已订阅认证方案。证件核验通过后标志就会开启。",
   "You're subscribed": "订阅成功",
   "Next we'll check your photo ID. You'll hear back in your Inbox within {n} days.": "接下来我们会核验你的带照片证件，{n} 天内会在收件箱回复你。",
-  "That username is saved for the official Biteboard account.": "该用户名为 Biteboard 官方账号保留。"
+  "That username is saved for the official Biteboard account.": "该用户名为 Biteboard 官方账号保留。",
+  "Followers": "粉丝",
+  "Follower": "粉丝",
+  "Likes": "获赞"
  },
  "es": {
   "({n} weeks).": "({n} semanas).",
@@ -2007,7 +2013,10 @@
   "You're on the Verified plan. Your badge turns on once your ID is checked.": "Tienes el plan Verified. Tu insignia se activa cuando revisemos tu documento.",
   "You're subscribed": "Ya estás suscrito",
   "Next we'll check your photo ID. You'll hear back in your Inbox within {n} days.": "Ahora revisaremos tu documento con foto. Te responderemos en tu bandeja de entrada en {n} días.",
-  "That username is saved for the official Biteboard account.": "Ese nombre de usuario está reservado para la cuenta oficial de Biteboard."
+  "That username is saved for the official Biteboard account.": "Ese nombre de usuario está reservado para la cuenta oficial de Biteboard.",
+  "Followers": "Seguidores",
+  "Follower": "Seguidor",
+  "Likes": "Me gusta"
  },
  "ru": {
   "({n} weeks).": "({n} нед.).",
@@ -2677,6 +2686,9 @@
   "You're on the Verified plan. Your badge turns on once your ID is checked.": "У вас подписка Verified. Значок включится после проверки документа.",
   "You're subscribed": "Подписка оформлена",
   "Next we'll check your photo ID. You'll hear back in your Inbox within {n} days.": "Теперь мы проверим ваш документ с фото. Ответ придёт во «Входящие» в течение {n} дней.",
-  "That username is saved for the official Biteboard account.": "Это имя пользователя зарезервировано для официального аккаунта Biteboard."
+  "That username is saved for the official Biteboard account.": "Это имя пользователя зарезервировано для официального аккаунта Biteboard.",
+  "Followers": "Подписчики",
+  "Follower": "Подписчик",
+  "Likes": "Лайки"
  }
 }

@@ -31,15 +31,27 @@ export function Avatar({ p, size = 44 }: { p: { name?: string; handle?: string; 
 /** "12 followers · 3 following", refetched when your own follow list changes. */
 export function FollowCounts({ id }: { id: string }) {
   const mine = useSocial((s) => s.friendIds);
-  const [c, setC] = useState<{ followers: number; following: number } | null>(null);
+  const [c, setC] = useState<{ followers: number; following: number; likes: number } | null>(null);
   useEffect(() => { followCounts(id).then(setC).catch(() => {}); }, [id, mine]);
   if (!c) return null;
+  // Profile numbers, TikTok style: Following, Followers, Likes.
+  const stat = (n: number, label: string) => (
+    <View style={{ alignItems: 'center', minWidth: 64 }}>
+      <T style={{ fontSize: 19, fontWeight: '800', color: Colors.ink }}>{short(n)}</T>
+      <T variant="muted" style={{ fontSize: 12.5 }}>{label}</T>
+    </View>
+  );
   return (
-    <T variant="muted">
-      <T style={{ fontWeight: '700' }}>{c.followers}</T> follower{c.followers === 1 ? '' : 's'} · <T style={{ fontWeight: '700' }}>{c.following}</T> following
-    </T>
+    <View style={{ flexDirection: 'row', gap: 14, marginVertical: 4 }}>
+      {stat(c.following, 'Following')}
+      {stat(c.followers, c.followers === 1 ? 'Follower' : 'Followers')}
+      {stat(c.likes, c.likes === 1 ? 'Like' : 'Likes')}
+    </View>
   );
 }
+
+/** 12,400 → 12K, 1,250,000 → 1.3M. */
+const short = (n: number) => (n >= 1e6 ? `${(n / 1e6).toFixed(n < 1e7 ? 1 : 0).replace(/\.0$/, '')}M` : n >= 1e4 ? `${Math.floor(n / 1e3)}K` : n.toLocaleString('en-US'));
 
 export async function refreshSocial(userId: string) {
   const [me, ids] = await Promise.all([myProfile(userId), friendIds(userId)]);

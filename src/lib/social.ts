@@ -77,8 +77,10 @@ export async function setFriend(userId: string, friendId: string, on: boolean) {
 /** How many people follow this person, and how many they follow. */
 export async function followCounts(userId: string) {
   const t = () => db().from('friendships').select('user_id', { count: 'exact', head: true });
-  const [a, b] = await Promise.all([t().eq('friend_id', userId), t().eq('user_id', userId)]);
-  return { followers: a.count ?? 0, following: b.count ?? 0 };
+  // Likes count every like on this person's posts (post keys start with their id).
+  const likes = db().from('post_likes').select('post_id', { count: 'exact', head: true }).like('post_id', `${userId}:%`);
+  const [a, b, c] = await Promise.all([t().eq('friend_id', userId), t().eq('user_id', userId), likes]);
+  return { followers: a.count ?? 0, following: b.count ?? 0, likes: c.count ?? 0 };
 }
 
 export async function profilesByIds(ids: string[]) {
