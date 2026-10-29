@@ -23,6 +23,8 @@ export type Recipe = {
   trim?: [number, number];
   /** Deleted clips: parts of the file skipped on playback. */
   cuts?: [number, number][];
+  /** Filmed with Mirror on (website); the app saves mirrored video itself. */
+  mirror?: boolean;
   /** look picked in the camera: beauty, warm, bright */
   filter?: 'none' | 'beauty' | 'warm' | 'bright' | 'mono';
   /** short text shown with the post, like a TikTok caption */

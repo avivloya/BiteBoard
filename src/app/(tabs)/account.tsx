@@ -8,7 +8,7 @@ import { Row, Screen } from '@/components/screen';
 import { Avatar, FollowCounts, refreshSocial } from '@/components/social';
 import { Button, Chip, Field, Panel, T } from '@/components/ui';
 import { Colors, Radius } from '@/constants/theme';
-import { ensureSession, saveProfile, socialConfigured } from '@/lib/social';
+import { conversations, ensureSession, saveProfile, socialConfigured } from '@/lib/social';
 import { startPost } from '@/lib/recorder';
 import { useSocial } from '@/lib/social-store';
 import { findRecipe, useStore } from '@/lib/store';
@@ -19,7 +19,7 @@ type Page = 0 | 1;
 
 /** Your account: picture, name and bio, then Posts and Saved, which slide sideways. */
 export default function Account() {
-  const { userId, me } = useSocial();
+  const { userId, me, unread } = useSocial();
   const profile = useStore((s) => s.profile);
   const mine = useStore((s) => s.mine);
   const [error, setError] = useState('');
@@ -31,7 +31,11 @@ export default function Account() {
 
   useFocusEffect(useCallback(() => {
     if (!socialConfigured) return;
-    ensureSession().then(refreshSocial).catch((e) => setError(e.message)).finally(() => setLoading(false));
+    ensureSession().then(async (id) => {
+      await refreshSocial(id);
+      const cs = await conversations(id).catch(() => []);
+      useSocial.getState().set({ unread: cs.reduce((n, c) => n + c.unread, 0) });
+    }).catch((e) => setError(e.message)).finally(() => setLoading(false));
   }, []));
 
   const go = (p: Page) => { setPage(p); pager.current?.scrollTo({ x: p * width, animated: true }); };
@@ -43,7 +47,15 @@ export default function Account() {
 
   return (
     <Screen>
-      <Row style={{ justifyContent: 'flex-end' }}>
+      <Row style={{ justifyContent: me ? 'space-between' : 'flex-end' }}>
+        {me && (
+          <Pressable onPress={() => router.push('/inbox')} accessibilityRole="button" accessibilityLabel={unread ? `Inbox, ${unread} new` : 'Inbox'} hitSlop={12}>
+            <Svg width={26} height={26} viewBox="0 0 24 24" fill="none" stroke={Colors.ink} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+              <Path d="M4 13l2.5-8h11L20 13v6H4z" /><Path d="M4 13h4.5l1 2h5l1-2H20" />
+            </Svg>
+            {unread > 0 && <View style={styles.badge}><T style={{ color: '#fff', fontSize: 11, fontWeight: '800' }}>{unread}</T></View>}
+          </Pressable>
+        )}
         <Pressable onPress={() => router.push('/settings')} accessibilityRole="button" accessibilityLabel="Settings" hitSlop={12}>
           <Svg width={26} height={26} viewBox="0 0 24 24" fill="none" stroke={Colors.ink} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
             <Circle cx={12} cy={12} r={3} />
@@ -149,6 +161,7 @@ function Saved() {
 
 const styles = StyleSheet.create({
   camera: { position: 'absolute', right: 0, bottom: 0, width: 28, height: 28, borderRadius: 14, backgroundColor: Colors.ink, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: Colors.bg },
+  badge: { position: 'absolute', top: -4, right: -8, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: '#E0533F', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
   tile: { width: '32.6%', aspectRatio: 3 / 4, backgroundColor: Colors.tile },
   mark: { position: 'absolute', left: 6, bottom: 6, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 999, backgroundColor: 'rgba(0,0,0,0.45)' },
 });

@@ -155,3 +155,99 @@ export async function deleteAccount(userId: string) {
   if (rpcError) throw new Error(rpcError.message);
   await client.auth.signOut();
 }
+
+// ---------- likes, comments and messages ----------
+
+/** A post is named "{owner id}:{recipe id}", the same way the website names it. */
+export const postKey = (r: Pick<Recipe, 'id' | 'byId'>, userId: string | null) => `${r.byId ?? userId ?? 'me'}:${r.id}`;
+
+/** Like counts for these posts, and which of them you liked. */
+export async function likesFor(keys: string[], userId: string) {
+  if (!keys.length) return { counts: {} as Record<string, number>, mine: new Set<string>() };
+  const { data } = await db().from('post_likes').select('post_id, user_id').in('post_id', keys);
+  const counts: Record<string, number> = {};
+  const mine = new Set<string>();
+  for (const l of data ?? []) {
+    counts[l.post_id] = (counts[l.post_id] ?? 0) + 1;
+    if (l.user_id === userId) mine.add(l.post_id);
+  }
+  return { counts, mine };
+}
+
+export async function setLike(key: string, userId: string, on: boolean) {
+  const t = db().from('post_likes');
+  const { error } = on ? await t.insert({ post_id: key, user_id: userId }) : await t.delete().eq('post_id', key).eq('user_id', userId);
+  if (error && error.code !== '23505') throw new Error(error.message);
+}
+
+export type Comment = { id: string; post_id: string; user_id: string; body: string; created_at: string; author?: PublicProfile };
+
+export async function commentCounts(keys: string[]) {
+  if (!keys.length) return {} as Record<string, number>;
+  const { data } = await db().from('post_comments').select('post_id').in('post_id', keys);
+  const counts: Record<string, number> = {};
+  for (const c of data ?? []) counts[c.post_id] = (counts[c.post_id] ?? 0) + 1;
+  return counts;
+}
+
+export async function commentsOn(key: string) {
+  const { data, error } = await db().from('post_comments').select('id, post_id, user_id, body, created_at').eq('post_id', key).order('created_at').limit(300);
+  if (error) throw new Error(error.message);
+  const list = (data ?? []) as Comment[];
+  const people = Object.fromEntries((await profilesByIds([...new Set(list.map((c) => c.user_id))])).map((p) => [p.id, p]));
+  return list.map((c) => ({ ...c, author: people[c.user_id] }));
+}
+
+export async function addComment(key: string, userId: string, body: string) {
+  const { error } = await db().from('post_comments').insert({ post_id: key, user_id: userId, body: body.slice(0, 300) });
+  if (error) throw new Error(error.message);
+}
+
+export async function deleteComment(id: string) {
+  const { error } = await db().from('post_comments').delete().eq('id', id);
+  if (error) throw new Error(error.message);
+}
+
+/** What travels with a shared video, so the chat can show and play it. */
+export type SharedPost = Pick<Recipe, 'id' | 'byId' | 'by' | 'title' | 'caption' | 'video' | 'speed' | 'trim' | 'cuts' | 'filter' | 'mirror'>;
+export type Message = { id: string; sender: string; recipient: string; body: string; post: SharedPost | null; created_at: string; read_at: string | null };
+
+export const sharedPost = (r: Recipe): SharedPost => ({ id: r.id, byId: r.byId, by: r.by, title: r.title, caption: r.caption, video: r.video, speed: r.speed, trim: r.trim, cuts: r.cuts, filter: r.filter, mirror: r.mirror });
+
+export async function sendMessage(userId: string, to: string, body: string, post?: SharedPost) {
+  const { error } = await db().from('messages').insert({ sender: userId, recipient: to, body: body.slice(0, 1000), post: post ?? null });
+  if (error) throw new Error(error.message);
+}
+
+/** Your latest message with each person, newest first, with how many of theirs you haven't read. */
+export async function conversations(userId: string) {
+  const { data, error } = await db().from('messages').select('*').or(`sender.eq.${userId},recipient.eq.${userId}`).order('created_at', { ascending: false }).limit(500);
+  if (error) throw new Error(error.message);
+  const byPerson = new Map<string, { other: string; last: Message; unread: number }>();
+  for (const m of (data ?? []) as Message[]) {
+    const other = m.sender === userId ? m.recipient : m.sender;
+    const c = byPerson.get(other) ?? { other, last: m, unread: 0 };
+    if (m.recipient === userId && !m.read_at) c.unread += 1;
+    byPerson.set(other, c);
+  }
+  return [...byPerson.values()];
+}
+
+export async function chatWith(userId: string, other: string) {
+  const { data, error } = await db().from('messages').select('*')
+    .or(`and(sender.eq.${userId},recipient.eq.${other}),and(sender.eq.${other},recipient.eq.${userId})`).order('created_at').limit(500);
+  if (error) throw new Error(error.message);
+  return (data ?? []) as Message[];
+}
+
+export async function markRead(other: string) {
+  await db().rpc('mark_read', { other });
+}
+
+/** Calls back whenever a message to or from you arrives. Returns a function that stops listening. */
+export function onMessages(userId: string, cb: () => void) {
+  const ch = db().channel(`messages-${userId}`)
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `recipient=eq.${userId}` }, cb)
+    .subscribe();
+  return () => { db().removeChannel(ch); };
+}

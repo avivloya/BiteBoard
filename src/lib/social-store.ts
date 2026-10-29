@@ -12,6 +12,10 @@ type SocialState = {
   feed: Recipe[];
   /** newest posts from everyone, for Explore */
   forYou: Recipe[];
+  /** the videos the full-screen player swipes through, and where it starts */
+  watch: { posts: Recipe[]; index: number };
+  /** messages you haven't read yet, for the Inbox badge */
+  unread: number;
   set: (patch: Partial<Omit<SocialState, 'set'>>) => void;
 };
 
@@ -22,5 +26,7 @@ export const useSocial = create<SocialState>()((set) => ({
   people: {},
   feed: [],
   forYou: [],
+  watch: { posts: [], index: 0 },
+  unread: 0,
   set: (patch) => set(patch),
 }));

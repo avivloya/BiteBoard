@@ -23,6 +23,9 @@ export function Reels({ posts }: { posts: Recipe[] }) {
     <View style={{ height, paddingBottom: 12 }}>
       <View style={{ flex: 1, borderRadius: Radius.lg, overflow: 'hidden', backgroundColor: '#000' }}>
         <RecipeVideo uri={r.video!} autoPlay active={r.id === current} muted={muted} controls={false} speed={r.speed} trim={r.trim} cuts={r.cuts} filter={r.filter} style={{ flex: 1 }} />
+        {/* Tap the video to watch full screen with likes, comments and sharing. */}
+        <Pressable style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} accessibilityRole="button" accessibilityLabel="Watch full screen"
+          onPress={() => { useSocial.getState().set({ watch: { posts, index: posts.findIndex((p) => p.id === r.id) } }); router.push('/watch'); }} />
         <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, gap: 6, backgroundColor: 'rgba(0,0,0,0.35)' }}>
           {r.byId && (
             <Pressable onPress={() => router.push({ pathname: '/person/[id]', params: { id: r.byId! } })} accessibilityRole="link">
@@ -42,7 +45,7 @@ export function Reels({ posts }: { posts: Recipe[] }) {
         </View>
       </View>
     </View>
-  ), [height, current, muted, people]);
+  ), [height, current, muted, people, posts]);
 
   return (
     <View style={{ flex: 1 }} onLayout={(e) => setHeight(e.nativeEvent.layout.height)}>
