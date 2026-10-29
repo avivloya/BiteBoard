@@ -53,13 +53,13 @@ export default function RecipeScreen() {
 
   // Same for the cooking video.
   const changeVideo = async (how: 'film' | 'upload' | null) => {
-    const uri = how === 'film' ? await filmVideo() : how === 'upload' ? await pickRecipeVideo() : null;
-    const add = !!how;
-    if (add && !uri) return;
+    const picked = how === 'film' ? await filmVideo() : how === 'upload' ? await pickRecipeVideo().then((uri) => (uri ? { uri, speed: 1 } : null)) : null;
+    if (how && !picked) return;
     deleteRecipePhoto(recipe.video ?? undefined);
-    updateRecipe(recipe.id, { video: uri });
+    const patch = { video: picked?.uri ?? null, speed: picked?.speed ?? 1 };
+    updateRecipe(recipe.id, patch);
     if (recipe.shared && userId) {
-      await setShared(userId, { ...recipe, video: uri }, true, useStore.getState().photos[recipe.id]).catch((e) => Alert.alert('Could not update your post', e instanceof Error ? e.message : ''));
+      await setShared(userId, { ...recipe, ...patch }, true, useStore.getState().photos[recipe.id]).catch((e) => Alert.alert('Could not update your post', e instanceof Error ? e.message : ''));
     }
   };
 
@@ -74,7 +74,7 @@ export default function RecipeScreen() {
           </Row>
         )}
       </View>
-      {recipe.video && <RecipeVideo uri={recipe.video} style={{ height: 420 }} />}
+      {recipe.video && <RecipeVideo uri={recipe.video} speed={recipe.speed} style={{ height: 420 }} />}
       <View style={{ padding: 20, gap: 18 }}>
         <View style={{ gap: 4 }}>
           <T variant="muted">{recipe.cat} · {recipe.min} min · {recipe.serv} serving{recipe.serv > 1 ? 's' : ''}{recipe.ai ? ' · Created with AI' : ''}</T>
@@ -84,6 +84,7 @@ export default function RecipeScreen() {
             </Pressable>
           )}
           <T variant="title" style={{ fontSize: 30 }}>{recipe.title}</T>
+          {!!recipe.caption && <T>{recipe.caption}</T>}
         </View>
 
         <Row style={{ flexWrap: 'nowrap' }}>

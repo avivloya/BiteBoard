@@ -17,6 +17,10 @@ export type Recipe = {
   image?: string | null;
   /** cooking video: a file on this phone for your own recipes, a web link for posts */
   video?: string | null;
+  /** playback speed the video was filmed for: 0.5 slow motion, 2 fast motion */
+  speed?: number;
+  /** short text shown with the post, like a TikTok caption */
+  caption?: string;
   /** created with AI */
   ai?: boolean;
   /** written by the user */
@@ -44,6 +48,7 @@ export type Profile = {
   activity: number;
   pace: number;
   units: 'metric' | 'imperial';
+  bio?: string;
 };
 
 export type Targets = { kcal: number; p: number; c: number; f: number };

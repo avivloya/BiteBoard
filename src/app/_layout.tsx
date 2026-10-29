@@ -45,6 +45,7 @@ export default function RootLayout() {
         <Stack.Screen name="people" options={sheet} />
         <Stack.Screen name="weight" options={sheet} />
         <Stack.Screen name="settings" options={sheet} />
+        <Stack.Screen name="edit-profile" options={sheet} />
         <Stack.Screen name="pro" options={sheet} />
         <Stack.Screen name="record-video" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="boards" options={{ headerShown: true, title: '', headerShadowVisible: false, headerStyle: { backgroundColor: Colors.bg }, headerTintColor: Colors.ink }} />

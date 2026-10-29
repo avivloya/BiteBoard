@@ -3,13 +3,17 @@ import { useEffect } from 'react';
 import type { ViewStyle } from 'react-native';
 
 /** A cooking video. With `autoPlay` it plays muted on a loop, like a reel; `active` pauses it when scrolled away. */
-export function RecipeVideo({ uri, style, autoPlay = false, active = true, muted = false, controls = true }: {
-  uri: string; style?: ViewStyle; autoPlay?: boolean; active?: boolean; muted?: boolean; controls?: boolean;
+export function RecipeVideo({ uri, style, autoPlay = false, active = true, muted = false, controls = true, speed = 1 }: {
+  uri: string; style?: ViewStyle; autoPlay?: boolean; active?: boolean; muted?: boolean; controls?: boolean; speed?: number;
 }) {
   const player = useVideoPlayer(uri, (p) => {
     p.loop = true;
     p.muted = muted;
+    p.playbackRate = speed;
+    p.preservesPitch = false;
   });
+
+  useEffect(() => { player.playbackRate = speed; }, [player, speed]);
 
   useEffect(() => { player.muted = muted; }, [player, muted]);
   useEffect(() => {

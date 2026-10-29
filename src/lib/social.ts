@@ -132,3 +132,16 @@ export async function setShared(userId: string, recipe: Recipe, on: boolean, loc
   if (error) throw new Error(error.message);
   return image;
 }
+
+/** Deletes your profile, posts, follows, uploaded photos and videos, and the sign-in itself. */
+export async function deleteAccount(userId: string) {
+  const client = db();
+  const { data: files } = await client.storage.from(BUCKET).list(userId, { limit: 1000 });
+  if (files?.length) await client.storage.from(BUCKET).remove(files.map((f) => `${userId}/${f.name}`));
+  // Deleting the profile also removes its posts and follows (on delete cascade).
+  const { error } = await client.from('profiles').delete().eq('id', userId);
+  if (error) throw new Error(error.message);
+  const { error: rpcError } = await client.rpc('delete_my_account');
+  if (rpcError) throw new Error(rpcError.message);
+  await client.auth.signOut();
+}

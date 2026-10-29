@@ -11,6 +11,7 @@ import { dayKey, guessMeal } from '@/lib/dates';
 import { ensureSession, forYouPosts, socialConfigured } from '@/lib/social';
 import { useSocial } from '@/lib/social-store';
 import { totals, useStore } from '@/lib/store';
+import { startPost } from '@/lib/recorder';
 import { streakInfo } from '@/lib/streak';
 
 /** Home: a calm overview. Calories left today, two shortcuts, and a few ideas. */
@@ -60,7 +61,7 @@ export default function Home() {
 
       <Row style={{ flexWrap: 'nowrap' }}>
         <Button title="Snap a meal" kind="primary" style={{ flex: 1 }} onPress={() => router.push('/snap')} />
-        <Button title="Post a recipe" style={{ flex: 1 }} onPress={() => router.push('/write-recipe')} />
+        <Button title="Film a post" style={{ flex: 1 }} onPress={startPost} />
       </Row>
 
       {ideas.length > 0 && (

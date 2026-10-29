@@ -5,7 +5,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import { LIBRARY } from '@/data/recipes';
 import { dayKey } from './dates';
 import { calcPlan } from './plan';
-import { deleteRecipePhoto } from './photos';
+import { deleteAllMedia, deleteRecipePhoto } from './photos';
 import type { Board, Entry, Profile, Recipe, Reminders, Targets } from './types';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -49,24 +49,40 @@ type State = {
   updateRecipe: (id: string, patch: Partial<Recipe>) => void;
   deleteRecipe: (id: string) => void;
   setPhoto: (recipeId: string, uri: string | null) => void;
+  setUnits: (units: Profile['units']) => void;
+  setAbout: (about: { name: string; bio: string }) => void;
+  /** wipes everything on this phone and returns to sign-up */
+  resetAll: () => void;
 };
+
+/** A brand-new account's data. */
+const fresh = () => ({
+  profile: null,
+  targets: { kcal: 1800, p: 130, c: 180, f: 60 },
+  boards: [
+    { id: 'b1', name: 'High protein lunches', ids: ['r2', 'r6', 'r10'] },
+    { id: 'b2', name: 'Quick breakfasts', ids: ['r1', 'r4', 'r8'] },
+  ],
+  mine: [] as Recipe[],
+  photos: {} as Record<string, string>,
+  days: {} as Record<string, Entry[]>,
+  weights: {} as Record<string, number>,
+  reminders: { meals: false, streak: false, weighIn: false },
+  aiUsage: { week: weekStart(), scans: 0, recipes: 0 },
+});
 
 export const useStore = create<State>()(
   persist(
     (set, get) => ({
       hydrated: false,
-      profile: null,
-      targets: { kcal: 1800, p: 130, c: 180, f: 60 },
-      boards: [
-        { id: 'b1', name: 'High protein lunches', ids: ['r2', 'r6', 'r10'] },
-        { id: 'b2', name: 'Quick breakfasts', ids: ['r1', 'r4', 'r8'] },
-      ],
-      mine: [],
-      photos: {},
-      days: {},
-      weights: {},
-      reminders: { meals: false, streak: false, weighIn: false },
-      aiUsage: { week: weekStart(), scans: 0, recipes: 0 },
+      ...fresh(),
+
+      setUnits: (units) => set((s) => ({ profile: s.profile && { ...s.profile, units } })),
+      setAbout: (about) => set((s) => ({ profile: s.profile && { ...s.profile, ...about } })),
+      resetAll: () => {
+        deleteAllMedia();
+        set(fresh());
+      },
 
       logWeight: (kg, day = dayKey()) =>
         set((s) => ({ weights: { ...s.weights, [day]: kg }, profile: s.profile && day >= latestDay(s.weights) ? { ...s.profile, weightKg: kg } : s.profile })),

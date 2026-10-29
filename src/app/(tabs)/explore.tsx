@@ -11,6 +11,7 @@ import { Colors } from '@/constants/theme';
 import { FILTERS, LIBRARY } from '@/data/recipes';
 import { ensureSession, forYouPosts, friendIds, socialConfigured } from '@/lib/social';
 import { useSocial } from '@/lib/social-store';
+import { startPost } from '@/lib/recorder';
 import { useStore } from '@/lib/store';
 
 type Feed = 'watch' | 'recipes';
@@ -51,7 +52,8 @@ export default function Explore() {
   ), [posts, mine, term, filter]);
 
   const add = () => Alert.alert('Add a recipe', undefined, [
-    { text: 'Post a recipe or video', onPress: () => router.push('/write-recipe') },
+    { text: 'Film a post', onPress: startPost },
+    { text: 'Write a recipe', onPress: () => router.push('/write-recipe') },
     { text: 'Create one with AI', onPress: () => router.push('/ai-recipe') },
     { text: 'Cancel', style: 'cancel' },
   ]);

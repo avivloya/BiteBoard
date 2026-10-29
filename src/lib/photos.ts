@@ -59,3 +59,12 @@ export function deleteRecipePhoto(uri: string | undefined) {
   const f = new File(uri);
   if (f.exists) f.delete();
 }
+
+/** Removes every photo and video this app saved on the phone. */
+export function deleteAllMedia() {
+  if (Platform.OS === 'web') return;
+  for (const name of ['recipe-photos', 'recipe-videos']) {
+    const dir = new Directory(Paths.document, name);
+    if (dir.exists) dir.delete();
+  }
+}
