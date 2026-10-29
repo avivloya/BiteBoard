@@ -81,6 +81,11 @@ export async function friendIds(userId: string) {
   return (data ?? []).map((r) => r.friend_id as string);
 }
 
+export async function followerIds(userId: string) {
+  const { data } = await db().from('friendships').select('user_id').eq('friend_id', userId);
+  return (data ?? []).map((r) => r.user_id as string);
+}
+
 export async function setFriend(userId: string, friendId: string, on: boolean) {
   const t = db().from('friendships');
   const { error } = on

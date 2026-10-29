@@ -670,7 +670,15 @@
   "That username is saved for the official Biteboard account.": "שם המשתמש הזה שמור לחשבון הרשמי של Biteboard.",
   "Followers": "עוקבים",
   "Follower": "עוקב",
-  "Likes": "לייקים"
+  "Likes": "לייקים",
+  "Search people": "חיפוש אנשים",
+  "You": "את/ה",
+  "No one matches that.": "אין אף אחד שמתאים.",
+  "Not following anyone yet.": "עדיין לא עוקבים אחרי אף אחד.",
+  "No followers yet.": "עדיין אין עוקבים.",
+  "Sign in to see who follows you.": "כדי לראות מי עוקב אחריך צריך להתחבר.",
+  "Following {n}": "נעקבים {n}",
+  "Followers {n}": "עוקבים {n}"
  },
  "zh": {
   "({n} weeks).": "（{n} 周）。",
@@ -1343,7 +1351,15 @@
   "That username is saved for the official Biteboard account.": "该用户名为 Biteboard 官方账号保留。",
   "Followers": "粉丝",
   "Follower": "粉丝",
-  "Likes": "获赞"
+  "Likes": "获赞",
+  "Search people": "搜索用户",
+  "You": "你",
+  "No one matches that.": "没有匹配的人。",
+  "Not following anyone yet.": "还没有关注任何人。",
+  "No followers yet.": "还没有粉丝。",
+  "Sign in to see who follows you.": "登录后可查看谁关注了你。",
+  "Following {n}": "关注 {n}",
+  "Followers {n}": "粉丝 {n}"
  },
  "es": {
   "({n} weeks).": "({n} semanas).",
@@ -2016,7 +2032,15 @@
   "That username is saved for the official Biteboard account.": "Ese nombre de usuario está reservado para la cuenta oficial de Biteboard.",
   "Followers": "Seguidores",
   "Follower": "Seguidor",
-  "Likes": "Me gusta"
+  "Likes": "Me gusta",
+  "Search people": "Buscar personas",
+  "You": "Tú",
+  "No one matches that.": "No hay nadie que coincida.",
+  "Not following anyone yet.": "Aún no sigues a nadie.",
+  "No followers yet.": "Aún no hay seguidores.",
+  "Sign in to see who follows you.": "Inicia sesión para ver quién te sigue.",
+  "Following {n}": "Siguiendo {n}",
+  "Followers {n}": "Seguidores {n}"
  },
  "ru": {
   "({n} weeks).": "({n} нед.).",
@@ -2689,6 +2713,14 @@
   "That username is saved for the official Biteboard account.": "Это имя пользователя зарезервировано для официального аккаунта Biteboard.",
   "Followers": "Подписчики",
   "Follower": "Подписчик",
-  "Likes": "Лайки"
+  "Likes": "Лайки",
+  "Search people": "Поиск людей",
+  "You": "Вы",
+  "No one matches that.": "Никого не найдено.",
+  "Not following anyone yet.": "Пока ни на кого не подписаны.",
+  "No followers yet.": "Подписчиков пока нет.",
+  "Sign in to see who follows you.": "Войдите, чтобы увидеть подписчиков.",
+  "Following {n}": "Подписки {n}",
+  "Followers {n}": "Подписчики {n}"
  }
 }

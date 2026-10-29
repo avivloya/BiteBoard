@@ -45,6 +45,7 @@ export default function RootLayout() {
         <Stack.Screen name="scan" options={sheet} />
         <Stack.Screen name="snap" options={sheet} />
         <Stack.Screen name="people" options={sheet} />
+        <Stack.Screen name="follows" options={sheet} />
         <Stack.Screen name="weight" options={sheet} />
         <Stack.Screen name="settings" options={sheet} />
         <Stack.Screen name="edit-profile" options={sheet} />
