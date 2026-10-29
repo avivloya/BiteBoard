@@ -13,7 +13,7 @@ import { useSocial } from '@/lib/social-store';
 import { findRecipe, useStore } from '@/lib/store';
 import { MEALS, type Meal } from '@/lib/types';
 import { deleteRecipePhoto, pickRecipePhoto, pickRecipeVideo } from '@/lib/photos';
-import { filmVideo } from '@/lib/recorder';
+import { type Filmed, filmVideo } from '@/lib/recorder';
 
 export default function RecipeScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -53,10 +53,10 @@ export default function RecipeScreen() {
 
   // Same for the cooking video.
   const changeVideo = async (how: 'film' | 'upload' | null) => {
-    const picked = how === 'film' ? await filmVideo() : how === 'upload' ? await pickRecipeVideo().then((uri) => (uri ? { uri, speed: 1 } : null)) : null;
+    const picked = how === 'film' ? await filmVideo() : how === 'upload' ? await pickRecipeVideo().then((uri): Filmed | null => (uri ? { uri, speed: 1 } : null)) : null;
     if (how && !picked) return;
     deleteRecipePhoto(recipe.video ?? undefined);
-    const patch = { video: picked?.uri ?? null, speed: picked?.speed ?? 1 };
+    const patch = { video: picked?.uri ?? null, speed: picked?.speed ?? 1, trim: picked?.trim };
     updateRecipe(recipe.id, patch);
     if (recipe.shared && userId) {
       await setShared(userId, { ...recipe, ...patch }, true, useStore.getState().photos[recipe.id]).catch((e) => Alert.alert('Could not update your post', e instanceof Error ? e.message : ''));
@@ -74,7 +74,7 @@ export default function RecipeScreen() {
           </Row>
         )}
       </View>
-      {recipe.video && <RecipeVideo uri={recipe.video} speed={recipe.speed} style={{ height: 420 }} />}
+      {recipe.video && <RecipeVideo uri={recipe.video} speed={recipe.speed} trim={recipe.trim} style={{ height: 420 }} />}
       <View style={{ padding: 20, gap: 18 }}>
         <View style={{ gap: 4 }}>
           <T variant="muted">{recipe.cat} · {recipe.min} min · {recipe.serv} serving{recipe.serv > 1 ? 's' : ''}{recipe.ai ? ' · Created with AI' : ''}</T>

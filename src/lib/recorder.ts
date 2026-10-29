@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 
-export type Filmed = { uri: string; speed: number };
+export type Filmed = { uri: string; speed: number; trim?: [number, number] };
 
 let pending: ((v: Filmed | null) => void) | null = null;
 

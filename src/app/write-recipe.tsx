@@ -8,7 +8,7 @@ import { Row, Screen } from '@/components/screen';
 import { Button, Field, Segmented, T } from '@/components/ui';
 import { Colors, Radius } from '@/constants/theme';
 import { deleteRecipePhoto, pickRecipePhoto, pickRecipeVideo } from '@/lib/photos';
-import { filmVideo } from '@/lib/recorder';
+import { type Filmed, filmVideo } from '@/lib/recorder';
 import { setShared } from '@/lib/social';
 import { useSocial } from '@/lib/social-store';
 import { useStore } from '@/lib/store';
@@ -16,10 +16,10 @@ import { MEALS, type Meal } from '@/lib/types';
 
 /** The post screen after filming: caption next to the video, then the recipe details. */
 export default function WriteRecipe() {
-  const params = useLocalSearchParams<{ video?: string; speed?: string }>();
+  const params = useLocalSearchParams<{ video?: string; speed?: string; start?: string; end?: string }>();
   const { addRecipe, setPhoto } = useStore();
   const [photo, setPhotoUri] = useState<string | null>(null);
-  const [video, setVideo] = useState<{ uri: string; speed: number } | null>(params.video ? { uri: params.video, speed: Number(params.speed) || 1 } : null);
+  const [video, setVideo] = useState<Filmed | null>(params.video ? { uri: params.video, speed: Number(params.speed) || 1, trim: params.end ? [Number(params.start) || 0, Number(params.end)] : undefined } : null);
   const { userId, me } = useSocial();
   const canPost = !!(userId && me);
   const [post, setPost] = useState(true);
@@ -39,7 +39,7 @@ export default function WriteRecipe() {
     const id = addRecipe({
       own: true, shared, posted: shared ? Date.now() : undefined, title: title.trim(), caption: caption.trim() || undefined, cat,
       min: Number(n.min) || 20, serv: Number(n.serv) || 1, kcal, p, c: Number(n.c) || 0, f: Number(n.f) || 0, tags, ing: lines(ing), steps: lines(steps),
-      video: video?.uri, speed: video?.speed,
+      video: video?.uri, speed: video?.speed, trim: video?.trim,
     });
     if (photo) setPhoto(id, photo);
     if (shared && userId) {
@@ -68,7 +68,7 @@ export default function WriteRecipe() {
         </View>
         {video ? (
           <View style={{ width: 112, height: 190, borderRadius: Radius.md, overflow: 'hidden' }}>
-            <RecipeVideo uri={video.uri} speed={video.speed} autoPlay muted controls={false} style={{ flex: 1 }} />
+            <RecipeVideo uri={video.uri} speed={video.speed} trim={video.trim} autoPlay muted controls={false} style={{ flex: 1 }} />
             <Pressable onPress={() => { deleteRecipePhoto(video.uri); setVideo(null); }} style={{ position: 'absolute', bottom: 6, left: 6, right: 6, paddingVertical: 5, borderRadius: 999, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center' }}>
               <T style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>Remove</T>
             </Pressable>

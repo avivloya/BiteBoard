@@ -19,6 +19,8 @@ export type Recipe = {
   video?: string | null;
   /** playback speed the video was filmed for: 0.5 slow motion, 2 fast motion */
   speed?: number;
+  /** part of the video to play, in seconds: [start, end] */
+  trim?: [number, number];
   /** short text shown with the post, like a TikTok caption */
   caption?: string;
   /** created with AI */
