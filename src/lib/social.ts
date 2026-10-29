@@ -32,6 +32,16 @@ export async function ensureSession() {
   return anon.user.id;
 }
 
+export const HANDLE_RULE = /^[A-Za-z0-9_.]{3,20}$/;
+
+/** A reason the username can't be used, or '' if it's free. Usernames ignore capitals, so "Aviv" and "aviv" clash. */
+export async function handleProblem(handle: string, userId?: string | null) {
+  if (!HANDLE_RULE.test(handle)) return 'Use 3 to 20 letters, numbers, dots or underscores.';
+  if (!supabase) return '';
+  const { data } = await supabase.from('profiles').select('id').ilike('handle', handle.replace(/[%_\\]/g, (c) => `\\${c}`)).limit(1);
+  return data?.length && data[0].id !== userId ? `@${handle} is taken. Try another one.` : '';
+}
+
 export async function myProfile(userId: string) {
   const { data } = await db().from('profiles').select('*').eq('id', userId).maybeSingle();
   return (data as PublicProfile | null) ?? null;
@@ -39,7 +49,7 @@ export async function myProfile(userId: string) {
 
 export async function saveProfile(userId: string, p: { handle: string; name: string; bio: string; streak: number; photo?: string | null }) {
   const { error } = await db().from('profiles').upsert({ id: userId, ...p, updated_at: new Date().toISOString() });
-  if (error) throw new Error(error.code === '23505' ? 'That handle is taken. Try another one.' : error.message);
+  if (error) throw new Error(error.code === '23505' ? `@${p.handle} is taken. Try another one.` : error.message);
 }
 
 export async function searchPeople(q: string, userId: string) {

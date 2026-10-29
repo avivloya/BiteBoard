@@ -53,11 +53,12 @@ export default function Account() {
       </Row>
 
       <View style={{ alignItems: 'center', gap: 6 }}>
-        <Pressable onPress={() => router.push('/edit-profile')} accessibilityLabel="Edit profile">
-          <Avatar p={me ?? { name }} size={92} />
+        <Pressable onPress={() => router.push('/edit-profile')} accessibilityLabel="Change profile picture">
+          <Avatar p={me ?? { name, photo: profile?.photo }} size={92} />
+          <View style={styles.camera}><T style={{ color: Colors.bg, fontSize: 13 }}>✎</T></View>
         </Pressable>
         <T variant="h2" style={{ marginTop: 6 }}>{name}</T>
-        {me && <T variant="muted">@{me.handle}</T>}
+        {!!(me?.handle || profile?.handle) && <T variant="muted">@{me?.handle ?? profile?.handle}</T>}
         {me && userId && <FollowCounts id={userId} />}
         {bio ? <T style={{ textAlign: 'center', maxWidth: 320 }}>{bio}</T> : (
           <Pressable onPress={() => router.push('/edit-profile')} hitSlop={8}><T variant="muted" style={{ fontWeight: '600' }}>+ Add a bio</T></Pressable>
@@ -147,6 +148,7 @@ function Saved() {
 }
 
 const styles = StyleSheet.create({
+  camera: { position: 'absolute', right: 0, bottom: 0, width: 28, height: 28, borderRadius: 14, backgroundColor: Colors.ink, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: Colors.bg },
   tile: { width: '32.6%', aspectRatio: 3 / 4, backgroundColor: Colors.tile },
   mark: { position: 'absolute', left: 6, bottom: 6, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 999, backgroundColor: 'rgba(0,0,0,0.45)' },
 });

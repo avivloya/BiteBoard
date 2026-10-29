@@ -7,7 +7,7 @@ import { Avatar, refreshSocial } from '@/components/social';
 import { Button, Field, T } from '@/components/ui';
 import { Colors } from '@/constants/theme';
 import { pickRecipePhoto } from '@/lib/photos';
-import { saveProfile, setProfilePhoto } from '@/lib/social';
+import { handleProblem, saveProfile, setProfilePhoto } from '@/lib/social';
 import { useSocial } from '@/lib/social-store';
 import { useStore } from '@/lib/store';
 
@@ -17,13 +17,18 @@ export default function EditProfile() {
   const profile = useStore((s) => s.profile);
   const setAbout = useStore((s) => s.setAbout);
   const [name, setName] = useState(me?.name ?? profile?.name ?? '');
-  const [handle, setHandle] = useState(me?.handle ?? '');
+  const [handle, setHandle] = useState(me?.handle ?? profile?.handle ?? '');
   const [bio, setBio] = useState(me?.bio ?? profile?.bio ?? '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
   const changePhoto = async () => {
-    if (!userId || !me) return Alert.alert('Make your recipe page first', 'Pick a handle on the Account tab, then you can add a picture.');
+    // Before there's a recipe page, the picture is kept on this phone.
+    if (!userId || !me) {
+      const local = await pickRecipePhoto({ aspect: [1, 1] });
+      if (local) setAbout({ name: profile?.name ?? '', bio: profile?.bio ?? '', photo: local });
+      return;
+    }
     const uri = await pickRecipePhoto({ aspect: [1, 1], keep: false });
     if (!uri) return;
     try {
@@ -35,10 +40,11 @@ export default function EditProfile() {
   };
 
   const save = async () => {
-    setAbout({ name: name.trim() || profile?.name || '', bio: bio.trim() });
-    if (!userId || !me) return router.back();
-    if (!/^[A-Za-z0-9_.]{3,20}$/.test(handle)) return setError('Handles are 3 to 20 letters, numbers, dots or underscores.');
     setBusy(true); setError('');
+    const bad = await handleProblem(handle, userId).catch(() => '');
+    if (bad) { setBusy(false); return setError(bad); }
+    setAbout({ name: name.trim() || profile?.name || '', bio: bio.trim(), handle });
+    if (!userId || !me) return router.back();
     try {
       await saveProfile(userId, { handle, name: name.trim() || handle, bio: bio.trim(), streak: me.streak, photo: me.photo });
       await refreshSocial(userId);
@@ -53,11 +59,11 @@ export default function EditProfile() {
     <Screen edges={[]} bg={Colors.surface}>
       <T variant="h2">Edit profile</T>
       <View style={{ alignItems: 'center', gap: 8 }}>
-        <Pressable onPress={changePhoto} accessibilityRole="button" accessibilityLabel="Change profile picture"><Avatar p={me ?? { name }} size={96} /></Pressable>
+        <Pressable onPress={changePhoto} accessibilityRole="button" accessibilityLabel="Change profile picture"><Avatar p={me ?? { name, photo: profile?.photo }} size={96} /></Pressable>
         <Pressable onPress={changePhoto} hitSlop={8}><T style={{ fontWeight: '700' }}>Change picture</T></Pressable>
       </View>
       <Field label="Name" value={name} onChangeText={setName} />
-      {me && <Field label="Handle" value={handle} onChangeText={setHandle} autoCapitalize="none" autoCorrect={false} />}
+      <Field label="Username" value={handle} onChangeText={(h) => setHandle(h.replace(/^@/, '').trim())} autoCapitalize="none" autoCorrect={false} placeholder="john.doe" />
       <Field label="Bio" value={bio} onChangeText={setBio} maxLength={120} multiline placeholder="Cooking my way to my goal weight" />
       <T variant="muted" style={{ fontSize: 12, textAlign: 'right' }}>{bio.length}/120</T>
       {!!error && <T style={{ color: Colors.warn }}>{error}</T>}

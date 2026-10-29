@@ -56,7 +56,7 @@ export default function RecipeScreen() {
     const picked = how === 'film' ? await filmVideo() : how === 'upload' ? await pickRecipeVideo().then((uri): Filmed | null => (uri ? { uri, speed: 1 } : null)) : null;
     if (how && !picked) return;
     deleteRecipePhoto(recipe.video ?? undefined);
-    const patch = { video: picked?.uri ?? null, speed: picked?.speed ?? 1, trim: picked?.trim };
+    const patch = { video: picked?.uri ?? null, speed: picked?.speed ?? 1, trim: picked?.trim, filter: picked?.filter };
     updateRecipe(recipe.id, patch);
     if (recipe.shared && userId) {
       await setShared(userId, { ...recipe, ...patch }, true, useStore.getState().photos[recipe.id]).catch((e) => Alert.alert('Could not update your post', e instanceof Error ? e.message : ''));
@@ -74,7 +74,7 @@ export default function RecipeScreen() {
           </Row>
         )}
       </View>
-      {recipe.video && <RecipeVideo uri={recipe.video} speed={recipe.speed} trim={recipe.trim} style={{ height: 420 }} />}
+      {recipe.video && <RecipeVideo uri={recipe.video} speed={recipe.speed} trim={recipe.trim} filter={recipe.filter} style={{ height: 420 }} />}
       <View style={{ padding: 20, gap: 18 }}>
         <View style={{ gap: 4 }}>
           <T variant="muted">{recipe.cat} · {recipe.min} min · {recipe.serv} serving{recipe.serv > 1 ? 's' : ''}{recipe.ai ? ' · Created with AI' : ''}</T>

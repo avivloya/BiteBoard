@@ -50,7 +50,7 @@ type State = {
   deleteRecipe: (id: string) => void;
   setPhoto: (recipeId: string, uri: string | null) => void;
   setUnits: (units: Profile['units']) => void;
-  setAbout: (about: { name: string; bio: string }) => void;
+  setAbout: (about: { name: string; bio: string; handle?: string; photo?: string }) => void;
   /** wipes everything on this phone and returns to sign-up */
   resetAll: () => void;
 };

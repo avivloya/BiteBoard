@@ -21,6 +21,8 @@ export type Recipe = {
   speed?: number;
   /** part of the video to play, in seconds: [start, end] */
   trim?: [number, number];
+  /** look picked in the camera: beauty, warm, bright */
+  filter?: 'none' | 'beauty' | 'warm' | 'bright' | 'mono';
   /** short text shown with the post, like a TikTok caption */
   caption?: string;
   /** created with AI */
@@ -51,6 +53,10 @@ export type Profile = {
   pace: number;
   units: 'metric' | 'imperial';
   bio?: string;
+  /** username, unique across Biteboard */
+  handle?: string;
+  /** profile picture on this phone, used before a recipe page exists */
+  photo?: string;
 };
 
 export type Targets = { kcal: number; p: number; c: number; f: number };

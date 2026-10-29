@@ -22,7 +22,7 @@ export function Reels({ posts }: { posts: Recipe[] }) {
   const item = useCallback(({ item: r }: { item: Recipe }) => (
     <View style={{ height, paddingBottom: 12 }}>
       <View style={{ flex: 1, borderRadius: Radius.lg, overflow: 'hidden', backgroundColor: '#000' }}>
-        <RecipeVideo uri={r.video!} autoPlay active={r.id === current} muted={muted} controls={false} speed={r.speed} trim={r.trim} style={{ flex: 1 }} />
+        <RecipeVideo uri={r.video!} autoPlay active={r.id === current} muted={muted} controls={false} speed={r.speed} trim={r.trim} filter={r.filter} style={{ flex: 1 }} />
         <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, gap: 6, backgroundColor: 'rgba(0,0,0,0.35)' }}>
           {r.byId && (
             <Pressable onPress={() => router.push({ pathname: '/person/[id]', params: { id: r.byId! } })} accessibilityRole="link">

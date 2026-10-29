@@ -7,6 +7,8 @@ import { Row, Screen } from '@/components/screen';
 import { Button, Field, Panel, Segmented, T } from '@/components/ui';
 import { Colors, Radius } from '@/constants/theme';
 import { ACTIVITY, PACE, calcPlan, kgToLb, lbToKg } from '@/lib/plan';
+import { ensureSession, handleProblem, saveProfile, socialConfigured } from '@/lib/social';
+import { refreshSocial } from '@/components/social';
 import { useStore } from '@/lib/store';
 import type { Profile, Sex } from '@/lib/types';
 
@@ -20,6 +22,7 @@ export default function Onboarding() {
   const [step, setStep] = useState(editing ? 1 : 0);
   const [d, setD] = useState<Draft>(saved ? { ...saved } : { units: 'metric', activity: 1.375, pace: 0.5 });
   const [error, setError] = useState('');
+  const [checking, setChecking] = useState(false);
   const imp = d.units === 'imperial';
 
   // Raw text for numeric inputs, so typing "5." or switching units doesn't fight the user.
@@ -67,10 +70,16 @@ export default function Onboarding() {
           <T variant="muted" style={{ fontSize: 16 }}>Create your account to get a calorie plan built around your body and your goal.</T>
         </View>
         <Field label="First name" value={d.name ?? ''} onChangeText={(name) => setD({ ...d, name })} autoComplete="given-name" placeholder="John Doe" />
+        <Field label="Username" value={d.handle ?? ''} onChangeText={(handle) => setD({ ...d, handle: handle.replace(/^@/, '').trim() })} autoCapitalize="none" autoCorrect={false} autoComplete="username" placeholder="john.doe" />
+        <T variant="muted" style={{ fontSize: 12, marginTop: -14 }}>3 to 20 letters, numbers, dots or underscores. No one else can have it.</T>
         <Field label="Email" value={d.email ?? ''} onChangeText={(email) => setD({ ...d, email })} autoComplete="email" keyboardType="email-address" autoCapitalize="none" placeholder="you@example.com" />
         {err}
-        {nav('Continue', () => {
+        {nav(checking ? 'Checking…' : 'Continue', async () => {
           if (!d.name?.trim()) return setError('Enter your first name.');
+          setChecking(true);
+          const bad = await handleProblem(d.handle ?? '').catch(() => '');
+          setChecking(false);
+          if (bad) return setError(bad);
           if (!/^\S+@\S+\.\S+$/.test(d.email ?? '')) return setError('Enter a valid email address.');
           next();
         })}
@@ -184,7 +193,18 @@ export default function Onboarding() {
         ))}
       </Row>
       <T variant="muted">BMI {plan.bmi.toFixed(1)}. Estimates use the Mifflin-St Jeor formula. You can change your targets any time from Today. This isn't medical advice, so check with a doctor before a big change in diet.</T>
-      {nav(editing ? 'Save my plan' : 'Start using Biteboard', () => {
+      {nav(editing ? 'Save my plan' : 'Start using Biteboard', async () => {
+        // New accounts get their public recipe page with the username they picked.
+        if (!editing && socialConfigured && profile.handle) {
+          try {
+            const id = await ensureSession();
+            await saveProfile(id, { handle: profile.handle, name: profile.name, bio: '', streak: 0 });
+            await refreshSocial(id);
+          } catch (e) {
+            setStep(0);
+            return setError(e instanceof Error ? e.message : 'Could not save your username. Try again.');
+          }
+        }
         finish(profile);
         router.replace('/');
       })}

@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
 import { Logo } from '@/components/logo';
-import { RecipeVideo } from '@/components/recipe-video';
+import { FILTER_TINT, RecipeVideo, type VideoFilter } from '@/components/recipe-video';
 import { Row } from '@/components/screen';
 import { Button, T } from '@/components/ui';
 import { Colors } from '@/constants/theme';
@@ -14,6 +14,7 @@ import { keepVideo, pickRecipeVideo } from '@/lib/photos';
 import { type Filmed, finishFilming } from '@/lib/recorder';
 
 const LIMITS = [15, 60, 180];
+const FILTERS: { v: VideoFilter; label: string }[] = [{ v: 'none', label: 'None' }, { v: 'beauty', label: 'Beauty' }, { v: 'warm', label: 'Warm' }, { v: 'bright', label: 'Bright' }];
 const SPEEDS = [{ v: 0.5, label: 'Slow' }, { v: 1, label: 'Normal' }, { v: 2, label: 'Fast' }];
 const speedName = (v: number) => (v < 1 ? 'Slow' : v > 1 ? 'Fast' : '1x');
 const mmss = (n: number) => `${Math.floor(n / 60)}:${String(Math.floor(n % 60)).padStart(2, '0')}`;
@@ -21,7 +22,7 @@ const GLASS = 'rgba(255,255,255,0.16)';
 const RED = '#FF5A4F';
 
 type Phase = 'ready' | 'countdown' | 'recording' | 'paused' | 'review';
-type Icon = 'flip' | 'flash' | 'speed' | 'timer' | 'close' | 'back' | 'trim' | 'upload' | 'pause' | 'play';
+type Icon = 'flip' | 'flash' | 'speed' | 'timer' | 'close' | 'back' | 'trim' | 'upload' | 'pause' | 'play' | 'filter' | 'check';
 
 function Glyph({ name, color = '#fff', size = 22 }: { name: Icon; color?: string; size?: number }) {
   const p = { stroke: color, strokeWidth: 1.9, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, fill: 'none' };
@@ -37,6 +38,8 @@ function Glyph({ name, color = '#fff', size = 22 }: { name: Icon; color?: string
       {name === 'upload' && <><Rect {...p} x={3} y={3} width={18} height={18} rx={4} /><Circle {...p} cx={9} cy={9} r={2} /><Path {...p} d="M21 15l-5-5L5 21" /></>}
       {name === 'pause' && <Path {...p} d="M9 5v14M15 5v14" />}
       {name === 'play' && <Path {...p} d="M7 5l12 7-12 7z" />}
+      {name === 'filter' && <><Circle {...p} cx={12} cy={12} r={9} /><Path {...p} d="M12 3a9 9 0 0 1 0 18M8 7l2 2M6 12h3" /></>}
+      {name === 'check' && <Path {...p} d="M5 12.5l4.5 4.5L19 7" />}
     </Svg>
   );
 }
@@ -52,7 +55,8 @@ export default function RecordVideo() {
   const [torch, setTorch] = useState(false);
   const [timer, setTimer] = useState(false);
   const [speed, setSpeed] = useState(1);
-  const [panel, setPanel] = useState<'speed' | 'trim' | null>(null);
+  const [panel, setPanel] = useState<'speed' | 'trim' | 'filter' | null>(null);
+  const [filter, setFilter] = useState<VideoFilter>('none');
   const [limit, setLimit] = useState(60);
   const [phase, setPhase] = useState<Phase>('ready');
   const [count, setCount] = useState(0);
@@ -74,6 +78,7 @@ export default function RecordVideo() {
     if (post && !waiting) {
       const params: Record<string, string> = video ? { video: video.uri, speed: String(video.speed) } : {};
       if (video?.trim) { params.start = String(video.trim[0]); params.end = String(video.trim[1]); }
+      if (video?.filter && video.filter !== 'none') params.filter = video.filter;
       router.replace({ pathname: '/write-recipe', params });
     } else router.back();
   };
@@ -96,6 +101,25 @@ export default function RecordVideo() {
     }
   };
 
+  // Record button: hold to film and let go to pause, or tap to start and tap to pause. ✓ finishes the video.
+  // Phones that can't pause a recording (older iPhones) finish it when you let go instead.
+  const pressRef = useRef<{ t: number; was: Phase } | null>(null);
+  const pause = async () => {
+    if (!canPause) return ref.current?.stopRecording();
+    await ref.current?.toggleRecordingAsync();
+    setPhase('paused');
+  };
+  const pressIn = async () => {
+    pressRef.current = { t: Date.now(), was: phase };
+    if (phase === 'paused') { await ref.current?.toggleRecordingAsync(); setPhase('recording'); return; }
+    if (phase === 'ready') press();
+  };
+  const pressOut = () => {
+    const p = pressRef.current;
+    pressRef.current = null;
+    if (!p || (p.was === 'ready' && timer)) return;
+    if (p.was === 'recording' || Date.now() - p.t > 300) pause();
+  };
   const press = () => {
     if (phase === 'ready') {
       if (!timer) return start();
@@ -107,14 +131,7 @@ export default function RecordVideo() {
         setCount(n);
         if (n === 0) { clearInterval(t); start(); }
       }, 1000);
-    } else if (live) {
-      ref.current?.stopRecording();
     }
-  };
-
-  const togglePause = async () => {
-    await ref.current?.toggleRecordingAsync();
-    setPhase(phase === 'paused' ? 'recording' : 'paused');
   };
 
   const renderReview = () => {
@@ -129,11 +146,11 @@ export default function RecordVideo() {
       if (!uri) return;
       setSaving(true);
       const kept = await keepVideo(uri).catch(() => uri);
-      next({ uri: kept, speed, trim: trim ?? undefined });
+      next({ uri: kept, speed, trim: trim ?? undefined, filter });
     };
     return (
       <View style={s.black}>
-        <RecipeVideo uri={uri!} autoPlay controls={false} speed={speed} trim={trim ?? undefined} onDuration={(d) => { if (!duration) setDuration(Math.round(d * 10) / 10); }} style={StyleSheet.absoluteFill} />
+        <RecipeVideo uri={uri!} autoPlay controls={false} speed={speed} filter={filter} trim={trim ?? undefined} onDuration={(d) => { if (!duration) setDuration(Math.round(d * 10) / 10); }} style={StyleSheet.absoluteFill} />
         <Shade />
         <SafeAreaView edges={['top']} style={s.top}>
           <Pressable onPress={() => { setUri(null); setPhase('ready'); }} style={s.round} accessibilityLabel="Retake"><Glyph name="back" /></Pressable>
@@ -205,6 +222,7 @@ export default function RecordVideo() {
     <View style={s.black}>
       <CameraView ref={ref} style={StyleSheet.absoluteFill} mode="video" facing={facing} enableTorch={torch} videoQuality="1080p" videoBitrate={8_000_000}
         mirror={facing === 'front'} onCameraReady={() => setReady(true)} onRecordingProgress={(e) => setSeconds(e.duration)} />
+      {FILTER_TINT[filter] && <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: FILTER_TINT[filter] }]} />}
       <Shade />
 
       {live && <SafeAreaView edges={['top']} style={s.barWrap}><View style={s.bar}><View style={[s.fill, { width: `${Math.min(100, (seconds / limit) * 100)}%` }]} /></View></SafeAreaView>}
@@ -221,6 +239,7 @@ export default function RecordVideo() {
         {!live && <Tool icon="flip" label="Flip" onPress={() => setFacing(facing === 'back' ? 'front' : 'back')} />}
         {facing === 'back' && <Tool icon="flash" label="Flash" on={torch} onPress={() => setTorch(!torch)} />}
         {!live && <Tool icon="speed" label={speedName(speed)} on={speed !== 1} onPress={() => setPanel(panel === 'speed' ? null : 'speed')} />}
+        {!live && <Tool icon="filter" label={filter === 'none' ? 'Filter' : FILTERS.find((f) => f.v === filter)!.label} on={filter !== 'none'} onPress={() => setPanel(panel === 'filter' ? null : 'filter')} />}
         {!live && <Tool icon="timer" label={timer ? '3s' : 'Timer'} on={timer} onPress={() => setTimer(!timer)} />}
       </SafeAreaView>
 
@@ -228,15 +247,30 @@ export default function RecordVideo() {
 
       <SafeAreaView edges={['bottom']} style={s.bottom}>
         {panel === 'speed' && !live && speeds()}
+        {panel === 'filter' && !live && (
+          <View style={s.seg}>
+            {FILTERS.map((x) => (
+              <Pressable key={x.v} onPress={() => setFilter(x.v)} style={[s.segItem, filter === x.v && { backgroundColor: Colors.bg }]} accessibilityState={{ selected: filter === x.v }}>
+                <T style={[s.segText, filter === x.v && { color: Colors.ink }]}>{x.label}</T>
+              </Pressable>
+            ))}
+          </View>
+        )}
         <View style={s.ctrls}>
           <View style={s.side3}>
-            {live ? (canPause && <Square icon={phase === 'paused' ? 'play' : 'pause'} label={phase === 'paused' ? 'Resume' : 'Pause'} onPress={togglePause} />)
-              : <Square icon="upload" label="Upload" onPress={upload} />}
+            {!live && <Square icon="upload" label="Upload" onPress={upload} />}
           </View>
-          <Pressable onPress={press} disabled={!ready || phase === 'countdown'} accessibilityRole="button" accessibilityLabel={live ? 'Stop recording' : 'Record'} style={[s.shutter, !ready && { opacity: 0.5 }]}>
-            <View style={live ? s.stop : s.dot} />
+          <Pressable onPressIn={pressIn} onPressOut={pressOut} disabled={!ready || phase === 'countdown'} accessibilityRole="button"
+            accessibilityLabel={phase === 'recording' ? 'Pause recording' : 'Record'} style={[s.shutter, !ready && { opacity: 0.5 }]}>
+            <View style={phase === 'recording' ? s.stop : s.dot} />
           </Pressable>
           <View style={s.side3}>
+            {live && seconds >= 0.5 && (
+              <Pressable onPress={() => ref.current?.stopRecording()} style={{ alignItems: 'center', gap: 4 }} accessibilityRole="button" accessibilityLabel="Done filming">
+                <View style={[s.square, { backgroundColor: Colors.bg }]}><Glyph name="check" color={Colors.ink} size={24} /></View>
+                <T style={s.squareLabel}>Done</T>
+              </Pressable>
+            )}
             {!live && !!post && (
               <Pressable onPress={() => next(null)} style={{ alignItems: 'center', gap: 4 }} accessibilityLabel="Post without a video">
                 <View style={s.square}><T style={{ color: '#fff', fontWeight: '800', fontSize: 13 }}>Skip</T></View>
@@ -245,7 +279,9 @@ export default function RecordVideo() {
             )}
           </View>
         </View>
-        {live ? <T style={s.hint}>{phase === 'paused' ? 'Paused. Set up the next step, then resume.' : 'Tap to stop'}</T> : (
+        {live ? <T style={s.hint}>{phase === 'paused' ? "Hold or tap to keep filming. Tap ✓ when you're done." : canPause ? 'Let go or tap to pause' : 'Let go to finish'}</T> : (
+          <>
+          <T style={s.hint}>Hold to film, or tap</T>
           <View style={s.seg}>
             {LIMITS.map((l) => (
               <Pressable key={l} onPress={() => setLimit(l)} style={[s.segItem, limit === l && { backgroundColor: Colors.bg }]} accessibilityState={{ selected: limit === l }}>
@@ -253,6 +289,7 @@ export default function RecordVideo() {
               </Pressable>
             ))}
           </View>
+          </>
         )}
       </SafeAreaView>
     </View>

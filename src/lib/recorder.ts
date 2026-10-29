@@ -1,6 +1,8 @@
 import { router } from 'expo-router';
 
-export type Filmed = { uri: string; speed: number; trim?: [number, number] };
+import type { VideoFilter } from '@/components/recipe-video';
+
+export type Filmed = { uri: string; speed: number; trim?: [number, number]; filter?: VideoFilter };
 
 let pending: ((v: Filmed | null) => void) | null = null;
 
