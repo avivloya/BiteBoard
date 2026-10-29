@@ -48,6 +48,7 @@ export default function RootLayout() {
         <Stack.Screen name="edit-profile" options={sheet} />
         <Stack.Screen name="pro" options={sheet} />
         <Stack.Screen name="watch" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
+        <Stack.Screen name="search" options={{ animation: 'fade' }} />
         <Stack.Screen name="inbox" options={{ headerShown: true, title: '', headerShadowVisible: false, headerStyle: { backgroundColor: Colors.bg }, headerTintColor: Colors.ink }} />
         <Stack.Screen name="chat/[id]" />
         <Stack.Screen name="record-video" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />

@@ -2,6 +2,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Svg, { Circle, Path } from 'react-native-svg';
 
 import { Masonry } from '@/components/recipe-card';
 import { Reels } from '@/components/reels';
@@ -65,10 +66,16 @@ export default function Explore() {
   const header = (
     <Row style={{ justifyContent: 'space-between' }}>
       <Row style={{ gap: 18 }}>{socialConfigured && tab('watch', 'Watch')}{tab('recipes', 'Recipes')}</Row>
+      <Row style={{ gap: 10, flexWrap: 'nowrap' }}>
+      <Pressable onPress={() => router.push('/search')} accessibilityRole="button" accessibilityLabel="Search" hitSlop={10}
+        style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' }}>
+        <Svg width={20} height={20} viewBox="0 0 24 24"><Circle cx={11} cy={11} r={7} stroke={Colors.ink} strokeWidth={2} fill="none" /><Path d="m20 20-3.5-3.5" stroke={Colors.ink} strokeWidth={2} strokeLinecap="round" /></Svg>
+      </Pressable>
       <Pressable onPress={add} accessibilityRole="button" accessibilityLabel="Add a recipe" hitSlop={10}
         style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: Colors.ink, alignItems: 'center', justifyContent: 'center' }}>
         <T style={{ color: Colors.bg, fontSize: 22, lineHeight: 24, fontWeight: '600' }}>+</T>
       </Pressable>
+      </Row>
     </Row>
   );
 

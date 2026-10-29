@@ -251,3 +251,15 @@ export function onMessages(userId: string, cb: () => void) {
     .subscribe();
   return () => { db().removeChannel(ch); };
 }
+
+// ---------- search ----------
+
+/** Posts from everyone whose title or caption mentions the words (a #hashtag is just text in the caption). */
+export async function searchPosts(q: string, limit = 60) {
+  const term = q.replace(/[%,()]/g, '').trim();
+  if (!term) return [];
+  const { data, error } = await db().from('shared_recipes').select('id, owner, recipe, created_at, profiles(handle)')
+    .or(`recipe->>title.ilike.%${term}%,recipe->>caption.ilike.%${term}%`).order('created_at', { ascending: false }).limit(limit);
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as unknown as Row[]).map(toPost);
+}

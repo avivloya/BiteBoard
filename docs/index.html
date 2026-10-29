@@ -472,6 +472,23 @@ body.cam-open{overflow:hidden}
 .dm-post{display:flex;gap:10px;align-items:center;background:rgba(0,0,0,.08);border:0;border-radius:12px;padding:6px;font:inherit;color:inherit;text-align:left;cursor:pointer}
 .dm-post video{width:54px;height:84px;object-fit:cover;border-radius:8px;background:#120c07;pointer-events:none}
 .dm-post span{display:grid;gap:2px;font-size:13px}
+.srch-btn{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:var(--surface);color:var(--ink);border:0;cursor:pointer;flex:none}
+.srch{display:grid;gap:14px;min-width:0;overflow-x:hidden}
+.srch .chips{flex-wrap:wrap;overflow:visible}
+#sResults{display:grid;gap:12px;min-width:0}
+.srch-box input::-webkit-search-cancel-button{-webkit-appearance:none}
+.srch-bar{display:flex;align-items:center;gap:6px}
+.srch-box{flex:1;min-width:0;display:flex;align-items:center;gap:8px;background:var(--surface);border-radius:999px;padding:0 14px;color:var(--muted)}
+.srch-box input{flex:1;min-width:0;border:0;background:none;padding:12px 0;font:inherit;color:var(--ink);outline:none}
+.srch-tabs{overflow-x:auto;scrollbar-width:none;white-space:nowrap}.srch-tabs::-webkit-scrollbar{display:none}
+.srch-tabs button{font-size:15px!important}
+.srch-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.srch-vid{position:relative;aspect-ratio:9/14;border:0;padding:0;border-radius:10px;overflow:hidden;background:#120c07;cursor:pointer;color:#fff;text-align:left;font:inherit}
+.srch-vid video{width:100%;height:100%;object-fit:cover;pointer-events:none}
+.srch-vid span{position:absolute;left:0;right:0;bottom:0;padding:18px 6px 5px;background:linear-gradient(transparent,rgba(18,12,7,.75));display:grid;font-size:11px}
+.srch-vid span b{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srch-vid i{position:absolute;top:5px;right:6px;font-style:normal;font-size:11px;font-weight:700;display:flex;align-items:center;gap:3px;text-shadow:0 1px 4px rgba(0,0,0,.5)}
+.srch-hash{width:48px;height:48px;border-radius:50%;background:var(--surface);display:grid;place-items:center;font-size:22px;font-weight:800;flex:none}
 .cam-shutter{touch-action:none;-webkit-touch-callout:none}
 .cam-clips{display:flex;gap:10px;max-width:100%;overflow-x:auto;padding:8px 4px 2px;scrollbar-width:none}
 .cam-clips::-webkit-scrollbar{display:none}
@@ -802,12 +819,70 @@ document.addEventListener("click",e=>{const c=e.target.closest("[data-chat]");if
   const p=e.target.closest("[data-dm-post]");if(p){const m=convo(UI.chat).find(x=>x.id===p.dataset.dmPost);if(m?.post?.video)openPlayer([{...m.post,byId:m.post.byId,by:m.post.by}],0)}
   if(e.target.closest('[data-act="chat-back"]')){UI.chat=null;render()}});
 
+// ---------- search ----------
+// One box for everything: people, videos, recipes and hashtags. Hashtags come from captions (#word) and recipe tags.
+const tagsOf=r=>[...new Set([...((r.caption||"")+" "+(r.title||"")).matchAll(/#([\p{L}\p{N}_]{2,30})/gu)].map(m=>m[1].toLowerCase()).concat((r.tags||[]).map(t=>t.toLowerCase().replace(/\s+/g,""))))];
+function searchPool(){const social=S.mode==="db";
+  const mine=S.mine.map(r=>({...r,by:r.by||S.people[uidUser]?.handle||S.profile?.handle,byId:r.byId||uidUser||undefined}));
+  const seen=new Set(),all=[];for(const r of [...(social?forYou():[]),...mine,...LIB]){const k=pkey(r);if(!seen.has(k)){seen.add(k);all.push(r)}}return all}
+function searchResults(q){
+  const raw=q.trim(),tagOnly=raw.startsWith("#"),atOnly=raw.startsWith("@"),t=raw.replace(/^[#@]/,"").toLowerCase();
+  const pool=searchPool();
+  const people=tagOnly?[]:Object.entries(S.people).filter(([id,p])=>id!==uidUser&&t&&((p.handle||"").toLowerCase().includes(t)||(p.name||"").toLowerCase().includes(t)))
+    .sort(([a,p],[b,q2])=>(S.friends.includes(b)-S.friends.includes(a))||(followers(b)-followers(a))).slice(0,30);
+  const hit=r=>!t?false:tagOnly?tagsOf(r).some(x=>x.startsWith(t)):((r.title||"")+" "+(r.caption||"")+" "+(r.by||"")+" "+(r.ing||[]).join(" ")+" "+tagsOf(r).join(" ")).toLowerCase().includes(t);
+  const found=atOnly?[]:pool.filter(hit);
+  const tags={};if(!atOnly&&t)pool.forEach(r=>tagsOf(r).forEach(x=>{if(x.includes(t))tags[x]=(tags[x]||0)+1}));
+  return {people,videos:found.filter(r=>r.video),recipes:found.filter(r=>!r.video||r.kcal),tags:Object.entries(tags).sort((a,b)=>b[1]-a[1]).slice(0,20)};
+}
+const S_TABS=[["top","Top"],["people","Accounts"],["videos","Videos"],["recipes","Recipes"],["tags","Hashtags"]];
+function viewSearch(){const tab=UI.stab||"top";
+  return `<div class="srch"><form class="srch-bar" data-srch-form><button type="button" class="icon-btn" data-act="srch-back" aria-label="Back">${icon('<path d="M15 5l-7 7 7 7"/>',24)}</button>
+      <div class="srch-box">${icon('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',20)}<input id="sq" type="search" enterkeyhint="search" placeholder="Search people, videos, #tags" value="${esc(UI.sq||"")}" autocomplete="off" aria-label="Search"></div></form>
+    <div class="feed-tabs srch-tabs" role="tablist">${S_TABS.map(([k,l])=>`<button role="tab" data-stab="${k}" aria-selected="${tab===k}">${l}</button>`).join("")}</div>
+    <div id="sResults">${searchBody()}</div></div>`}
+function searchBody(){const q=UI.sq||"",tab=UI.stab||"top";
+  if(!q.trim()){const recent=socGet("recent-search",[]),tags={};searchPool().forEach(r=>tagsOf(r).forEach(x=>tags[x]=(tags[x]||0)+1));
+    const top=Object.entries(tags).sort((a,b)=>b[1]-a[1]).slice(0,12);
+    return `${recent.length?`<div class="h-head"><div class="label">Recent</div><button class="linkish" data-act="srch-clear">Clear</button></div><div class="chips">${recent.map(x=>`<button class="chip" data-sq="${esc(x)}">${esc(x)}</button>`).join("")}</div>`:""}
+      ${top.length?`<div class="label">Popular hashtags</div><div class="chips">${top.map(([x])=>`<button class="chip" data-sq="#${esc(x)}">#${esc(x)}</button>`).join("")}</div>`:""}
+      ${S.mode!=="db"?`<p class="note">On this website you can search recipes and your own posts. Searching other people works in the app.</p>`:""}`}
+  const R=searchResults(q);
+  const people=list=>list.length?`<div class="dm-list">${list.map(([id,p])=>`<button class="dm-row" data-person="${esc(id)}">${avatar(p,48)}<span><b>${esc(p.name||p.handle)}</b><small>@${esc(p.handle)} · ${followers(id)} follower${followers(id)===1?"":"s"}</small></span>${S.friends.includes(id)?`<span class="note" style="margin-left:auto">Following</span>`:""}</button>`).join("")}</div>`:"";
+  const vids=list=>list.length?`<div class="srch-grid">${list.map((r,i)=>`<button class="srch-vid" data-svid="${i}"><video src="${esc(r.video)}" muted playsinline preload="metadata" ${vFilter(r.filter,r.mirror)}></video><span>${r.by?`@${esc(r.by)}`:""}<b>${esc(r.caption||r.title||"")}</b></span><i>${icon(IC.heart,13,"currentColor")} ${likeCount(pkey(r))}</i></button>`).join("")}</div>`:"";
+  const recs=list=>list.length?`<div class="masonry">${list.map(card).join("")}</div>`:"";
+  const tags=list=>list.length?`<div class="dm-list">${list.map(([x,n])=>`<button class="dm-row" data-sq="#${esc(x)}"><span class="srch-hash">#</span><span><b>#${esc(x)}</b><small>${n} post${n===1?"":"s"}</small></span></button>`).join("")}</div>`:"";
+  UI.sVids=R.videos;
+  const none=`<div class="empty"><h3>Nothing found</h3>Try another word, an @name or a #hashtag.</div>`;
+  if(tab==="people")return people(R.people)||none;
+  if(tab==="videos")return vids(R.videos)||none;
+  if(tab==="recipes")return recs(R.recipes)||none;
+  if(tab==="tags")return tags(R.tags)||none;
+  const parts=[R.people.length?`<div class="h-head"><div class="label">Accounts</div>${R.people.length>3?`<button class="linkish" data-stab="people">See all</button>`:""}</div>${people(R.people.slice(0,3))}`:"",
+    R.tags.length?`<div class="h-head"><div class="label">Hashtags</div>${R.tags.length>3?`<button class="linkish" data-stab="tags">See all</button>`:""}</div>${tags(R.tags.slice(0,3))}`:"",
+    R.videos.length?`<div class="h-head"><div class="label">Videos</div>${R.videos.length>6?`<button class="linkish" data-stab="videos">See all</button>`:""}</div>${vids(R.videos.slice(0,6))}`:"",
+    R.recipes.length?`<div class="h-head"><div class="label">Recipes</div>${R.recipes.length>6?`<button class="linkish" data-stab="recipes">See all</button>`:""}</div>${recs(R.recipes.slice(0,6))}`:""].filter(Boolean);
+  return parts.join("")||none}
+function searchRefresh(){const el=$("#sResults");if(el)el.innerHTML=searchBody();document.querySelectorAll("[data-stab]").forEach(b=>{if(b.getAttribute("role")==="tab")b.setAttribute("aria-selected",b.dataset.stab===(UI.stab||"top"))})}
+function rememberSearch(q){q=q.trim();if(q.length<2)return;socSet("recent-search",[q,...socGet("recent-search",[]).filter(x=>x!==q)].slice(0,8))}
+document.addEventListener("input",e=>{if(e.target.id!=="sq")return;UI.sq=e.target.value;clearTimeout(window._sqt);window._sqt=setTimeout(searchRefresh,120)});
+document.addEventListener("submit",e=>{if(!e.target.closest("[data-srch-form]"))return;e.preventDefault();rememberSearch(UI.sq||"");$("#sq")?.blur()},true);
+document.addEventListener("click",e=>{
+  const st=e.target.closest("[data-stab]");if(st){UI.stab=st.dataset.stab;searchRefresh();return}
+  const sq=e.target.closest("[data-sq]");if(sq){UI.sq=sq.dataset.sq;rememberSearch(UI.sq);if(UI.sq.startsWith("#"))UI.stab="top";const i=$("#sq");if(i)i.value=UI.sq;searchRefresh();return}
+  const v=e.target.closest("[data-svid]");if(v){rememberSearch(UI.sq||"");openPlayer(UI.sVids||[],+v.dataset.svid);return}
+  if(e.target.closest('[data-act="srch-clear"]')){socSet("recent-search",[]);searchRefresh();return}
+  if(e.target.closest('[data-act="srch-back"]')){history.length>1?history.back():location.hash="#explore";return}
+  if(e.target.closest('[data-act="search"]')){UI.sq="";UI.stab="top";location.hash="#search"}
+  if(e.target.closest("#sResults [data-person],#sResults [data-open]"))rememberSearch(UI.sq||"");
+});
+
 // ---------- views ----------
 const LEGACY={discover:"explore",boards:"account",friends:"account"};
-function route(){let t=(location.hash||"#home").slice(1);t=LEGACY[t]||t;return ["home","explore","snap","today","account","people","inbox"].includes(t)?t:"home"}
+function route(){let t=(location.hash||"#home").slice(1);t=LEGACY[t]||t;return ["home","explore","snap","today","account","people","inbox","search"].includes(t)?t:"home"}
 function render(){
   const tab=route();
-  const navTab=tab==="snap"?"today":tab==="people"||tab==="inbox"?"account":tab;
+  const navTab=tab==="snap"?"today":tab==="people"||tab==="inbox"?"account":tab==="search"?"explore":tab;
   document.querySelectorAll("nav.tabs a").forEach(a=>{if(a.dataset.tab===navTab)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current")});
   const v=$("#view");
   if(!S.profile&&!UI.ob&&S.ready)UI.ob={step:0,editing:false,d:{units:"metric",activity:"1.375",pace:"0.5"}};
@@ -821,6 +896,7 @@ function render(){
   if(tab==="today")v.innerHTML=viewToday();
   if(tab==="account")v.innerHTML=UI.board?viewBoards():viewAccount();
   if(tab==="people")v.innerHTML=viewFriends();
+  if(tab==="search"){v.innerHTML=viewSearch();if(!UI.sq)setTimeout(()=>$("#sq")?.focus(),50)}
   if(tab==="inbox"){v.innerHTML=viewInbox();const cl=$("#chatList");if(cl)cl.scrollTop=cl.scrollHeight}
   v.insertAdjacentHTML("beforeend",`<p class="status-line">${S.mode==="db"?"Your boards and food log are saved to your account.":"Prototype mode: your data is kept in this browser only."}</p>`);
 }
@@ -863,7 +939,7 @@ function watchReels(){reelObs?.disconnect();if(!("IntersectionObserver" in windo
 function viewDiscover(){
   const q=UI.q.toLowerCase();
   const social=S.mode==="db";
-  const feedTabs=`<div class="explore-head"><div class="feed-tabs" role="tablist"><button role="tab" data-act="feed" data-feed="watch" aria-selected="${UI.feed==="watch"}">Watch</button><button role="tab" data-act="feed" data-feed="recipes" aria-selected="${UI.feed!=="watch"}">Recipes</button></div><button class="plus-btn" data-act="add-menu" aria-label="Add a recipe">+</button></div>`;
+  const feedTabs=`<div class="explore-head"><div class="feed-tabs" role="tablist"><button role="tab" data-act="feed" data-feed="watch" aria-selected="${UI.feed==="watch"}">Watch</button><button role="tab" data-act="feed" data-feed="recipes" aria-selected="${UI.feed!=="watch"}">Recipes</button></div><div class="row" style="gap:8px;flex-wrap:nowrap"><button class="icon-btn srch-btn" data-act="search" aria-label="Search">${icon('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',22)}</button><button class="plus-btn" data-act="add-menu" aria-label="Add a recipe">+</button></div></div>`;
   if(UI.feed==="watch"){const vids=UI.watchList=[...(social?forYou():[]),...S.mine.filter(r=>r.shared||!social).map(r=>({...r,by:S.people[uidUser]?.handle,byId:uidUser}))].filter(r=>r.video);
     return feedTabs+(vids.length?`<div class="reels">${vids.map((r,j)=>`<section class="reel" data-reel="${j}"><video src="${esc(r.video)}" data-speed="${r.speed||1}" ${vTrim(r.trim,r.cuts)} ${vFilter(r.filter,r.mirror)} playsinline muted loop preload="metadata"></video>
       <div class="reel-info"><button class="by" data-person="${esc(r.byId||"")}">${S.people[r.byId]?avatar(S.people[r.byId],22):""}@${esc(r.by||"")}</button><h3>${esc(r.title)}</h3>${r.caption?`<p class="reel-cap">${esc(r.caption)}</p>`:""}${facts(r,1)?`<div class="note num">${facts(r,1)}</div>`:""}
