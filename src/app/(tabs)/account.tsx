@@ -1,3 +1,4 @@
+import { Image } from 'expo-image';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, type ScrollViewInstance, StyleSheet, useWindowDimensions, View } from 'react-native';
@@ -117,7 +118,7 @@ function Posts({ recipes }: { recipes: Recipe[] }) {
       </Pressable>
       {recipes.map((r) => (
         <Pressable key={r.id} onPress={() => router.push({ pathname: '/recipe/[id]', params: { id: r.id } })} style={styles.tile} accessibilityLabel={`${r.title}${r.video ? ', video' : ''}`}>
-          <RecipeArt recipe={r} style={StyleSheet.absoluteFill} />
+          {r.cover ? <Image source={{ uri: r.cover }} style={StyleSheet.absoluteFill} contentFit="cover" /> : <RecipeArt recipe={r} style={StyleSheet.absoluteFill} />}
           {r.video && <View style={styles.mark}><T style={{ color: '#fff', fontSize: 12 }}>▶</T></View>}
           {r.shared && !r.video && <View style={styles.mark}><T style={{ color: '#fff', fontSize: 10, fontWeight: '700' }}>Posted</T></View>}
         </Pressable>

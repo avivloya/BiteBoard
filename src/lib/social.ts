@@ -139,7 +139,8 @@ export async function setShared(userId: string, recipe: Recipe, on: boolean, loc
   }
   const image = localPhoto && !localPhoto.startsWith('http') ? await uploadPhoto(userId, recipe.id, localPhoto) : localPhoto ?? recipe.image ?? null;
   const video = recipe.video && !recipe.video.startsWith('http') ? await uploadPhoto(userId, `${recipe.id}-video`, recipe.video) : recipe.video ?? null;
-  const { error } = await t.upsert({ id: recipe.id, owner: userId, recipe: { ...recipe, image, video, shared: undefined, by: undefined, byId: undefined, posted: undefined } });
+  const cover = recipe.cover && !recipe.cover.startsWith('http') ? await uploadPhoto(userId, `${recipe.id}-cover`, recipe.cover).catch(() => undefined) : recipe.cover;
+  const { error } = await t.upsert({ id: recipe.id, owner: userId, recipe: { ...recipe, image, video, cover, shared: undefined, by: undefined, byId: undefined, posted: undefined } });
   if (error) throw new Error(error.message);
   return image;
 }
@@ -210,10 +211,10 @@ export async function deleteComment(id: string) {
 }
 
 /** What travels with a shared video, so the chat can show and play it. */
-export type SharedPost = Pick<Recipe, 'id' | 'byId' | 'by' | 'title' | 'caption' | 'video' | 'speed' | 'trim' | 'cuts' | 'filter' | 'mirror'>;
+export type SharedPost = Pick<Recipe, 'id' | 'byId' | 'by' | 'title' | 'caption' | 'video' | 'speed' | 'trim' | 'cuts' | 'filter' | 'mirror' | 'music' | 'mvol' | 'ovol' | 'texts' | 'cover'>;
 export type Message = { id: string; sender: string; recipient: string; body: string; post: SharedPost | null; created_at: string; read_at: string | null };
 
-export const sharedPost = (r: Recipe): SharedPost => ({ id: r.id, byId: r.byId, by: r.by, title: r.title, caption: r.caption, video: r.video, speed: r.speed, trim: r.trim, cuts: r.cuts, filter: r.filter, mirror: r.mirror });
+export const sharedPost = (r: Recipe): SharedPost => ({ id: r.id, byId: r.byId, by: r.by, title: r.title, caption: r.caption, video: r.video, speed: r.speed, trim: r.trim, cuts: r.cuts, filter: r.filter, mirror: r.mirror, music: r.music, mvol: r.mvol, ovol: r.ovol, texts: r.texts, cover: r.cover });
 
 export async function sendMessage(userId: string, to: string, body: string, post?: SharedPost) {
   const { error } = await db().from('messages').insert({ sender: userId, recipient: to, body: body.slice(0, 1000), post: post ?? null });

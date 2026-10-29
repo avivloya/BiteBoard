@@ -79,7 +79,7 @@ export default function RecipeScreen() {
           </Row>
         )}
       </View>}
-      {recipe.video && <RecipeVideo uri={recipe.video} speed={recipe.speed} trim={recipe.trim} cuts={recipe.cuts} filter={recipe.filter} style={{ height: 420 }} />}
+      {recipe.video && <RecipeVideo uri={recipe.video} speed={recipe.speed} trim={recipe.trim} cuts={recipe.cuts} filter={recipe.filter} music={recipe.music} mvol={recipe.mvol} ovol={recipe.ovol} texts={recipe.texts} style={{ height: 420 }} />}
       <View style={{ padding: 20, gap: 18 }}>
         <View style={{ gap: 4 }}>
           {!!facts && <T variant="muted">{facts}</T>}

@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { FlatList, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
@@ -94,7 +95,7 @@ export default function Search() {
     <View style={s.grid}>
       {list.map((r, i) => (
         <Pressable key={`${r.byId ?? ''}:${r.id}`} onPress={() => watch(i)} style={s.vid} accessibilityRole="button" accessibilityLabel={r.caption || r.title}>
-          <RecipeVideo uri={r.video!} controls={false} muted speed={r.speed} filter={r.filter} style={{ flex: 1 }} />
+          {r.cover ? <Image source={{ uri: r.cover }} style={{ flex: 1 }} contentFit="cover" /> : <RecipeVideo uri={r.video!} controls={false} muted speed={r.speed} filter={r.filter} style={{ flex: 1 }} />}
           <View style={s.vidInfo}>{!!r.by && <T style={s.vidText}>@{r.by}</T>}<T style={[s.vidText, { fontWeight: '700' }]} numberOfLines={1}>{r.caption || r.title}</T></View>
         </Pressable>
       ))}

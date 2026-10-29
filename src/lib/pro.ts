@@ -4,13 +4,15 @@ import { create } from 'zustand';
 
 // RevenueCat handles App Store and Google Play subscriptions. "pro" is the entitlement id set up in RevenueCat.
 const ENTITLEMENT = 'pro';
+// The Verified plan ($10/month) is its own entitlement and offering, both named "verified" in RevenueCat.
+const VERIFIED = 'verified';
 const apiKey = Platform.OS === 'ios' ? process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY : process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY;
 export const proConfigured = !!apiKey;
 
-type ProState = { isPro: boolean; packages: PurchasesPackage[]; ready: boolean };
-export const usePro = create<ProState>()(() => ({ isPro: false, packages: [], ready: false }));
+type ProState = { isPro: boolean; packages: PurchasesPackage[]; ready: boolean; verifiedPlan: boolean; verifiedPackage: PurchasesPackage | null };
+export const usePro = create<ProState>()(() => ({ isPro: false, packages: [], ready: false, verifiedPlan: false, verifiedPackage: null }));
 
-const apply = (info: CustomerInfo) => usePro.setState({ isPro: !!info.entitlements.active[ENTITLEMENT] });
+const apply = (info: CustomerInfo) => usePro.setState({ isPro: !!info.entitlements.active[ENTITLEMENT], verifiedPlan: !!info.entitlements.active[VERIFIED] });
 
 let started = false;
 export async function initPro() {
@@ -21,7 +23,7 @@ export async function initPro() {
   try {
     const [info, offerings] = await Promise.all([Purchases.getCustomerInfo(), Purchases.getOfferings()]);
     apply(info);
-    usePro.setState({ packages: offerings.current?.availablePackages ?? [] });
+    usePro.setState({ packages: offerings.current?.availablePackages ?? [], verifiedPackage: offerings.all[VERIFIED]?.monthly ?? offerings.all[VERIFIED]?.availablePackages[0] ?? null });
   } finally {
     usePro.setState({ ready: true });
   }

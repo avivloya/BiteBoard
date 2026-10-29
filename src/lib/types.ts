@@ -27,6 +27,16 @@ export type Recipe = {
   mirror?: boolean;
   /** look picked in the camera: beauty, warm, bright */
   filter?: 'none' | 'beauty' | 'warm' | 'bright' | 'mono';
+  /** id of a free Biteboard sound played with the video (see lib/sounds) */
+  music?: string;
+  /** music volume, 0 to 1 (default 0.8) */
+  mvol?: number;
+  /** volume of the video's own sound (your voice), 0 to 1 (default 1) */
+  ovol?: number;
+  /** words placed on the video */
+  texts?: VideoText[];
+  /** the cover frame picked in the editor */
+  cover?: string;
   /** short text shown with the post, like a TikTok caption */
   caption?: string;
   /** created with AI */
@@ -42,6 +52,9 @@ export type Recipe = {
   /** when it was posted, ms since epoch */
   posted?: number;
 };
+
+/** Words on a video. x and y are the center in % of the video; size is % of its width. */
+export type VideoText = { text: string; x: number; y: number; color: string; style: 'pill' | 'plain'; size: number };
 
 export type Sex = 'female' | 'male' | 'other';
 

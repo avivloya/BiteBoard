@@ -1,8 +1,21 @@
 import { router } from 'expo-router';
 
 import type { VideoFilter } from '@/components/recipe-video';
+import type { VideoText } from '@/lib/types';
 
-export type Filmed = { uri: string; speed: number; trim?: [number, number]; filter?: VideoFilter; cuts?: [number, number][] };
+export type Filmed = {
+  uri: string; speed: number; trim?: [number, number]; filter?: VideoFilter; cuts?: [number, number][];
+  /** from the editor: a Biteboard sound and the two volumes, words on the video, and the cover frame */
+  music?: string; mvol?: number; ovol?: number; texts?: VideoText[]; cover?: string;
+};
+
+/** The editor's words travel between screens as JSON; anything that doesn't look right is dropped. */
+export const textsFromParam = (s?: string): VideoText[] | undefined => {
+  try {
+    const t = JSON.parse(s ?? '') as VideoText[];
+    return Array.isArray(t) && t.length ? t.filter((x) => typeof x?.text === 'string' && x.text.trim()).slice(0, 10) : undefined;
+  } catch { return undefined; }
+};
 
 /** Deleted clips travel between screens as "1.5-2.7,4-5". */
 export const cutsToParam = (c?: [number, number][]) => (c ?? []).map((x) => x.join('-')).join(',');

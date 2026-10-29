@@ -4,6 +4,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 
+import { Intro } from '@/components/intro';
 import { Colors } from '@/constants/theme';
 import { initPro } from '@/lib/pro';
 import { syncReminders } from '@/lib/reminders';
@@ -57,6 +58,7 @@ export default function RootLayout() {
         <Stack.Screen name="boards" options={{ headerShown: true, title: '', headerShadowVisible: false, headerStyle: { backgroundColor: Colors.bg }, headerTintColor: Colors.ink }} />
         <Stack.Screen name="board/[id]" options={{ headerShown: true, title: '', headerShadowVisible: false, headerStyle: { backgroundColor: Colors.bg }, headerTintColor: Colors.ink }} />
       </Stack>
+      <Intro />
     </>
   );
 }

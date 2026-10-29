@@ -65,7 +65,7 @@ export default function Watch() {
     const author = r.byId ? people[r.byId] : undefined;
     return (
       <View style={{ width, height, backgroundColor: '#120C07' }}>
-        <RecipeVideo uri={r.video!} autoPlay active={i === current && !paused && !sheet} muted={false} controls={false} speed={r.speed} trim={r.trim} cuts={r.cuts} filter={r.filter} style={StyleSheet.absoluteFill} />
+        <RecipeVideo uri={r.video!} autoPlay active={i === current && !paused && !sheet} muted={false} controls={false} speed={r.speed} trim={r.trim} cuts={r.cuts} filter={r.filter} music={r.music} mvol={r.mvol} ovol={r.ovol} texts={r.texts} style={StyleSheet.absoluteFill} />
         <Pressable style={StyleSheet.absoluteFill} onPress={() => setPaused(!paused)} accessibilityLabel={paused ? 'Play' : 'Pause'} />
         {paused && i === current && <View pointerEvents="none" style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }]}><Icon d="M8 5v14l11-7z" fill="rgba(255,255,255,0.85)" color="rgba(255,255,255,0.85)" size={54} /></View>}
         <View pointerEvents="none" style={s.shade} />
