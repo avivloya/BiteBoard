@@ -22,7 +22,7 @@ const GLASS = 'rgba(255,255,255,0.16)';
 const RED = '#FF5A4F';
 
 type Phase = 'ready' | 'countdown' | 'recording' | 'paused' | 'review';
-type Icon = 'flip' | 'flash' | 'speed' | 'timer' | 'close' | 'back' | 'trim' | 'upload' | 'pause' | 'play' | 'filter' | 'check' | 'undo';
+type Icon = 'flip' | 'flash' | 'speed' | 'timer' | 'close' | 'back' | 'trim' | 'upload' | 'pause' | 'play' | 'filter' | 'check' | 'undo' | 'mirror';
 
 function Glyph({ name, color = '#fff', size = 22 }: { name: Icon; color?: string; size?: number }) {
   const p = { stroke: color, strokeWidth: 1.9, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, fill: 'none' };
@@ -39,6 +39,7 @@ function Glyph({ name, color = '#fff', size = 22 }: { name: Icon; color?: string
       {name === 'pause' && <Path {...p} d="M9 5v14M15 5v14" />}
       {name === 'play' && <Path {...p} d="M7 5l12 7-12 7z" />}
       {name === 'filter' && <><Circle {...p} cx={12} cy={12} r={9} /><Path {...p} d="M12 3a9 9 0 0 1 0 18M8 7l2 2M6 12h3" /></>}
+      {name === 'mirror' && <Path {...p} d="M12 3v18M8 7l-5 5 5 5zM16 7l5 5-5 5z" />}
       {name === 'undo' && <Path {...p} d="M9 14L4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11" />}
       {name === 'check' && <Path {...p} d="M5 12.5l4.5 4.5L19 7" />}
     </Svg>
@@ -54,6 +55,8 @@ export default function RecordVideo() {
   const [ready, setReady] = useState(false);
   const [facing, setFacing] = useState<CameraType>('back');
   const [torch, setTorch] = useState(false);
+  // Selfie camera shows and saves the real (not mirrored) picture unless Mirror is on.
+  const [mirror, setMirror] = useState(false);
   const [timer, setTimer] = useState(false);
   const [speed, setSpeed] = useState(1);
   const [panel, setPanel] = useState<'speed' | 'trim' | 'filter' | null>(null);
@@ -243,7 +246,7 @@ export default function RecordVideo() {
   return (
     <View style={s.black}>
       <CameraView ref={ref} style={StyleSheet.absoluteFill} mode="video" facing={facing} enableTorch={torch} videoQuality="1080p" videoBitrate={8_000_000}
-        mirror={facing === 'front'} onCameraReady={() => setReady(true)} onRecordingProgress={(e) => { fileSecs.current = e.duration; setSeconds(e.duration); }} />
+        mirror={facing === 'front' && mirror} onCameraReady={() => setReady(true)} onRecordingProgress={(e) => { fileSecs.current = e.duration; setSeconds(e.duration); }} />
       {FILTER_TINT[filter] && <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: FILTER_TINT[filter] }]} />}
       <Shade />
 
@@ -260,6 +263,7 @@ export default function RecordVideo() {
       <SafeAreaView edges={['top']} style={s.side}>
         {phase === 'paused' && clips.length > 0 && <Tool icon="undo" label="Delete" onPress={undo} />}
         {!live && <Tool icon="flip" label="Flip" onPress={() => setFacing(facing === 'back' ? 'front' : 'back')} />}
+        {!live && facing === 'front' && <Tool icon="mirror" label="Mirror" on={mirror} onPress={() => setMirror(!mirror)} />}
         {facing === 'back' && <Tool icon="flash" label="Flash" on={torch} onPress={() => setTorch(!torch)} />}
         {!live && <Tool icon="speed" label={speedName(speed)} on={speed !== 1} onPress={() => setPanel(panel === 'speed' ? null : 'speed')} />}
         {!live && <Tool icon="filter" label={filter === 'none' ? 'Filter' : FILTERS.find((f) => f.v === filter)!.label} on={filter !== 'none'} onPress={() => setPanel(panel === 'filter' ? null : 'filter')} />}
