@@ -1053,9 +1053,12 @@ function camRender(){
     v.onloadedmetadata=()=>{v.classList.toggle("fit",v.videoWidth>v.videoHeight);if(isFinite(v.duration)&&!CAM.dur){CAM.dur=Math.round(v.duration*10)/10;if(CAM.edit==="trim")camRender()}};
     v.dataset.cuts=camCutsAttr(CAM.cuts);if(CAM.trim){v.dataset.start=CAM.trim[0];v.dataset.end=CAM.trim[1]}
     return}
-  const keep=$("#cam video.live");
-  el.innerHTML=`<video class="live full" autoplay muted playsinline style="${camFilterCss(CAM.filter,CAM.facing==="user"&&CAM.mirror)}"></video>
-    <div class="cam-shade top"></div><div class="cam-shade bottom"></div>
+  // The live picture is created once and never moved; only the buttons around it are redrawn.
+  // (iPhone shrinks a camera picture that gets moved or rebuilt.)
+  let lv=el.querySelector(":scope>video.live"),ui=el.querySelector(":scope>.cam-ui");
+  if(!lv||!ui){el.innerHTML=`<video class="live full" autoplay muted playsinline></video><div class="cam-ui"></div>`;lv=el.firstChild;ui=el.lastChild}
+  lv.setAttribute("style",camFilterCss(CAM.filter,CAM.facing==="user"&&CAM.mirror));
+  ui.innerHTML=`<div class="cam-shade top"></div><div class="cam-shade bottom"></div>
     <div class="cam-top">${live?`<span class="cam-spacer"></span>`:`<button class="cam-x" data-cam="close" aria-label="Close">${camSvg("close")}</button>`}
       ${live?`<span class="cam-time ${CAM.phase}"><i></i>${mmss(CAM.secs)}</span>`:brand}<span class="cam-spacer"></span></div>
     ${live?`<div class="cam-bar"><i style="width:${Math.min(100,CAM.secs/CAM.limit*100)}%"></i></div>`:""}
@@ -1073,9 +1076,7 @@ function camRender(){
       ${live?`<div class="cam-hint">${CAM.phase==="paused"?"Hold or tap to keep filming. Tap ✓ when you're done.":"Let go or tap to pause"}</div>`
         :`<div class="cam-hint">Hold to film, or tap</div><div class="cam-limits">${[15,60,180].map(l=>`<button data-cam="limit" data-v="${l}" aria-pressed="${CAM.limit===l}">${l<60?l+"s":l/60+"m"}</button>`).join("")}</div>`}
     </div>`;
-  // Keep the same live preview between redraws so it never flashes black.
-  if(keep&&keep.srcObject===CAM.stream&&CAM.stream){const nv=$("#cam video.live");keep.setAttribute("style",camFilterCss(CAM.filter,CAM.facing==="user"&&CAM.mirror));nv.replaceWith(keep);return}
-  const v=$("#cam video.live");if(v&&CAM.stream){v.srcObject=CAM.stream;v.play().catch(()=>{})}
+  if(CAM.stream&&lv.srcObject!==CAM.stream){lv.srcObject=CAM.stream;lv.play().catch(()=>{})}
 }
 function camTick(){const i=$("#cam .cam-bar i");if(i)i.style.width=Math.min(100,CAM.secs/CAM.limit*100)+"%";const t=$("#cam .cam-time");if(t)t.lastChild.textContent=mmss(CAM.secs)}
 function camRecord(){
