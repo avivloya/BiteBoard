@@ -4,6 +4,7 @@ import * as WebBrowser from 'expo-web-browser';
 import type { ReactNode } from 'react';
 import { Alert, Linking, Pressable, Share, Switch, View } from 'react-native';
 
+import { LangPicker } from '@/components/lang-picker';
 import { Screen } from '@/components/screen';
 import { Segmented, T } from '@/components/ui';
 import { PRIVACY_URL, SHARE_URL, SUPPORT_EMAIL, TERMS_URL } from '@/constants/app';
@@ -74,6 +75,10 @@ export default function Settings() {
         <Item title="Edit profile" sub={me ? 'Picture, name, handle and bio' : 'Name and bio'} onPress={() => router.push('/edit-profile')} />
         <Item title="Personal info and goals" sub={profile ? `${profile.name}${profile.email ? ` · ${profile.email}` : ''}` : undefined} onPress={() => router.push({ pathname: '/onboarding', params: { edit: '1' } })} />
         <Item title="Weight" sub="Log and see your trend" onPress={() => router.push('/weight')} />
+        <View style={{ padding: 14, gap: 8 }}>
+          <T style={{ fontWeight: '600' }}>Language</T>
+          <LangPicker />
+        </View>
         <View style={{ padding: 14, gap: 8 }}>
           <T style={{ fontWeight: '600' }}>Units</T>
           <Segmented value={profile?.units ?? 'metric'} onChange={setUnits} options={[{ value: 'metric', label: 'kg, cm' }, { value: 'imperial', label: 'lb, ft' }]} />

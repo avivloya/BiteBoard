@@ -2,14 +2,21 @@ import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View, type TextInputProps, type TextProps, type ViewStyle } from 'react-native';
 
 import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
+import { useTr } from '@/lib/i18n';
 
-export function T({ style, variant = 'body', ...rest }: TextProps & { variant?: 'title' | 'h2' | 'h3' | 'body' | 'muted' | 'label' | 'num' }) {
-  return <Text {...rest} style={[styles[variant], style]} />;
+/** Text in the chosen language. Plain words and numbers are translated as one sentence; nested pieces one by one. */
+export function T({ style, variant = 'body', children, ...rest }: TextProps & { variant?: 'title' | 'h2' | 'h3' | 'body' | 'muted' | 'label' | 'num' }) {
+  const t = useTr();
+  const list = Array.isArray(children) ? children : [children];
+  const plain = list.every((c) => typeof c === 'string' || typeof c === 'number');
+  const out = plain ? t(list.join('')) : list.map((c) => (typeof c === 'string' ? t(c) : c));
+  return <Text {...rest} style={[styles[variant], style]}>{out}</Text>;
 }
 
 export function Button({
   title, onPress, kind = 'secondary', disabled, icon, style,
 }: { title: string; onPress?: () => void; kind?: 'primary' | 'secondary' | 'ghost'; disabled?: boolean; icon?: ReactNode; style?: ViewStyle }) {
+  const t = useTr();
   return (
     <Pressable
       accessibilityRole="button"
@@ -17,15 +24,16 @@ export function Button({
       disabled={disabled}
       style={({ pressed }) => [styles.btn, kind === 'primary' && styles.btnPrimary, kind === 'ghost' && styles.btnGhost, (pressed || disabled) && { opacity: disabled ? 0.5 : 0.85 }, style]}>
       {icon}
-      <Text style={[styles.btnText, kind === 'primary' && { color: Colors.accentInk }]}>{title}</Text>
+      <Text style={[styles.btnText, kind === 'primary' && { color: Colors.accentInk }]}>{t(title)}</Text>
     </Pressable>
   );
 }
 
 export function Chip({ label, selected, onPress }: { label: string; selected?: boolean; onPress?: () => void }) {
+  const t = useTr();
   return (
     <Pressable onPress={onPress} accessibilityState={{ selected }} style={[styles.chip, selected && styles.chipOn]}>
-      <Text style={[styles.chipText, selected && { color: Colors.accentInk }]}>{label}</Text>
+      <Text style={[styles.chipText, selected && { color: Colors.accentInk }]}>{t(label)}</Text>
     </Pressable>
   );
 }
@@ -35,21 +43,23 @@ export function Panel({ children, style }: { children: ReactNode; style?: ViewSt
 }
 
 export function Field({ label, ...rest }: TextInputProps & { label: string }) {
+  const t = useTr();
   return (
     <View style={{ gap: 6 }}>
       <T variant="label" style={{ textTransform: 'none', letterSpacing: 0, fontSize: 13 }}>{label}</T>
-      <TextInput placeholderTextColor={Colors.muted} {...rest} style={[styles.input, rest.multiline && { minHeight: 96, textAlignVertical: 'top' }, rest.style]} />
+      <TextInput placeholderTextColor={Colors.muted} {...rest} placeholder={rest.placeholder && t(rest.placeholder)} style={[styles.input, rest.multiline && { minHeight: 96, textAlignVertical: 'top' }, rest.style]} />
     </View>
   );
 }
 
 /** Segmented control: one choice out of a few. */
 export function Segmented<V extends string | number>({ options, value, onChange }: { options: { value: V; label: string }[]; value?: V; onChange: (v: V) => void }) {
+  const t = useTr();
   return (
     <View style={styles.seg}>
       {options.map((o) => (
         <Pressable key={String(o.value)} onPress={() => onChange(o.value)} style={[styles.segItem, value === o.value && styles.segOn]} accessibilityState={{ selected: value === o.value }}>
-          <Text style={[styles.segText, value === o.value && { color: Colors.ink }]}>{o.label}</Text>
+          <Text style={[styles.segText, value === o.value && { color: Colors.ink }]}>{t(o.label)}</Text>
         </Pressable>
       ))}
     </View>

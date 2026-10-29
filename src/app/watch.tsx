@@ -9,6 +9,7 @@ import { Row } from '@/components/screen';
 import { Avatar } from '@/components/social';
 import { Button, T } from '@/components/ui';
 import { Colors } from '@/constants/theme';
+import { tr } from '@/lib/i18n';
 import { SHARE_URL } from '@/constants/app';
 import {
   addComment, type Comment, commentCounts, commentsOn, deleteComment, likesFor, postKey, sendMessage, setLike, sharedPost, socialConfigured,
@@ -167,7 +168,7 @@ function Comments({ postId, signedIn, userId, onClose, onCount }: { postId: stri
         )} />
       {signedIn && (
         <Row style={{ flexWrap: 'nowrap' }}>
-          <TextInput value={text} onChangeText={setText} placeholder="Add a comment…" placeholderTextColor={Colors.muted} maxLength={300} onSubmitEditing={post} returnKeyType="send" style={s.input} />
+          <TextInput value={text} onChangeText={setText} placeholder={tr("Add a comment…")} placeholderTextColor={Colors.muted} maxLength={300} onSubmitEditing={post} returnKeyType="send" style={s.input} />
           <Button title="Post" kind="primary" disabled={!text.trim()} onPress={post} />
         </Row>
       )}

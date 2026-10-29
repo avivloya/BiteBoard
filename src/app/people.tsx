@@ -7,6 +7,7 @@ import { Row, Screen } from '@/components/screen';
 import { Avatar, refreshSocial } from '@/components/social';
 import { Button, T, styles as ui } from '@/components/ui';
 import { Colors } from '@/constants/theme';
+import { tr } from '@/lib/i18n';
 import { type PublicProfile, searchPeople, setFriend } from '@/lib/social';
 import { useSocial } from '@/lib/social-store';
 
@@ -48,7 +49,7 @@ export default function People() {
   return (
     <Screen edges={[]} bg={Colors.surface}>
       <T variant="h2">People</T>
-      <TextInput value={q} onChangeText={setQ} placeholder="Search by name or @handle" placeholderTextColor={Colors.muted} autoCapitalize="none" style={[ui.input, { borderRadius: 999, backgroundColor: Colors.surface2 }]} />
+      <TextInput value={q} onChangeText={setQ} placeholder={tr("Search by name or @handle")} placeholderTextColor={Colors.muted} autoCapitalize="none" style={[ui.input, { borderRadius: 999, backgroundColor: Colors.surface2 }]} />
       {q || !following.length
         ? (results.length ? results.map(person) : <T variant="muted">{q ? 'No one matches that name yet.' : 'No one else is here yet. Invite a friend to join Biteboard.'}</T>)
         : <><T variant="label">Following</T>{following.map(person)}</>}

@@ -9,6 +9,7 @@ import { Reels } from '@/components/reels';
 import { Row, Screen } from '@/components/screen';
 import { Button, Chip, T, styles as ui } from '@/components/ui';
 import { Colors } from '@/constants/theme';
+import { tr } from '@/lib/i18n';
 import { FILTERS, LIBRARY } from '@/data/recipes';
 import { ensureSession, forYouPosts, friendIds, socialConfigured } from '@/lib/social';
 import { useSocial } from '@/lib/social-store';
@@ -92,7 +93,7 @@ export default function Explore() {
   return (
     <Screen style={{ gap: 14 }}>
       {header}
-      <TextInput value={q} onChangeText={setQ} placeholder="Search recipes" placeholderTextColor={Colors.muted} returnKeyType="search"
+      <TextInput value={q} onChangeText={setQ} placeholder={tr("Search recipes")} placeholderTextColor={Colors.muted} returnKeyType="search"
         style={[ui.input, { borderRadius: 999, backgroundColor: 'rgba(248,239,226,0.7)', borderColor: 'transparent' }]} />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
         {FILTERS.map((f) => <Chip key={f} label={f} selected={filter === f} onPress={() => setFilter(f)} />)}

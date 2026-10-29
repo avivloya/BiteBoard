@@ -11,6 +11,7 @@ import { Row } from '@/components/screen';
 import { Avatar } from '@/components/social';
 import { Chip, T } from '@/components/ui';
 import { Colors } from '@/constants/theme';
+import { tr } from '@/lib/i18n';
 import { LIBRARY } from '@/data/recipes';
 import { tagsOf } from '@/lib/hashtags';
 import { type PublicProfile, searchPeople, searchPosts, socialConfigured } from '@/lib/social';
@@ -137,7 +138,7 @@ export default function Search() {
         </Pressable>
         <View style={s.box}>
           <Svg width={20} height={20} viewBox="0 0 24 24"><Circle cx={11} cy={11} r={7} stroke={Colors.muted} strokeWidth={2} fill="none" /><Path d="m20 20-3.5-3.5" stroke={Colors.muted} strokeWidth={2} strokeLinecap="round" /></Svg>
-          <TextInput value={q} onChangeText={setQ} autoFocus placeholder="Search people, videos, #tags" placeholderTextColor={Colors.muted} returnKeyType="search"
+          <TextInput value={q} onChangeText={setQ} autoFocus placeholder={tr("Search people, videos, #tags")} placeholderTextColor={Colors.muted} returnKeyType="search"
             onSubmitEditing={() => remember(q)} autoCapitalize="none" autoCorrect={false} style={s.input} />
           {!!q && <Pressable onPress={() => setQ('')} hitSlop={10} accessibilityLabel="Clear"><T variant="muted" style={{ fontSize: 16 }}>✕</T></Pressable>}
         </View>

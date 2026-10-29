@@ -7,6 +7,7 @@ import { RecipeVideo } from '@/components/recipe-video';
 import { Row, Screen } from '@/components/screen';
 import { Button, Field, Segmented, T } from '@/components/ui';
 import { Colors, Radius } from '@/constants/theme';
+import { tr } from '@/lib/i18n';
 import { deleteRecipePhoto, pickRecipePhoto, pickRecipeVideo } from '@/lib/photos';
 import { cutsFromParam, type Filmed, filmVideo } from '@/lib/recorder';
 import { setShared } from '@/lib/social';
@@ -66,7 +67,7 @@ export default function WriteRecipe() {
 
       <Row style={{ alignItems: 'flex-start', flexWrap: 'nowrap', gap: 12 }}>
         <View style={{ flex: 1, minHeight: 190, backgroundColor: Colors.bg, borderRadius: Radius.md, padding: 12 }}>
-          <TextInput value={caption} onChangeText={setCaption} placeholder="Write a caption…" placeholderTextColor={Colors.muted} multiline maxLength={300}
+          <TextInput value={caption} onChangeText={setCaption} placeholder={tr("Write a caption…")} placeholderTextColor={Colors.muted} multiline maxLength={300}
             style={{ flex: 1, fontSize: 16, color: Colors.ink, textAlignVertical: 'top' }} />
         </View>
         {video ? (
@@ -93,7 +94,7 @@ export default function WriteRecipe() {
 
       {(!video || more) && <>
       <T variant="label">Recipe</T>
-      <Field label="Recipe name" value={title} onChangeText={setTitle} placeholder="Mom's lentil salad" />
+      <Field label="Recipe name" value={title} onChangeText={setTitle} placeholder={tr("Mom's lentil salad")} />
       <Segmented value={cat} onChange={setCat} options={MEALS.map((m) => ({ value: m, label: m }))} />
       <Row style={{ flexWrap: 'nowrap' }}>{num('min', 'Minutes')}{num('serv', 'Servings')}{num('kcal', 'kcal / serving')}</Row>
       <Row style={{ flexWrap: 'nowrap' }}>{num('p', 'Protein g')}{num('c', 'Carbs g')}{num('f', 'Fat g')}</Row>

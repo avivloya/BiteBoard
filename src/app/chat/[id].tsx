@@ -8,6 +8,7 @@ import { Row } from '@/components/screen';
 import { Avatar } from '@/components/social';
 import { Button, T } from '@/components/ui';
 import { Colors } from '@/constants/theme';
+import { tr } from '@/lib/i18n';
 import { chatWith, markRead, type Message, onMessages, type PublicProfile, profilesByIds, sendMessage } from '@/lib/social';
 import { ago } from '@/lib/ago';
 import { useSocial } from '@/lib/social-store';
@@ -76,7 +77,7 @@ export default function Chat() {
             );
           }} />
         <Row style={{ paddingHorizontal: 16, paddingBottom: 8, flexWrap: 'nowrap' }}>
-          <TextInput value={text} onChangeText={setText} placeholder="Message…" placeholderTextColor={Colors.muted} maxLength={1000} onSubmitEditing={send} returnKeyType="send" style={s.input} />
+          <TextInput value={text} onChangeText={setText} placeholder={tr("Message…")} placeholderTextColor={Colors.muted} maxLength={1000} onSubmitEditing={send} returnKeyType="send" style={s.input} />
           <Button title="Send" kind="primary" disabled={!text.trim()} onPress={send} />
         </Row>
       </KeyboardAvoidingView>
