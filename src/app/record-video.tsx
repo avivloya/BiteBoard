@@ -203,7 +203,7 @@ export default function RecordVideo() {
 
   return (
     <View style={s.black}>
-      <CameraView ref={ref} style={StyleSheet.absoluteFill} mode="video" facing={facing} enableTorch={torch} videoQuality="720p"
+      <CameraView ref={ref} style={StyleSheet.absoluteFill} mode="video" facing={facing} enableTorch={torch} videoQuality="1080p" videoBitrate={8_000_000}
         mirror={facing === 'front'} onCameraReady={() => setReady(true)} onRecordingProgress={(e) => setSeconds(e.duration)} />
       <Shade />
 

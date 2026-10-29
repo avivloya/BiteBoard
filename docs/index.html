@@ -385,7 +385,7 @@ body.ob nav.tabs,body.ob .today-pill{display:none}
 .reel-cap{margin:2px 0 4px;color:#fff;font-size:14px}
 body.cam-open{overflow:hidden}
 .cam{position:fixed;inset:0;z-index:100;background:#1d140d;color:#fff;font-family:inherit;-webkit-user-select:none;user-select:none}
-.cam .full{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.cam .mirror{transform:scaleX(-1)}
+.cam .full{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.cam .full.fit{object-fit:contain}.cam .mirror{transform:scaleX(-1)}
 .cam-shade{position:absolute;left:0;right:0;pointer-events:none}.cam-shade.top{top:0;height:160px;background:linear-gradient(rgba(29,20,13,.55),transparent)}.cam-shade.bottom{bottom:0;height:260px;background:linear-gradient(transparent,rgba(29,20,13,.7))}
 .cam-top{position:absolute;top:0;left:0;right:0;padding:calc(env(safe-area-inset-top) + 14px) 16px 0;display:flex;align-items:center;justify-content:space-between}
 .cam-spacer{width:42px}
@@ -583,7 +583,7 @@ loadLocal();
 // Videos: uploaded when signed in on claude.ai, otherwise kept in this browser (IndexedDB).
 const vdb=()=>new Promise((ok,no)=>{try{const r=indexedDB.open("biteboard-videos",1);r.onupgradeneeded=()=>r.result.createObjectStore("v");r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)}catch(e){no(e)}});
 async function storeVideo(r,blob){
-  if(assets){const a=await assets.upload(blob);r.video=a.url;delete r.localVideo;return}
+  if(assets){if(blob.size>20*1024*1024)throw new Error("too big");const a=await assets.upload(blob);r.video=a.url;delete r.localVideo;return}
   const d=await vdb();await new Promise((ok,no)=>{const t=d.transaction("v","readwrite");t.objectStore("v").put(blob,r.id);t.oncomplete=ok;t.onerror=()=>no(t.error)});
   r.localVideo=true;r.video=URL.createObjectURL(blob);
 }
@@ -979,7 +979,10 @@ async function camStart(){
   CAM.stream?.getTracks().forEach(t=>t.stop());
   try{
     if(!navigator.mediaDevices?.getUserMedia)throw new Error("none");
-    CAM.stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:CAM.facing,width:{ideal:720},height:{ideal:1280}},audio:true});
+    // Ask for the camera's full HD resolution (the phone rotates it to portrait), and zoom all the way out.
+    CAM.stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:CAM.facing,width:{ideal:1920},height:{ideal:1080},frameRate:{ideal:30}},audio:{echoCancellation:false,noiseSuppression:false}});
+    const vt=CAM.stream.getVideoTracks()[0],caps=vt?.getCapabilities?.()||{};
+    if(caps.zoom)vt.applyConstraints({advanced:[{zoom:caps.zoom.min}]}).catch(()=>{});
     if(CAM.phase==="starting"||CAM.phase==="blocked")CAM.phase="ready";camRender();
   }catch(e){CAM.phase="blocked";camRender()}
 }
@@ -1024,7 +1027,7 @@ function camRender(){
         <div class="cam-review"><button data-cam="retake">Retake</button><button class="go" data-cam="use">${CAM.post?"Next":"Use video"}</button></div>
       </div>`;
     const v=$("#camPlay");v.playbackRate=CAM.speed;
-    v.onloadedmetadata=()=>{if(isFinite(v.duration)&&!CAM.dur){CAM.dur=Math.round(v.duration*10)/10;if(CAM.edit==="trim")camRender()}};
+    v.onloadedmetadata=()=>{v.classList.toggle("fit",v.videoWidth>v.videoHeight);if(isFinite(v.duration)&&!CAM.dur){CAM.dur=Math.round(v.duration*10)/10;if(CAM.edit==="trim")camRender()}};
     v.ontimeupdate=()=>{const t=CAM.trim;if(t&&(v.currentTime<t[0]||v.currentTime>t[1]))v.currentTime=t[0]};
     return}
   el.innerHTML=`<video class="live full ${CAM.facing==="user"?"mirror":""}" autoplay muted playsinline></video>
@@ -1046,13 +1049,13 @@ function camRender(){
       ${live?`<div class="cam-hint">${CAM.phase==="paused"?"Paused. Set up the next step, then resume.":"Tap to stop"}</div>`
         :`<div class="cam-limits">${[15,60,180].map(l=>`<button data-cam="limit" data-v="${l}" aria-pressed="${CAM.limit===l}">${l<60?l+"s":l/60+"m"}</button>`).join("")}</div>`}
     </div>`;
-  const v=$("#cam video.live");if(v&&CAM.stream){v.srcObject=CAM.stream;v.play().catch(()=>{})}
+  const v=$("#cam video.live");if(v&&CAM.stream){v.srcObject=CAM.stream;v.onloadedmetadata=()=>v.classList.toggle("fit",v.videoWidth>v.videoHeight);v.play().catch(()=>{})}
 }
 function camTick(){const i=$("#cam .cam-bar i");if(i)i.style.width=Math.min(100,CAM.secs/CAM.limit*100)+"%";const t=$("#cam .cam-time");if(t)t.lastChild.textContent=mmss(CAM.secs)}
 function camRecord(){
   CAM.chunks=[];CAM.secs=0;CAM.showSpeed=false;CAM.trim=null;CAM.dur=0;CAM.edit=null;
   const type=["video/mp4","video/webm;codecs=vp9,opus","video/webm"].find(t=>window.MediaRecorder&&MediaRecorder.isTypeSupported?.(t))||"";
-  try{CAM.rec=new MediaRecorder(CAM.stream,type?{mimeType:type}:{})}catch(e){toast("Filming isn't supported in this browser. Try uploading a video.");return}
+  try{CAM.rec=new MediaRecorder(CAM.stream,{...(type?{mimeType:type}:{}),videoBitsPerSecond:5000000,audioBitsPerSecond:128000})}catch(e){toast("Filming isn't supported in this browser. Try uploading a video.");return}
   CAM.rec.ondataavailable=e=>e.data.size&&CAM.chunks.push(e.data);
   CAM.rec.onstop=()=>{clearInterval(CAM.t);CAM.blob=new Blob(CAM.chunks,{type:CAM.rec.mimeType||"video/webm"});CAM.url=URL.createObjectURL(CAM.blob);CAM.dur=Math.round(CAM.secs*10)/10;CAM.phase="review";camRender()};
   CAM.rec.start(250);CAM.phase="recording";
