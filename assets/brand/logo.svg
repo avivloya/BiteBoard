@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Snapspoon logo: brown spoon with a bite taken out of the bowl -->
+  <defs>
+    <mask id="bite" maskUnits="userSpaceOnUse" x="-2000" y="-2000" width="5000" height="5000">
+      <rect x="-2000" y="-2000" width="5000" height="5000" fill="#fff"/>
+      <circle cx="650" cy="250" r="72" fill="#000"/>
+      <circle cx="660" cy="345" r="60" fill="#000"/>
+      <circle cx="615" cy="168" r="58" fill="#000"/>
+    </mask>
+  </defs>
+  <rect class="bg" width="1024" height="1024" rx="224" fill="#E2CEB1"/>
+  <g transform="rotate(35 512 512)">
+    <g mask="url(#bite)">
+      <ellipse cx="512" cy="330" rx="165" ry="215" fill="#5B3A22"/>
+      <ellipse cx="482" cy="305" rx="78" ry="118" fill="#7A5235" opacity=".6"/>
+      <path d="M484 520 Q512 556 540 520 L556 880 Q556 922 512 922 Q468 922 468 880 Z" fill="#5B3A22"/>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,61 @@
+import { router } from 'expo-router';
+import { useCallback, useRef, useState } from 'react';
+import { FlatList, Pressable, View } from 'react-native';
+
+import { RecipeVideo } from '@/components/recipe-video';
+import { Row } from '@/components/screen';
+import { Avatar, Verified } from '@/components/social';
+import { Button, T } from '@/components/ui';
+import { Radius } from '@/constants/theme';
+import { useSocial } from '@/lib/social-store';
+import type { Recipe } from '@/lib/types';
+
+/** Full-height cooking videos you swipe through one at a time. Only the one on screen plays. */
+export function Reels({ posts }: { posts: Recipe[] }) {
+  const people = useSocial((s) => s.people);
+  const [height, setHeight] = useState(0);
+  const [current, setCurrent] = useState(posts[0]?.id);
+  const [muted, setMuted] = useState(true);
+  const onViewable = useRef(({ viewableItems }: { viewableItems: { item: Recipe }[] }) => {
+    if (viewableItems[0]) setCurrent(viewableItems[0].item.id);
+  }).current;
+  const item = useCallback(({ item: r }: { item: Recipe }) => (
+    <View style={{ height, paddingBottom: 12 }}>
+      <View style={{ flex: 1, borderRadius: Radius.lg, overflow: 'hidden', backgroundColor: '#000' }}>
+        <RecipeVideo uri={r.video!} autoPlay active={r.id === current} muted={muted} controls={false} speed={r.speed} trim={r.trim} cuts={r.cuts} filter={r.filter} music={r.music} mvol={r.mvol} ovol={r.ovol} texts={r.texts} style={{ flex: 1 }} />
+        {/* Tap the video to watch full screen with likes, comments and sharing. */}
+        <Pressable style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} accessibilityRole="button" accessibilityLabel="Watch full screen"
+          onPress={() => { useSocial.getState().set({ watch: { posts, index: posts.findIndex((p) => p.id === r.id) } }); router.push('/watch'); }} />
+        <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, gap: 6, backgroundColor: 'rgba(0,0,0,0.35)' }}>
+          {r.byId && (
+            <Pressable onPress={() => router.push({ pathname: '/person/[id]', params: { id: r.byId! } })} accessibilityRole="link">
+              <Row>
+                {people[r.byId] && <Avatar p={people[r.byId]} size={22} />}
+                <T style={{ color: '#fff', fontWeight: '700' }}>@{r.by}</T>
+                <Verified on={people[r.byId]?.verified} color="#fff" />
+              </Row>
+            </Pressable>
+          )}
+          <T variant="h3" style={{ color: '#fff' }}>{r.title}</T>
+          {!!r.caption && <T style={{ color: '#fff' }} numberOfLines={2}>{r.caption}</T>}
+          <T style={{ color: 'rgba(255,255,255,0.85)', fontSize: 13 }}>{[r.kcal > 0 && `${Math.round(r.kcal)} kcal`, r.min > 0 && `${r.min} min`, r.p > 0 && `${Math.round(r.p)}g protein`].filter(Boolean).join(' · ')}</T>
+          <Row>
+            <Button title="View recipe" kind="primary" onPress={() => router.push({ pathname: '/recipe/[id]', params: { id: r.id } })} />
+            <Button title={muted ? 'Sound on' : 'Sound off'} onPress={() => setMuted(!muted)} />
+          </Row>
+        </View>
+      </View>
+    </View>
+  ), [height, current, muted, people, posts]);
+
+  return (
+    <View style={{ flex: 1 }} onLayout={(e) => setHeight(e.nativeEvent.layout.height)}>
+      {height > 0 && (
+        <FlatList data={posts} keyExtractor={(r) => r.id} renderItem={item} pagingEnabled showsVerticalScrollIndicator={false}
+          getItemLayout={(_, i) => ({ length: height, offset: height * i, index: i })}
+          onViewableItemsChanged={onViewable} viewabilityConfig={{ itemVisiblePercentThreshold: 60 }}
+          windowSize={3} initialNumToRender={1} maxToRenderPerBatch={2} />
+      )}
+    </View>
+  );
+}

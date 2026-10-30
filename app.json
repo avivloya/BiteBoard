@@ -1,0 +1,71 @@
+{
+  "expo": {
+    "name": "Snapspoon",
+    "slug": "snapspoon",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "snapspoon",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "bundleIdentifier": "com.avivloya.snapspoon",
+      "supportsTablet": false,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "usesAppleSignIn": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E2CEB1",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundImage": "./assets/images/android-icon-background.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "com.avivloya.snapspoon"
+    },
+    "web": {
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#E2CEB1",
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 200
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Snapspoon uses your photos and videos to estimate the calories in your meals and to add pictures and cooking videos to your recipes.",
+          "cameraPermission": "Snapspoon uses the camera to snap your meals and estimate their calories.",
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Snapspoon uses the camera to snap meals, scan food barcodes and film your cooking videos.",
+          "microphonePermission": "Snapspoon uses the microphone to record sound in your cooking videos.",
+          "recordAudioAndroid": true
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#6B4026"
+        }
+      ],
+      "expo-video",
+      "expo-apple-authentication"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}
