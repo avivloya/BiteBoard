@@ -27,7 +27,7 @@ export function Intro() {
   return (
     <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, s.wrap, { opacity: fade }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       <Animated.View style={{ opacity: pop, transform: [{ scale }] }}><Logo size={96} /></Animated.View>
-      <Animated.Text style={[s.name, { opacity: pop, transform: [{ translateY: rise }] }]}>Biteboard</Animated.Text>
+      <Animated.Text style={[s.name, { opacity: pop, transform: [{ translateY: rise }] }]}>Snapspoon</Animated.Text>
     </Animated.View>
   );
 }

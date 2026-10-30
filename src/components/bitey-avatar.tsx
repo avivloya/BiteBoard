@@ -3,7 +3,7 @@ import Svg, { Circle, Defs, G, Mask, Path, Rect } from 'react-native-svg';
 
 import { Colors } from '@/constants/theme';
 
-/** Bitey's face: the Biteboard plate, smiling. */
+/** Bitey's face: the Snapspoon plate, smiling. */
 export function BiteyAvatar({ size = 48 }: { size?: number }) {
   return (
     <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: Colors.accent, alignItems: 'center', justifyContent: 'center' }}>

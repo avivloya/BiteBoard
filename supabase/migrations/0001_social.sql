@@ -1,4 +1,4 @@
--- Public profiles, friendships and shared recipes for Biteboard.
+-- Public profiles, friendships and shared recipes for Snapspoon.
 -- Private data (weight, food log) stays on the device and is never stored here.
 
 create table public.profiles (

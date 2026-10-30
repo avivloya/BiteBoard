@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { LangPicker } from '@/components/lang-picker';
@@ -10,6 +10,7 @@ import { Colors, Radius } from '@/constants/theme';
 import { ACTIVITY, PACE, calcPlan, kgToLb, lbToKg } from '@/lib/plan';
 import { ensureSession, handleProblem, saveProfile, socialConfigured } from '@/lib/social';
 import { refreshSocial } from '@/components/social';
+import { useSocial } from '@/lib/social-store';
 import { useStore } from '@/lib/store';
 import type { Profile, Sex } from '@/lib/types';
 
@@ -22,6 +23,9 @@ export default function Onboarding() {
   const finish = useStore((s) => s.finishOnboarding);
   const [step, setStep] = useState(editing ? 1 : 0);
   const [d, setD] = useState<Draft>(saved ? { ...saved } : { units: 'metric', activity: 1.375, pace: 0.5 });
+  // Signed back in to an old account: fill in its name and username.
+  const me = useSocial((s) => s.me);
+  useEffect(() => { if (me && !editing) setD((x) => ({ ...x, name: x.name || me.name, handle: me.handle })); }, [me?.id]);
   const [error, setError] = useState('');
   const [checking, setChecking] = useState(false);
   const imp = d.units === 'imperial';
@@ -76,10 +80,11 @@ export default function Onboarding() {
         <T variant="muted" style={{ fontSize: 12, marginTop: -14 }}>3 to 20 letters, numbers, dots or underscores. No one else can have it.</T>
         <Field label="Email" value={d.email ?? ''} onChangeText={(email) => setD({ ...d, email })} autoComplete="email" keyboardType="email-address" autoCapitalize="none" placeholder="you@example.com" />
         {err}
+        {socialConfigured && !editing && !me && <Button title="Already have an account? Sign in" kind="ghost" onPress={() => router.push('/sign-in')} />}
         {nav(checking ? 'Checking…' : 'Continue', async () => {
           if (!d.name?.trim()) return setError('Enter your first name.');
           setChecking(true);
-          const bad = await handleProblem(d.handle ?? '').catch(() => '');
+          const bad = await handleProblem(d.handle ?? '', me?.id).catch(() => '');
           setChecking(false);
           if (bad) return setError(bad);
           if (!/^\S+@\S+\.\S+$/.test(d.email ?? '')) return setError('Enter a valid email address.');
@@ -195,7 +200,7 @@ export default function Onboarding() {
         ))}
       </Row>
       <T variant="muted">BMI {plan.bmi.toFixed(1)}. Estimates use the Mifflin-St Jeor formula. You can change your targets any time from Today. This isn't medical advice, so check with a doctor before a big change in diet.</T>
-      {nav(editing ? 'Save my plan' : 'Start using Biteboard', async () => {
+      {nav(editing ? 'Save my plan' : 'Start using Snapspoon', async () => {
         // New accounts get their public recipe page with the username they picked.
         if (!editing && socialConfigured && profile.handle) {
           try {

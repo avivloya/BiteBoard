@@ -12,7 +12,7 @@ const PERKS = [
   ['Unlimited photo scans', `Free plan: ${FREE_LIMITS.scans} a week`],
   ['Unlimited AI recipes', `Free plan: ${FREE_LIMITS.recipes} a week`],
   ['Weight trends', 'Full history and goal chart'],
-  ['Support an indie app', 'Helps keep Biteboard growing'],
+  ['Support an indie app', 'Helps keep Snapspoon growing'],
 ];
 
 export default function Pro() {
@@ -35,7 +35,7 @@ export default function Pro() {
   return (
     <Screen edges={[]} bg={Colors.surface}>
       <View style={{ backgroundColor: Colors.accent, borderRadius: 24, padding: 24, gap: 6 }}>
-        <T style={{ color: Colors.accentInk, fontSize: 13, fontWeight: '700', letterSpacing: 1 }}>BITEBOARD PRO</T>
+        <T style={{ color: Colors.accentInk, fontSize: 13, fontWeight: '700', letterSpacing: 1 }}>SNAPSPOON PRO</T>
         <T style={{ color: Colors.accentInk, fontSize: 30, fontWeight: '800', letterSpacing: -1 }}>{isPro ? "You're Pro. Thank you!" : 'Reach your goal faster'}</T>
       </View>
       <View style={{ gap: 12 }}>

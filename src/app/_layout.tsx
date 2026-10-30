@@ -4,14 +4,20 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 
+import { ErrorScreen } from '@/components/error-screen';
 import { Intro } from '@/components/intro';
 import { Colors } from '@/constants/theme';
+import { catchCrashes } from '@/lib/crash';
 import { initPro } from '@/lib/pro';
 import { listenForPushTaps } from '@/lib/push';
 import { syncReminders } from '@/lib/reminders';
 import { useStore } from '@/lib/store';
 
 SplashScreen.preventAutoHideAsync();
+catchCrashes();
+
+// Expo Router shows this when any screen throws.
+export const ErrorBoundary = ErrorScreen;
 
 export default function RootLayout() {
   const hydrated = useStore((s) => s.hydrated);
@@ -60,6 +66,7 @@ export default function RootLayout() {
         <Stack.Screen name="bitey" />
         <Stack.Screen name="activity" options={{ headerShown: true, title: '', headerShadowVisible: false, headerStyle: { backgroundColor: Colors.bg }, headerTintColor: Colors.ink }} />
         <Stack.Screen name="blocked" options={sheet} />
+        <Stack.Screen name="sign-in" options={sheet} />
         <Stack.Screen name="record-video" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="boards" options={{ headerShown: true, title: '', headerShadowVisible: false, headerStyle: { backgroundColor: Colors.bg }, headerTintColor: Colors.ink }} />
         <Stack.Screen name="board/[id]" options={{ headerShown: true, title: '', headerShadowVisible: false, headerStyle: { backgroundColor: Colors.bg }, headerTintColor: Colors.ink }} />

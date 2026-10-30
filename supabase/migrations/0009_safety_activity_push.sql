@@ -3,7 +3,7 @@
 -- Replies: a comment can answer another comment on the same post.
 alter table public.post_comments add column if not exists parent_id uuid references public.post_comments (id) on delete set null;
 
--- Reports go to Biteboard. People can file them but never read them; review them in the Supabase dashboard.
+-- Reports go to Snapspoon. People can file them but never read them; review them in the Supabase dashboard.
 create table if not exists public.reports (
   id uuid primary key default gen_random_uuid(),
   reporter uuid not null default auth.uid() references auth.users (id) on delete cascade,

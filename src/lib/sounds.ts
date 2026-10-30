@@ -1,5 +1,5 @@
 /**
- * Free music anyone can post with. These are Biteboard's own tracks (the same ones the website makes),
+ * Free music anyone can post with. These are Snapspoon's own tracks (the same ones the website makes),
  * so there's nothing to license. Famous songs need a deal with a music catalog first.
  */
 export const SOUNDS = [

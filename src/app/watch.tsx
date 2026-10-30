@@ -138,7 +138,7 @@ export default function Watch() {
       {post && sheet === 'share' && (
         <Sheet onClose={() => setSheet(null)} title="Send to">
           <SendTo post={post} userId={signedIn ? userId : null} friendIds={friendIds} people={people} />
-          <Button title="Share outside Biteboard" onPress={() => Share.share({ message: `${post.title || 'A cooking video'} on Biteboard${SHARE_URL ? ` ${SHARE_URL}` : ''}` }).catch(() => {})} />
+          <Button title="Share outside Snapspoon" onPress={() => Share.share({ message: `${post.title || 'A cooking video'} on Snapspoon${SHARE_URL ? ` ${SHARE_URL}` : ''}` }).catch(() => {})} />
         </Sheet>
       )}
     </View>

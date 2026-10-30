@@ -27,7 +27,7 @@ export type Recipe = {
   mirror?: boolean;
   /** look picked in the camera: beauty, warm, bright */
   filter?: 'none' | 'beauty' | 'warm' | 'bright' | 'mono';
-  /** id of a free Biteboard sound played with the video (see lib/sounds) */
+  /** id of a free Snapspoon sound played with the video (see lib/sounds) */
   music?: string;
   /** music volume, 0 to 1 (default 0.8) */
   mvol?: number;
@@ -70,7 +70,7 @@ export type Profile = {
   pace: number;
   units: 'metric' | 'imperial';
   bio?: string;
-  /** username, unique across Biteboard */
+  /** username, unique across Snapspoon */
   handle?: string;
   /** profile picture on this phone, used before a recipe page exists */
   photo?: string;

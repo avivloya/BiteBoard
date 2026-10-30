@@ -46,7 +46,7 @@ export function ReportSheet({ title, onClose, onPick, blockId, blockHandle }: { 
   const me = useSocial((st) => st.userId);
   return (
     <Sheet onClose={onClose} title={done ? 'Thanks for telling us' : title}>
-      {done ? <T variant="muted">Biteboard reviews reports within 24 hours.</T> : (
+      {done ? <T variant="muted">Snapspoon reviews reports within 24 hours.</T> : (
         <>
           <T variant="muted" style={{ textAlign: 'center' }}>Why are you reporting this? Your report is anonymous.</T>
           {REPORT_REASONS.map((r) => <Option key={r} label={r} onPress={() => { onPick(r); setDone(true); }} />)}

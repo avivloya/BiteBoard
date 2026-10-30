@@ -1,5 +1,5 @@
--- Verified badge. Only Biteboard (the service role or the SQL editor) can turn it on or off;
--- a user's own profile save can never change it. See the Biteboard verification rules.
+-- Verified badge. Only Snapspoon (the service role or the SQL editor) can turn it on or off;
+-- a user's own profile save can never change it. See the Snapspoon verification rules.
 
 alter table public.profiles add column verified boolean not null default false;
 
@@ -17,11 +17,11 @@ create trigger profiles_keep_verified before insert or update on public.profiles
 -- The founder's account.
 update public.profiles set verified = true where lower(handle) = 'avivloya';
 
--- @biteboard is the official account. Only a verified profile can use the name.
+-- @snapspoon is the official account. Only a verified profile can use the name.
 create function public.reserved_handles() returns trigger language plpgsql as $$
 begin
-  if lower(new.handle) in ('biteboard') and not new.verified then
-    raise exception 'That username is saved for the official Biteboard account.' using errcode = 'P0001';
+  if lower(new.handle) in ('snapspoon') and not new.verified then
+    raise exception 'That username is saved for the official Snapspoon account.' using errcode = 'P0001';
   end if;
   return new;
 end $$;

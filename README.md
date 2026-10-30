@@ -1,4 +1,4 @@
-# Biteboard
+# Snapspoon
 
 An AI-powered weight-loss app for iPhone and Android, built with Expo.
 
@@ -10,7 +10,7 @@ An AI-powered weight-loss app for iPhone and Android, built with Expo.
 - **Weight tracker:** log weigh-ins and see your trend against your goal.
 - **Barcode scanner:** scan packaged food and log it by grams (Open Food Facts data).
 - **Reminders:** meal reminders, an 8pm streak saver on days you haven't logged, and a weekly weigh-in.
-- **Biteboard Pro:** a subscription for unlimited AI photo scans and AI recipes (free plan: 3 of each per week).
+- **Snapspoon Pro:** a subscription for unlimited AI photo scans and AI recipes (free plan: 3 of each per week).
 - **Sign-up:** gender, age, height, weight, goal and activity produce a personal calorie plan (Mifflin-St Jeor).
 
 Your weight and food log stay on the phone. Only your public profile, friend list and the recipes you choose to share go to the server.

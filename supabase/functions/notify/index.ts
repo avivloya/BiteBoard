@@ -1,4 +1,4 @@
-// Biteboard push notifications (Supabase Edge Function, Deno).
+// Snapspoon push notifications (Supabase Edge Function, Deno).
 // A Database Webhook calls this on every new like, comment, follow and message.
 // It works out who should hear about it and sends the push through Expo.
 // Secrets: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are set for edge functions automatically;
@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
   const res = await fetch('https://exp.host/--/api/v2/push/send', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-    body: JSON.stringify(tokens.map((t) => ({ to: t.token, title: 'Biteboard', body, sound: 'default', data: { url: p.url } }))),
+    body: JSON.stringify(tokens.map((t) => ({ to: t.token, title: 'Snapspoon', body, sound: 'default', data: { url: p.url } }))),
   });
   // Forget phones that uninstalled the app.
   const out = await res.json().catch(() => null);

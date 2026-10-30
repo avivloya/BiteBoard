@@ -22,7 +22,7 @@ export const FILTER_TINT: Record<VideoFilter, string | null> = {
 /** A cooking video. With `autoPlay` it plays muted on a loop, like a reel; `active` pauses it when scrolled away. */
 export function RecipeVideo({ uri, style, autoPlay = false, active = true, muted = false, controls = true, speed = 1, trim, cuts, onDuration, filter, music, mvol = 0.8, ovol = 1, texts, onTime, seek, hideTexts }: {
   uri: string; style?: ViewStyle; autoPlay?: boolean; active?: boolean; muted?: boolean; controls?: boolean; speed?: number; trim?: [number, number]; cuts?: [number, number][]; onDuration?: (seconds: number) => void; filter?: VideoFilter;
-  /** a Biteboard sound played along with the video, and the two volumes */
+  /** a Snapspoon sound played along with the video, and the two volumes */
   music?: string; mvol?: number; ovol?: number;
   texts?: VideoText[]; hideTexts?: boolean;
   /** the editor follows the play position and jumps the video to a time (change `n` to jump again) */

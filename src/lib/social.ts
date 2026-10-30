@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
 import { File } from 'expo-file-system';
 
+import { blockedReason, clean, maskSwears } from './moderation';
 import { useSocial } from './social-store';
 import type { Recipe } from './types';
 
@@ -38,7 +39,8 @@ export const HANDLE_RULE = /^[A-Za-z0-9_.]{3,20}$/;
 /** A reason the username can't be used, or '' if it's free. Usernames ignore capitals, so "Aviv" and "aviv" clash. */
 export async function handleProblem(handle: string, userId?: string | null) {
   if (!HANDLE_RULE.test(handle)) return 'Use 3 to 20 letters, numbers, dots or underscores.';
-  if (handle.toLowerCase() === 'biteboard') return ''; // reserved; the server only lets the verified official account take it
+  if (blockedReason(handle) || maskSwears(handle) !== handle) return "That username isn't allowed. Try another one.";
+  if (handle.toLowerCase() === 'snapspoon') return ''; // reserved; the server only lets the verified official account take it
   if (!supabase) return '';
   const { data } = await supabase.from('profiles').select('id').ilike('handle', handle.replace(/[%_\\]/g, (c) => `\\${c}`)).limit(1);
   return data?.length && data[0].id !== userId ? `@${handle} is taken. Try another one.` : '';
@@ -50,19 +52,21 @@ export async function myProfile(userId: string) {
 }
 
 export async function saveProfile(userId: string, p: { handle: string; name: string; bio: string; streak: number; photo?: string | null }) {
+  const why = blockedReason(`${p.handle} ${p.name} ${p.bio}`);
+  if (why) throw new Error(why);
   const isNew = !(await myProfile(userId));
-  const { error } = await db().from('profiles').upsert({ id: userId, ...p, updated_at: new Date().toISOString() });
+  const { error } = await db().from('profiles').upsert({ id: userId, ...p, bio: clean(p.bio), updated_at: new Date().toISOString() });
   if (error) throw new Error(error.code === '23505' ? `@${p.handle} is taken. Try another one.` : error.message);
-  // New accounts follow @biteboard to start, like TikTok does with its own account. They can unfollow any time.
+  // New accounts follow @snapspoon to start, like TikTok does with its own account. They can unfollow any time.
   if (isNew) {
     const o = await officialAccount().catch(() => null);
     if (o && o.id !== userId) await setFriend(userId, o.id, true).catch(() => {});
   }
 }
 
-/** The official @biteboard account, once it exists. Only a verified profile can hold the name (migration 0008). */
+/** The official @snapspoon account, once it exists. Only a verified profile can hold the name (migration 0008). */
 export async function officialAccount() {
-  const { data } = await db().from('profiles').select('*').eq('verified', true).ilike('handle', 'biteboard').maybeSingle();
+  const { data } = await db().from('profiles').select('*').eq('verified', true).ilike('handle', 'snapspoon').maybeSingle();
   return (data as PublicProfile | null) ?? null;
 }
 
@@ -72,7 +76,7 @@ export async function searchPeople(q: string, userId: string) {
   if (term) query = query.or(`handle.ilike.%${term}%,name.ilike.%${term}%`);
   const [{ data }, o] = await Promise.all([query, officialAccount().catch(() => null)]);
   const list = (data as PublicProfile[]) ?? [];
-  // @biteboard always comes first: in suggestions, and in results when it matches.
+  // @snapspoon always comes first: in suggestions, and in results when it matches.
   const fits = o && o.id !== userId && (!term || `${o.handle} ${o.name}`.toLowerCase().includes(term.toLowerCase()));
   const blocked = new Set(useSocial.getState().blocked);
   const ok = list.filter((x) => !blocked.has(x.id));
@@ -158,6 +162,12 @@ export async function setProfilePhoto(userId: string, localUri: string) {
   return photo;
 }
 
+/** Refuses a post whose words aren't allowed, before anything is uploaded. */
+export function checkRecipe(r: Recipe) {
+  const why = blockedReason([r.title, r.caption, ...(r.texts ?? []).map((t) => t.text), ...(r.ing ?? []), ...(r.steps ?? [])].filter(Boolean).join('\n'));
+  if (why) throw new Error(why);
+}
+
 /** Posts a recipe (with its photo and cooking video) to your recipe page and For you, or takes it down. Returns the photo's public URL when posting. */
 export async function setShared(userId: string, recipe: Recipe, on: boolean, localPhoto?: string) {
   const t = db().from('shared_recipes');
@@ -168,10 +178,11 @@ export async function setShared(userId: string, recipe: Recipe, on: boolean, loc
     if (data?.length) await db().storage.from(BUCKET).remove(data.map((f) => `${userId}/${f.name}`));
     return null;
   }
+  checkRecipe(recipe);
   const image = localPhoto && !localPhoto.startsWith('http') ? await uploadPhoto(userId, recipe.id, localPhoto) : localPhoto ?? recipe.image ?? null;
   const video = recipe.video && !recipe.video.startsWith('http') ? await uploadPhoto(userId, `${recipe.id}-video`, recipe.video) : recipe.video ?? null;
   const cover = recipe.cover && !recipe.cover.startsWith('http') ? await uploadPhoto(userId, `${recipe.id}-cover`, recipe.cover).catch(() => undefined) : recipe.cover;
-  const { error } = await t.upsert({ id: recipe.id, owner: userId, recipe: { ...recipe, image, video, cover, shared: undefined, by: undefined, byId: undefined, posted: undefined } });
+  const { error } = await t.upsert({ id: recipe.id, owner: userId, recipe: { ...recipe, title: clean(recipe.title ?? ''), caption: recipe.caption && clean(recipe.caption), image, video, cover, shared: undefined, by: undefined, byId: undefined, posted: undefined } });
   if (error) throw new Error(error.message);
   return image;
 }
@@ -233,7 +244,7 @@ export async function commentsOn(key: string) {
 }
 
 export async function addComment(key: string, userId: string, body: string, parentId?: string) {
-  const { error } = await db().from('post_comments').insert({ post_id: key, user_id: userId, body: body.slice(0, 300), parent_id: parentId ?? null });
+  const { error } = await db().from('post_comments').insert({ post_id: key, user_id: userId, body: clean(body.slice(0, 300)), parent_id: parentId ?? null });
   if (error) throw new Error(error.message);
 }
 
@@ -249,7 +260,7 @@ export type Message = { id: string; sender: string; recipient: string; body: str
 export const sharedPost = (r: Recipe): SharedPost => ({ id: r.id, byId: r.byId, by: r.by, title: r.title, caption: r.caption, video: r.video, speed: r.speed, trim: r.trim, cuts: r.cuts, filter: r.filter, mirror: r.mirror, music: r.music, mvol: r.mvol, ovol: r.ovol, texts: r.texts, cover: r.cover });
 
 export async function sendMessage(userId: string, to: string, body: string, post?: SharedPost) {
-  const { error } = await db().from('messages').insert({ sender: userId, recipient: to, body: body.slice(0, 1000), post: post ?? null });
+  const { error } = await db().from('messages').insert({ sender: userId, recipient: to, body: clean(body.slice(0, 1000)), post: post ?? null });
   if (error) throw new Error(error.message);
 }
 
@@ -303,7 +314,7 @@ export async function searchPosts(q: string, limit = 60) {
 
 export const REPORT_REASONS = ['Spam or scam', 'Nudity or sexual content', 'Bullying or harassment', 'Hate speech or symbols', 'Dangerous weight-loss or eating disorder content', 'Violence or threats', 'Pretending to be someone', 'Something else'];
 
-/** Sends a report to Biteboard. Reports are anonymous to the person reported, and only Biteboard can read them. */
+/** Sends a report to Snapspoon. Reports are anonymous to the person reported, and only Snapspoon can read them. */
 export async function report(userId: string, kind: 'post' | 'comment' | 'user' | 'message', target: string, reason: string, targetUser?: string) {
   const { error } = await db().from('reports').insert({ reporter: userId, kind, target, reason, target_user: targetUser ?? null });
   if (error) throw new Error(error.message);

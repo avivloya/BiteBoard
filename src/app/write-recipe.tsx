@@ -14,6 +14,7 @@ import { setShared } from '@/lib/social';
 import { useSocial } from '@/lib/social-store';
 import { useStore } from '@/lib/store';
 import { MEALS, type Meal } from '@/lib/types';
+import { blockedReason } from '@/lib/moderation';
 
 /** The post screen after filming: caption next to the video, then the recipe details. */
 export default function WriteRecipe() {
@@ -41,6 +42,8 @@ export default function WriteRecipe() {
     const name = title.trim() || caption.trim().split('\n')[0].slice(0, 40) || 'Cooking video';
     const tags = [kcal > 0 && kcal < 400 && 'Under 400', p >= 25 && 'High protein'].filter((x): x is string => !!x);
     const shared = canPost && post;
+    const why = shared && blockedReason([name, caption, ing, steps, ...(video?.texts ?? []).map((t) => t.text)].join('\n'));
+    if (why) return Alert.alert('Change a few words', why);
     const id = addRecipe({
       own: true, shared, posted: shared ? Date.now() : undefined, title: name, caption: caption.trim() || undefined, cat,
       min: Number(n.min) || (video ? 0 : 20), serv: Number(n.serv) || 1, kcal, p, c: Number(n.c) || 0, f: Number(n.f) || 0, tags, ing: lines(ing), steps: lines(steps),

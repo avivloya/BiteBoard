@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 
-// Biteboard palette: warm cream ground (#E2CEB1) with coffee-brown ink.
+// Snapspoon palette: warm cream ground (#E2CEB1) with coffee-brown ink.
 export const Colors = {
   bg: '#E2CEB1',
   surface: '#F8EFE2',

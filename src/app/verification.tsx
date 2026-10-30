@@ -9,7 +9,7 @@ import { buy, usePro } from '@/lib/pro';
 import { useSocial } from '@/lib/social-store';
 import { VERIFIED_PRICE, VERIFY_RULES } from '@/lib/verification';
 
-const soon = (what: string) => Alert.alert(`${what} is coming soon`, 'This will be added before Biteboard is in the App Store.');
+const soon = (what: string) => Alert.alert(`${what} is coming soon`, 'This will be added before Snapspoon is in the App Store.');
 
 /** Settings › Verification rules: who can get the badge, how to apply, and how it's kept or lost. */
 export default function Verification() {
@@ -17,7 +17,7 @@ export default function Verification() {
   const { verifiedPlan, verifiedPackage } = usePro();
   const [busy, setBusy] = useState(false);
   const price = verifiedPackage ? `${verifiedPackage.product.priceString}/month` : VERIFIED_PRICE;
-  // Paying starts the ID check; the badge turns on only after Biteboard checks it.
+  // Paying starts the ID check; the badge turns on only after Snapspoon checks it.
   const subscribe = async () => {
     if (!verifiedPackage) return soon('The Verified plan');
     setBusy(true);

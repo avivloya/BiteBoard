@@ -10,7 +10,7 @@ export type Product = {
 export async function lookupBarcode(code: string): Promise<Product | null> {
   const fields = 'product_name,brands,serving_quantity,nutriments';
   const res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(code)}.json?fields=${fields}`, {
-    headers: { 'User-Agent': 'Biteboard/1.0 (mobile app)' },
+    headers: { 'User-Agent': 'Snapspoon/1.0 (mobile app)' },
   });
   if (!res.ok) return null;
   const data = await res.json();

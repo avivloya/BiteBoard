@@ -9,6 +9,7 @@ import { Screen } from '@/components/screen';
 import { Segmented, T } from '@/components/ui';
 import { PRIVACY_URL, SHARE_URL, SUPPORT_EMAIL, TERMS_URL } from '@/constants/app';
 import { Colors, Radius } from '@/constants/theme';
+import { type SignedIn, signedIn } from '@/lib/auth';
 import { proConfigured, restore, usePro } from '@/lib/pro';
 import { pushOn, setPushOn } from '@/lib/push';
 import { askPermission, syncReminders } from '@/lib/reminders';
@@ -23,7 +24,7 @@ const REMINDERS: { key: keyof Reminders; title: string; sub: string }[] = [
   { key: 'weighIn', title: 'Weekly weigh-in', sub: 'Mondays at 8:00' },
 ];
 
-const soon = (what: string) => Alert.alert(`${what} is coming soon`, 'This will be added before Biteboard is in the App Store.');
+const soon = (what: string) => Alert.alert(`${what} is coming soon`, 'This will be added before Snapspoon is in the App Store.');
 const openUrl = (url: string, what: string) => (url ? WebBrowser.openBrowserAsync(url) : soon(what));
 
 /** Everything an account needs, grouped like a phone's own Settings. */
@@ -35,10 +36,12 @@ export default function Settings() {
   const { userId, me, blocked } = useSocial();
   const [push, setPush] = useState(true);
   useEffect(() => { pushOn().then(setPush); }, []);
+  const [signin, setSignin] = useState<SignedIn | null>(null);
+  useEffect(() => { signedIn().then(setSignin).catch(() => {}); }, [userId]);
 
   const toggle = async (key: keyof Reminders, on: boolean) => {
     if (on && !(await askPermission())) {
-      return Alert.alert('Notifications are off', 'Turn on notifications for Biteboard in your phone settings to get reminders.');
+      return Alert.alert('Notifications are off', 'Turn on notifications for Snapspoon in your phone settings to get reminders.');
     }
     setReminders({ ...reminders, [key]: on });
     await syncReminders();
@@ -46,7 +49,7 @@ export default function Settings() {
 
   const exportData = () => {
     const { profile: p, targets, boards, mine, days, weights } = useStore.getState();
-    Share.share({ title: 'My Biteboard data', message: JSON.stringify({ profile: p, targets, boards, recipes: mine, foodLog: days, weights }, null, 2) });
+    Share.share({ title: 'My Snapspoon data', message: JSON.stringify({ profile: p, targets, boards, recipes: mine, foodLog: days, weights }, null, 2) });
   };
 
   const clearPhone = () => Alert.alert('Clear everything on this phone?', 'Your food log, weight, boards and recipes on this phone are erased. Posts on your recipe page stay up.', [
@@ -75,6 +78,7 @@ export default function Settings() {
       <T variant="h2">Settings</T>
 
       <Section title="Account">
+        {socialConfigured && <Item title={signin?.provider ? `Signed in with ${signin.provider === 'apple' ? 'Apple' : 'Google'}` : 'Save your account'} sub={signin?.provider ? signin.email ?? 'Sign out' : 'Sign in with Apple or Google so you never lose it'} onPress={() => router.push('/sign-in')} />}
         <Item title="Edit profile" sub={me ? 'Picture, name, handle and bio' : 'Name and bio'} onPress={() => router.push('/edit-profile')} />
         <Item title="Personal info and goals" sub={profile ? `${profile.name}${profile.email ? ` · ${profile.email}` : ''}` : undefined} onPress={() => router.push({ pathname: '/onboarding', params: { edit: '1' } })} />
         <Item title="Weight" sub="Log and see your trend" onPress={() => router.push('/weight')} />
@@ -89,11 +93,11 @@ export default function Settings() {
       </Section>
 
       <Section title="Subscription">
-        <Item title={isPro ? 'Biteboard Pro' : 'Free plan'} sub={isPro ? 'Unlimited photo scans and AI recipes' : `${aiLeft('scans')} photo scans and ${aiLeft('recipes')} AI recipes left this week`}
+        <Item title={isPro ? 'Snapspoon Pro' : 'Free plan'} sub={isPro ? 'Unlimited photo scans and AI recipes' : `${aiLeft('scans')} photo scans and ${aiLeft('recipes')} AI recipes left this week`}
           onPress={isPro ? undefined : () => router.push('/pro')} action={isPro ? undefined : 'Upgrade'} />
         {proConfigured && <Item title="Restore purchases" onPress={async () => {
           const ok = await restore().catch(() => false);
-          Alert.alert(ok ? 'Pro restored' : 'Nothing to restore', ok ? 'Welcome back to Biteboard Pro.' : 'We couldn’t find a Pro subscription on this account.');
+          Alert.alert(ok ? 'Pro restored' : 'Nothing to restore', ok ? 'Welcome back to Snapspoon Pro.' : 'We couldn’t find a Pro subscription on this account.');
         }} />}
       </Section>
 
@@ -123,8 +127,8 @@ export default function Settings() {
       </Section>
 
       <Section title="Help">
-        <Item title="Contact support" onPress={() => (SUPPORT_EMAIL ? Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=Biteboard help`) : soon('Support email'))} />
-        <Item title="Share Biteboard" onPress={() => Share.share({ message: `I'm using Biteboard to cook healthy and track calories.${SHARE_URL ? ` ${SHARE_URL}` : ''}` })} />
+        <Item title="Contact support" onPress={() => (SUPPORT_EMAIL ? Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=Snapspoon help`) : soon('Support email'))} />
+        <Item title="Share Snapspoon" onPress={() => Share.share({ message: `I'm using Snapspoon to cook healthy and track calories.${SHARE_URL ? ` ${SHARE_URL}` : ''}` })} />
       </Section>
 
       <Section title="Your data">
@@ -133,7 +137,7 @@ export default function Settings() {
         <Item title="Delete account" onPress={removeAccount} danger />
       </Section>
 
-      <T variant="muted" style={{ textAlign: 'center', fontSize: 12 }}>Biteboard {version}</T>
+      <T variant="muted" style={{ textAlign: 'center', fontSize: 12 }}>Snapspoon {version}</T>
     </Screen>
   );
 }

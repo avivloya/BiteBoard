@@ -33,7 +33,7 @@ export const useLang = create<{ lang: Lang; set: (l: Lang) => void }>()((set) =>
     if (I18nManager.isRTL !== rtl) {
       I18nManager.allowRTL(rtl);
       I18nManager.forceRTL(rtl);
-      Alert.alert(tr('Restart Biteboard'), tr('Close and reopen the app to finish switching the layout.'));
+      Alert.alert(tr('Restart Snapspoon'), tr('Close and reopen the app to finish switching the layout.'));
     }
   },
 }));

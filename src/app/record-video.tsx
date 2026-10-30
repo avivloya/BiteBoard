@@ -58,7 +58,7 @@ function Glyph({ name, color = '#fff', size = 22 }: { name: Icon; color?: string
   );
 }
 
-/** Biteboard's own video recorder: a record button to start and stop, tools down the side, then an editor for cuts, sound, words and the cover before posting. */
+/** Snapspoon's own video recorder: a record button to start and stop, tools down the side, then an editor for cuts, sound, words and the cover before posting. */
 export default function RecordVideo() {
   const { post } = useLocalSearchParams<{ post?: string }>();
   const [cam, requestCam] = useCameraPermissions();
@@ -208,9 +208,9 @@ export default function RecordVideo() {
       <SafeAreaView style={{ flex: 1, backgroundColor: Colors.bg, padding: 24 }}>
         <Pressable onPress={close} style={[s.round, { backgroundColor: Colors.surface2 }]} accessibilityLabel="Close"><Glyph name="close" color={Colors.ink} /></Pressable>
         <View style={{ flex: 1, justifyContent: 'center', gap: 14 }}>
-          <Row><Logo /><T style={{ fontWeight: '800', fontSize: 18, color: Colors.ink }}>Biteboard</T></Row>
+          <Row><Logo /><T style={{ fontWeight: '800', fontSize: 18, color: Colors.ink }}>Snapspoon</T></Row>
           <T variant="title">Film your cooking</T>
-          <T>Biteboard needs your camera and microphone to film videos of you making food.</T>
+          <T>Snapspoon needs your camera and microphone to film videos of you making food.</T>
           <Button title={blocked ? 'Open Settings' : 'Allow camera and mic'} kind="primary"
             onPress={blocked ? () => Linking.openSettings() : async () => { if (!cam.granted) await requestCam(); if (!mic.granted) await requestMic(); }} />
           <Button title="Upload a video instead" onPress={upload} />
@@ -431,7 +431,7 @@ function Editor({ uri, speed, filter, cuts: filmedCuts, post, saving, speeds, on
             return (
               <Pressable key={x.id ?? 'none'} onPress={() => setMusic(x.id)} style={[s.sound, on && { backgroundColor: Colors.bg }]} accessibilityState={{ selected: on }}>
                 <Glyph name={x.id ? 'music' : 'close'} size={16} color={on ? Colors.ink : '#fff'} />
-                <View><T style={[s.cardText, on && { color: Colors.ink }]}>{x.name}</T><T style={[s.small, on && { color: Colors.ink }]}>{x.id ? 'Biteboard beats · free to use' : 'Just your video'}</T></View>
+                <View><T style={[s.cardText, on && { color: Colors.ink }]}>{x.name}</T><T style={[s.small, on && { color: Colors.ink }]}>{x.id ? 'Snapspoon beats · free to use' : 'Just your video'}</T></View>
               </Pressable>
             );
           })}
@@ -577,7 +577,7 @@ function Spinner({ on }: { on: boolean }) {
 const Brand = () => (
   <Row style={{ gap: 7 }}>
     <Logo size={20} color={Colors.bg} ring="rgba(29,20,13,0.35)" />
-    <T style={{ color: '#fff', fontWeight: '800', fontSize: 16, letterSpacing: -0.3 }}>Biteboard</T>
+    <T style={{ color: '#fff', fontWeight: '800', fontSize: 16, letterSpacing: -0.3 }}>Snapspoon</T>
   </Row>
 );
 

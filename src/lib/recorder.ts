@@ -5,7 +5,7 @@ import type { VideoText } from '@/lib/types';
 
 export type Filmed = {
   uri: string; speed: number; trim?: [number, number]; filter?: VideoFilter; cuts?: [number, number][];
-  /** from the editor: a Biteboard sound and the two volumes, words on the video, and the cover frame */
+  /** from the editor: a Snapspoon sound and the two volumes, words on the video, and the cover frame */
   music?: string; mvol?: number; ovol?: number; texts?: VideoText[]; cover?: string;
 };
 

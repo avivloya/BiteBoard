@@ -6,7 +6,7 @@ import { Alert, Platform } from 'react-native';
 export async function pickRecipePhoto({ aspect = [4, 5] as [number, number], keep = true } = {}): Promise<string | null> {
   const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (!perm.granted) {
-    Alert.alert('Photos access needed', 'Allow Biteboard to use your photos in Settings to add a picture.');
+    Alert.alert('Photos access needed', 'Allow Snapspoon to use your photos in Settings to add a picture.');
     return null;
   }
   const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect, quality: 0.7 });
@@ -29,7 +29,7 @@ const MAX_VIDEO_MB = 50;
 export async function pickRecipeVideo(): Promise<string | null> {
   const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (!perm.granted) {
-    Alert.alert('Videos access needed', 'Allow Biteboard to use your photos and videos in Settings to add a cooking video.');
+    Alert.alert('Videos access needed', 'Allow Snapspoon to use your photos and videos in Settings to add a cooking video.');
     return null;
   }
   const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['videos'], allowsEditing: true, videoMaxDuration: 180, quality: 0.7 });

@@ -1,18 +1,19 @@
 {
   "expo": {
-    "name": "Biteboard",
-    "slug": "biteboard",
+    "name": "Snapspoon",
+    "slug": "snapspoon",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "biteboard",
+    "scheme": "snapspoon",
     "userInterfaceStyle": "light",
     "ios": {
-      "bundleIdentifier": "com.avivloya.biteboard",
+      "bundleIdentifier": "com.avivloya.snapspoon",
       "supportsTablet": false,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
-      }
+      },
+      "usesAppleSignIn": true
     },
     "android": {
       "adaptiveIcon": {
@@ -22,7 +23,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.avivloya.biteboard"
+      "package": "com.avivloya.snapspoon"
     },
     "web": {
       "favicon": "./assets/images/favicon.png"
@@ -40,16 +41,16 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Biteboard uses your photos and videos to estimate the calories in your meals and to add pictures and cooking videos to your recipes.",
-          "cameraPermission": "Biteboard uses the camera to snap your meals and estimate their calories.",
+          "photosPermission": "Snapspoon uses your photos and videos to estimate the calories in your meals and to add pictures and cooking videos to your recipes.",
+          "cameraPermission": "Snapspoon uses the camera to snap your meals and estimate their calories.",
           "microphonePermission": false
         }
       ],
       [
         "expo-camera",
         {
-          "cameraPermission": "Biteboard uses the camera to snap meals, scan food barcodes and film your cooking videos.",
-          "microphonePermission": "Biteboard uses the microphone to record sound in your cooking videos.",
+          "cameraPermission": "Snapspoon uses the camera to snap meals, scan food barcodes and film your cooking videos.",
+          "microphonePermission": "Snapspoon uses the microphone to record sound in your cooking videos.",
           "recordAudioAndroid": true
         }
       ],
@@ -59,7 +60,8 @@
           "color": "#6B4026"
         }
       ],
-      "expo-video"
+      "expo-video",
+      "expo-apple-authentication"
     ],
     "experiments": {
       "typedRoutes": true,

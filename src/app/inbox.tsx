@@ -17,7 +17,7 @@ type Convo = { other: string; last: Message; unread: number };
 const BiteyRow = () => (
   <Pressable onPress={() => router.push('/bitey')} accessibilityRole="button" style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8, paddingHorizontal: 8, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.45)' }}>
     <BiteyAvatar size={48} />
-    <View style={{ flex: 1 }}><T style={{ fontWeight: '700' }}>Bitey</T><T variant="muted" numberOfLines={1}>Your Biteboard helper. Ask me anything about the app.</T></View>
+    <View style={{ flex: 1 }}><T style={{ fontWeight: '700' }}>Bitey</T><T variant="muted" numberOfLines={1}>Your Snapspoon helper. Ask me anything about the app.</T></View>
   </Pressable>
 );
 

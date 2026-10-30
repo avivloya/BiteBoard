@@ -1,29 +1,283 @@
 [
-  {"k":["snap","photo","scan meal","picture of","estimate","calories in"],"a":"To log a meal from a photo, open Tracker and tap Snap a meal. Take or pick a photo and Biteboard estimates the calories, protein, carbs and fat. Check the amounts, change anything that looks off, then tap Add to today."},
-  {"k":["barcode","package","packaged","label"],"a":"In the phone app, open Tracker and tap Barcode. Point the camera at the barcode on the package and Biteboard looks up the nutrition for you."},
-  {"k":["calorie goal","target","how many calories","goal","macros","protein goal","change my calories"],"a":"Your daily calories and macros come from your age, height, weight, activity and how fast you want to lose weight. To change them, open Settings › Daily calorie and macro targets, or Personal info and goals to update your details."},
-  {"k":["weight","weigh","log my weight","trend"],"a":"In the app, open Tracker and tap Weight to log your weight and see your trend. Your weight is private and never shown on your profile."},
-  {"k":["streak","fire","days in a row"],"a":"Your streak counts the days in a row you've logged at least one meal. Log something every day to keep it going. The streak saver reminder nudges you at 8pm if you haven't logged yet."},
-  {"k":["film","record","camera","video","post a video","make a video"],"a":"Tap + on Explore (or Film a post on Home). Hold the record button to film and let go to pause, or tap to start and tap again to pause. Use the side tools to flip, flash, change speed, set a timer, mirror the selfie camera, or delete a clip. Tap the check mark when you're done."},
-  {"k":["edit","cut","trim","split","shorten","delete part"],"a":"After filming, tap Edit on the side. Move to a spot, tap Split here, then tap a part and Delete part to cut it out. Put back brings it back. The time at the top shows how long your video is now."},
-  {"k":["music","sound","song","audio"],"a":"After filming, tap Sound and pick one of the free Biteboard beats. Then tap Volume to set the music against your voice. Famous songs aren't available yet because they need a music license."},
-  {"k":["text","words","caption on video","write on"],"a":"After filming, tap Text, type your words and tap Add. Drag them anywhere on the video, and tap them to change the color, size or background."},
-  {"k":["cover","thumbnail","first picture"],"a":"After filming, tap Cover and pick the frame people see on your profile and in search before they tap play."},
-  {"k":["caption","hashtag","#"],"a":"On the New post screen, write a caption next to your video. Add #hashtags so people can find it in search. The recipe details are optional for videos."},
-  {"k":["recipe","write a recipe","ai recipe","create recipe"],"a":"Tap + and choose Write a recipe, or Create one with AI and describe what you want. Recipes need a title, calories, ingredients and steps. You can post them to your page or keep them private."},
-  {"k":["board","save","saved","pin"],"a":"Tap Save on any recipe to add it to a board, like Pinterest. Find your boards in Account › Saved, and make new ones with + New board."},
-  {"k":["follow","followers","following","find people","friends"],"a":"Find people from Account › Find people, or search for @username. Tap Follow to see their posts first in For you. Tap Following or Followers on any profile to see the list."},
-  {"k":["like","heart","comment","reply"],"a":"In Watch, double-tap a video or tap the heart to like it. Tap the speech bubble to comment, and tap Reply under any comment to answer it."},
-  {"k":["share","send video","send to"],"a":"Tap Share on a video to send it to someone you follow in the Inbox, or Share outside Biteboard to send the link anywhere."},
-  {"k":["inbox","message","dm","chat"],"a":"Your Inbox is the icon at the top left of Account. Tap someone to chat, or pick a person you follow under Start a chat."},
-  {"k":["notification","activity","bell","alerts"],"a":"Tap the bell at the top of Account to see who liked, commented, replied, followed you or sent a message. In the phone app you also get push notifications, which you can turn on or off in Settings › Notifications."},
-  {"k":["search","find a recipe","look up"],"a":"Tap the magnifier at the top of Explore. Search people, videos, recipes or hashtags. Start with @ to search only people, or # for only hashtags."},
-  {"k":["verified","badge","check mark","verification"],"a":"The verified badge means Biteboard checked who the account belongs to. You can get it with Biteboard Verified for $10 a month (plus an ID check) or for free if you're a well-known creator, health professional, chef or brand. See Settings › Verification rules."},
-  {"k":["pro","subscription","premium","price","cost","pay"],"a":"Biteboard is free with 3 photo scans and 3 AI recipes a week. Biteboard Pro gives you unlimited scans and AI recipes. Biteboard Verified ($10 a month) is separate and gives you the verified badge after an ID check."},
-  {"k":["report","block","harass","spam","abuse","unsafe"],"a":"Tap ⋯ on a video or a profile, or Report under a comment, to report it. Biteboard reviews reports within 24 hours. Block someone to hide their posts, comments and messages from you. Unblock them from their profile any time."},
-  {"k":["language","hebrew","spanish","chinese","russian","english"],"a":"Change the language in Settings › Language. Biteboard speaks English, Hebrew, Chinese, Spanish and Russian."},
-  {"k":["profile picture","photo","bio","username","name","edit profile"],"a":"Open Account and tap Edit profile to change your picture, name, username and bio. Tap your picture to move and zoom it inside the circle."},
-  {"k":["delete account","delete my data","privacy","private"],"a":"Your profile, posts, videos and who you follow are public. Your weight, food log and goals stay private. To remove things, use Settings › Your data, where you can export your data, clear it, or delete your account."},
-  {"k":["camera permission","allow camera","keeps asking"],"a":"On the website, Safari asks for the camera. To stop it asking, tap aA in the address bar, then Website Settings, and set Camera and Microphone to Allow. The phone app only asks once."},
-  {"k":["lose weight","diet","healthy","tips","hungry"],"a":"Aim for your daily calories, get plenty of protein, and fill half your plate with vegetables. Most people lose about 0.5 kg a week safely. Never go under 1,200 kcal a day without a doctor, and check with a doctor before big changes."}
+ {
+  "k": [
+   "snap",
+   "photo",
+   "scan meal",
+   "picture of",
+   "estimate",
+   "calories in"
+  ],
+  "a": "To log a meal from a photo, open Tracker and tap Snap a meal. Take or pick a photo and Snapspoon estimates the calories, protein, carbs and fat. Check the amounts, change anything that looks off, then tap Add to today."
+ },
+ {
+  "k": [
+   "barcode",
+   "package",
+   "packaged",
+   "label"
+  ],
+  "a": "In the phone app, open Tracker and tap Barcode. Point the camera at the barcode on the package and Snapspoon looks up the nutrition for you."
+ },
+ {
+  "k": [
+   "calorie goal",
+   "target",
+   "how many calories",
+   "goal",
+   "macros",
+   "protein goal",
+   "change my calories"
+  ],
+  "a": "Your daily calories and macros come from your age, height, weight, activity and how fast you want to lose weight. To change them, open Settings › Daily calorie and macro targets, or Personal info and goals to update your details."
+ },
+ {
+  "k": [
+   "weight",
+   "weigh",
+   "log my weight",
+   "trend"
+  ],
+  "a": "In the app, open Tracker and tap Weight to log your weight and see your trend. Your weight is private and never shown on your profile."
+ },
+ {
+  "k": [
+   "streak",
+   "fire",
+   "days in a row"
+  ],
+  "a": "Your streak counts the days in a row you've logged at least one meal. Log something every day to keep it going. The streak saver reminder nudges you at 8pm if you haven't logged yet."
+ },
+ {
+  "k": [
+   "film",
+   "record",
+   "camera",
+   "video",
+   "post a video",
+   "make a video"
+  ],
+  "a": "Tap + on Explore (or Film a post on Home). Hold the record button to film and let go to pause, or tap to start and tap again to pause. Use the side tools to flip, flash, change speed, set a timer, mirror the selfie camera, or delete a clip. Tap the check mark when you're done."
+ },
+ {
+  "k": [
+   "edit",
+   "cut",
+   "trim",
+   "split",
+   "shorten",
+   "delete part"
+  ],
+  "a": "After filming, tap Edit on the side. Move to a spot, tap Split here, then tap a part and Delete part to cut it out. Put back brings it back. The time at the top shows how long your video is now."
+ },
+ {
+  "k": [
+   "music",
+   "sound",
+   "song",
+   "audio"
+  ],
+  "a": "After filming, tap Sound and pick one of the free Snapspoon beats. Then tap Volume to set the music against your voice. Famous songs aren't available yet because they need a music license."
+ },
+ {
+  "k": [
+   "text",
+   "words",
+   "caption on video",
+   "write on"
+  ],
+  "a": "After filming, tap Text, type your words and tap Add. Drag them anywhere on the video, and tap them to change the color, size or background."
+ },
+ {
+  "k": [
+   "cover",
+   "thumbnail",
+   "first picture"
+  ],
+  "a": "After filming, tap Cover and pick the frame people see on your profile and in search before they tap play."
+ },
+ {
+  "k": [
+   "caption",
+   "hashtag",
+   "#"
+  ],
+  "a": "On the New post screen, write a caption next to your video. Add #hashtags so people can find it in search. The recipe details are optional for videos."
+ },
+ {
+  "k": [
+   "recipe",
+   "write a recipe",
+   "ai recipe",
+   "create recipe"
+  ],
+  "a": "Tap + and choose Write a recipe, or Create one with AI and describe what you want. Recipes need a title, calories, ingredients and steps. You can post them to your page or keep them private."
+ },
+ {
+  "k": [
+   "board",
+   "save",
+   "saved",
+   "pin"
+  ],
+  "a": "Tap Save on any recipe to add it to a board, like Pinterest. Find your boards in Account › Saved, and make new ones with + New board."
+ },
+ {
+  "k": [
+   "follow",
+   "followers",
+   "following",
+   "find people",
+   "friends"
+  ],
+  "a": "Find people from Account › Find people, or search for @username. Tap Follow to see their posts first in For you. Tap Following or Followers on any profile to see the list."
+ },
+ {
+  "k": [
+   "like",
+   "heart",
+   "comment",
+   "reply"
+  ],
+  "a": "In Watch, double-tap a video or tap the heart to like it. Tap the speech bubble to comment, and tap Reply under any comment to answer it."
+ },
+ {
+  "k": [
+   "share",
+   "send video",
+   "send to"
+  ],
+  "a": "Tap Share on a video to send it to someone you follow in the Inbox, or Share outside Snapspoon to send the link anywhere."
+ },
+ {
+  "k": [
+   "inbox",
+   "message",
+   "dm",
+   "chat"
+  ],
+  "a": "Your Inbox is the icon at the top left of Account. Tap someone to chat, or pick a person you follow under Start a chat."
+ },
+ {
+  "k": [
+   "notification",
+   "activity",
+   "bell",
+   "alerts"
+  ],
+  "a": "Tap the bell at the top of Account to see who liked, commented, replied, followed you or sent a message. In the phone app you also get push notifications, which you can turn on or off in Settings › Notifications."
+ },
+ {
+  "k": [
+   "search",
+   "find a recipe",
+   "look up"
+  ],
+  "a": "Tap the magnifier at the top of Explore. Search people, videos, recipes or hashtags. Start with @ to search only people, or # for only hashtags."
+ },
+ {
+  "k": [
+   "verified",
+   "badge",
+   "check mark",
+   "verification"
+  ],
+  "a": "The verified badge means Snapspoon checked who the account belongs to. You can get it with Snapspoon Verified for $10 a month (plus an ID check) or for free if you're a well-known creator, health professional, chef or brand. See Settings › Verification rules."
+ },
+ {
+  "k": [
+   "pro",
+   "subscription",
+   "premium",
+   "price",
+   "cost",
+   "pay"
+  ],
+  "a": "Snapspoon is free with 3 photo scans and 3 AI recipes a week. Snapspoon Pro gives you unlimited scans and AI recipes. Snapspoon Verified ($10 a month) is separate and gives you the verified badge after an ID check."
+ },
+ {
+  "k": [
+   "report",
+   "block",
+   "harass",
+   "spam",
+   "abuse",
+   "unsafe"
+  ],
+  "a": "Tap ⋯ on a video or a profile, or Report under a comment, to report it. Snapspoon reviews reports within 24 hours. Block someone to hide their posts, comments and messages from you. Unblock them from their profile any time."
+ },
+ {
+  "k": [
+   "language",
+   "hebrew",
+   "spanish",
+   "chinese",
+   "russian",
+   "english"
+  ],
+  "a": "Change the language in Settings › Language. Snapspoon speaks English, Hebrew, Chinese, Spanish and Russian."
+ },
+ {
+  "k": [
+   "profile picture",
+   "photo",
+   "bio",
+   "username",
+   "name",
+   "edit profile"
+  ],
+  "a": "Open Account and tap Edit profile to change your picture, name, username and bio. Tap your picture to move and zoom it inside the circle."
+ },
+ {
+  "k": [
+   "delete account",
+   "delete my data",
+   "privacy",
+   "private"
+  ],
+  "a": "Your profile, posts, videos and who you follow are public. Your weight, food log and goals stay private. To remove things, use Settings › Your data, where you can export your data, clear it, or delete your account."
+ },
+ {
+  "k": [
+   "camera permission",
+   "allow camera",
+   "keeps asking"
+  ],
+  "a": "On the website, Safari asks for the camera. To stop it asking, tap aA in the address bar, then Website Settings, and set Camera and Microphone to Allow. The phone app only asks once."
+ },
+ {
+  "k": [
+   "sign in",
+   "log in",
+   "login",
+   "new phone",
+   "lost my account",
+   "apple",
+   "google",
+   "sign out"
+  ],
+  "a": "In the phone app, open Settings › Save your account and continue with Apple or Google. That keeps your profile, posts and followers safe, and on a new phone you sign in the same way to get them back."
+ },
+ {
+  "k": [
+   "not allowed",
+   "blocked words",
+   "can't post",
+   "won't post",
+   "bad words",
+   "swear",
+   "filter"
+  ],
+  "a": "Snapspoon keeps comments, messages, posts and profiles friendly. Hate, threats, self-harm and pro-eating-disorder words can't be posted, and swear words are starred out. Change those words and try again."
+ },
+ {
+  "k": [
+   "lose weight",
+   "diet",
+   "healthy",
+   "tips",
+   "hungry"
+  ],
+  "a": "Aim for your daily calories, get plenty of protein, and fill half your plate with vegetables. Most people lose about 0.5 kg a week safely. Never go under 1,200 kcal a day without a doctor, and check with a doctor before big changes."
+ }
 ]

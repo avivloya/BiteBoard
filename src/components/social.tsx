@@ -10,7 +10,7 @@ import { blockedIds, followCounts, friendIds, loadHidden, myProfile, profilesByI
 import { registerPush } from '@/lib/push';
 import { useSocial } from '@/lib/social-store';
 
-// The verified badge. `verified` is set only by Biteboard on the server (migration 0008).
+// The verified badge. `verified` is set only by Snapspoon on the server (migration 0008).
 export function Verified({ on, size = 14, color = Colors.accent }: { on?: boolean; size?: number; color?: string }) {
   if (!on) return null;
   return (

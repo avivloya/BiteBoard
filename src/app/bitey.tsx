@@ -11,9 +11,9 @@ import { ask, type BiteyMsg, loadBitey } from '@/lib/bitey';
 import { tr } from '@/lib/i18n';
 
 const STARTERS = ['How do I add music?', 'How do I log a meal?', 'How do I get verified?', 'How do I block someone?'];
-const HELLO: BiteyMsg = { from: 'bitey', text: "Hi! I'm Bitey 🍳 Ask me anything about Biteboard, like how to edit a video, log a meal, or get verified.", at: 0 };
+const HELLO: BiteyMsg = { from: 'bitey', text: "Hi! I'm Bitey 🍳 Ask me anything about Snapspoon, like how to edit a video, log a meal, or get verified.", at: 0 };
 
-/** Bitey, Biteboard's built-in helper, in the Inbox. */
+/** Bitey, Snapspoon's built-in helper, in the Inbox. */
 export default function Bitey() {
   const [chat, setChat] = useState<BiteyMsg[]>([]);
   const [text, setText] = useState('');
@@ -36,7 +36,7 @@ export default function Bitey() {
       <Row style={{ paddingHorizontal: 16, paddingVertical: 10, flexWrap: 'nowrap' }}>
         <Pressable onPress={() => router.back()} hitSlop={10} accessibilityRole="button" accessibilityLabel="Back"><T style={{ fontSize: 22 }}>←</T></Pressable>
         <BiteyAvatar size={36} />
-        <View><T style={{ fontWeight: '700' }}>Bitey</T><T variant="muted" style={{ fontSize: 12 }}>Your Biteboard helper</T></View>
+        <View><T style={{ fontWeight: '700' }}>Bitey</T><T variant="muted" style={{ fontSize: 12 }}>Your Snapspoon helper</T></View>
       </Row>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <FlatList ref={ref} data={[HELLO, ...chat, ...(thinking ? [{ from: 'bitey' as const, text: '…', at: -1 }] : [])]} keyExtractor={(m, i) => `${m.at}-${i}`}

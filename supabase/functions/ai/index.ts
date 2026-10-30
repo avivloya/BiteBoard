@@ -1,4 +1,4 @@
-// Biteboard AI endpoint (Supabase Edge Function, Deno).
+// Snapspoon AI endpoint (Supabase Edge Function, Deno).
 // POST { mode: "meal", imageBase64, mediaType }  -> MealEstimate JSON
 // POST { mode: "recipe", prompt }                -> RecipeDraft JSON
 // POST { mode: "bitey", messages: [{role, content}] } -> { text } (Bitey, the helper in the Inbox)

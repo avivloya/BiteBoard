@@ -40,7 +40,7 @@ export default function Scan() {
     return (
       <Screen edges={[]} bg={Colors.surface}>
         <T variant="h2">Scan a barcode</T>
-        <T variant="muted">Biteboard needs the camera to read barcodes on packaged food.</T>
+        <T variant="muted">Snapspoon needs the camera to read barcodes on packaged food.</T>
         <Button title="Allow camera" kind="primary" onPress={requestPermission} />
       </Screen>
     );

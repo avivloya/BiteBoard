@@ -1,6 +1,6 @@
 import type { Meal } from './types';
 
-// Calls the Biteboard backend (supabase/functions/ai). The Anthropic API key lives only on the server.
+// Calls the Snapspoon backend (supabase/functions/ai). The Anthropic API key lives only on the server.
 const API_URL = process.env.EXPO_PUBLIC_AI_URL;
 
 export type MealItem = { name: string; grams: number; kcal: number; protein: number; carbs: number; fat: number };
