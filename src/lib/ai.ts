@@ -24,3 +24,5 @@ export const estimateMeal = (imageBase64: string, mediaType: string) =>
   call<MealEstimate>({ mode: 'meal', imageBase64, mediaType });
 
 export const draftRecipe = (prompt: string) => call<RecipeDraft>({ mode: 'recipe', prompt });
+
+export const askBitey = (messages: { role: 'user' | 'assistant'; content: string }[]) => call<{ text: string }>({ mode: 'bitey', messages });

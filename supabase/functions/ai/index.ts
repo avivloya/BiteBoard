@@ -1,8 +1,11 @@
 // Biteboard AI endpoint (Supabase Edge Function, Deno).
 // POST { mode: "meal", imageBase64, mediaType }  -> MealEstimate JSON
 // POST { mode: "recipe", prompt }                -> RecipeDraft JSON
+// POST { mode: "bitey", messages: [{role, content}] } -> { text } (Bitey, the helper in the Inbox)
 // Secret: supabase secrets set ANTHROPIC_API_KEY=sk-ant-...
 import Anthropic from 'npm:@anthropic-ai/sdk';
+
+import { BITEY_GUIDE } from './bitey.ts';
 
 const client = new Anthropic({ apiKey: Deno.env.get('ANTHROPIC_API_KEY') });
 const MODEL = 'claude-opus-5-5';
@@ -92,6 +95,26 @@ Deno.serve(async (req) => {
       const prompt = String(body.prompt ?? '').slice(0, 500).trim();
       if (!prompt) return json({ error: 'Describe the recipe you want.' }, 400);
       return json(await ask([{ type: 'text', text: recipePrompt(prompt) }], RECIPE_SCHEMA));
+    }
+    if (body.mode === 'bitey') {
+      // Keep the last 12 turns, each clipped, and make sure the conversation ends with the user.
+      const messages = (Array.isArray(body.messages) ? body.messages : [])
+        .filter((m: { role?: string; content?: unknown }) => (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string' && m.content.trim())
+        .slice(-12)
+        .map((m: { role: 'user' | 'assistant'; content: string }) => ({ role: m.role, content: m.content.slice(0, 1000) }));
+      while (messages.length && messages[0].role !== 'user') messages.shift();
+      if (!messages.length || messages[messages.length - 1].role !== 'user') return json({ error: 'Ask Bitey something.' }, 400);
+      const response = await client.beta.messages.create({
+        model: MODEL,
+        max_tokens: 2000,
+        betas: ['server-side-fallback-2026-07-01'],
+        fallbacks: 'default',
+        output_config: { effort: 'low' },
+        system: BITEY_GUIDE,
+        messages,
+      });
+      const text = response.content.find((b) => b.type === 'text');
+      return json({ text: text && text.type === 'text' ? text.text.trim() : "Sorry, I didn't catch that. Try asking another way." });
     }
     return json({ error: 'Unknown mode.' }, 400);
   } catch (e) {

@@ -1,7 +1,7 @@
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import type { ReactNode } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 import { Alert, Linking, Pressable, Share, Switch, View } from 'react-native';
 
 import { LangPicker } from '@/components/lang-picker';
@@ -10,6 +10,7 @@ import { Segmented, T } from '@/components/ui';
 import { PRIVACY_URL, SHARE_URL, SUPPORT_EMAIL, TERMS_URL } from '@/constants/app';
 import { Colors, Radius } from '@/constants/theme';
 import { proConfigured, restore, usePro } from '@/lib/pro';
+import { pushOn, setPushOn } from '@/lib/push';
 import { askPermission, syncReminders } from '@/lib/reminders';
 import { deleteAccount, socialConfigured } from '@/lib/social';
 import { useSocial } from '@/lib/social-store';
@@ -31,7 +32,9 @@ export default function Settings() {
   const reminders = useStore((s) => s.reminders);
   const { setReminders, setUnits, resetAll } = useStore();
   const isPro = usePro((s) => s.isPro);
-  const { userId, me } = useSocial();
+  const { userId, me, blocked } = useSocial();
+  const [push, setPush] = useState(true);
+  useEffect(() => { pushOn().then(setPush); }, []);
 
   const toggle = async (key: keyof Reminders, on: boolean) => {
     if (on && !(await askPermission())) {
@@ -99,10 +102,16 @@ export default function Settings() {
       </Section>
 
       <Section title="Notifications">
+        <Item title="Likes, comments and follows" sub="Also replies and messages"
+          right={<Switch value={push} onValueChange={(v) => { setPush(v); setPushOn(userId, v); }} trackColor={{ true: Colors.accent, false: Colors.line }} />} />
         {REMINDERS.map((it) => (
           <Item key={it.key} title={it.title} sub={it.sub}
             right={<Switch value={reminders[it.key]} onValueChange={(v) => toggle(it.key, v)} trackColor={{ true: Colors.accent, false: Colors.line }} />} />
         ))}
+      </Section>
+
+      <Section title="Safety">
+        <Item title="Blocked accounts" sub={blocked.length ? `${blocked.length} blocked` : 'No one'} onPress={() => router.push('/blocked')} />
       </Section>
 
       <Section title="Privacy">

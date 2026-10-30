@@ -6,7 +6,8 @@ import Svg, { Path } from 'react-native-svg';
 
 import { T } from '@/components/ui';
 import { Colors } from '@/constants/theme';
-import { followCounts, friendIds, myProfile, profilesByIds, recipesBy } from '@/lib/social';
+import { blockedIds, followCounts, friendIds, loadHidden, myProfile, profilesByIds, recipesBy, visible } from '@/lib/social';
+import { registerPush } from '@/lib/push';
 import { useSocial } from '@/lib/social-store';
 
 // The verified badge. `verified` is set only by Biteboard on the server (migration 0008).
@@ -57,12 +58,15 @@ export function FollowCounts({ id }: { id: string }) {
 const short = (n: number) => (n >= 1e6 ? `${(n / 1e6).toFixed(n < 1e7 ? 1 : 0).replace(/\.0$/, '')}M` : n >= 1e4 ? `${Math.floor(n / 1e3)}K` : n.toLocaleString('en-US'));
 
 export async function refreshSocial(userId: string) {
-  const [me, ids] = await Promise.all([myProfile(userId), friendIds(userId)]);
+  const [me, ids, blocked] = await Promise.all([myProfile(userId), friendIds(userId), blockedIds(userId).catch(() => useSocial.getState().blocked)]);
+  useSocial.getState().set({ blocked });
+  await loadHidden();
+  registerPush(userId).catch(() => {});
   const [friends, shared] = await Promise.all([profilesByIds(ids), recipesBy(ids)]);
   const people = Object.fromEntries(friends.map((f) => [f.id, f]));
   useSocial.getState().set({
     userId, me, friendIds: ids, people,
-    feed: shared.map(({ owner, recipe }) => ({ ...recipe, by: people[owner]?.handle, byId: owner })),
+    feed: shared.map(({ owner, recipe }) => ({ ...recipe, by: people[owner]?.handle, byId: owner })).filter(visible),
   });
 }
 

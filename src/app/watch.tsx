@@ -6,13 +6,14 @@ import Svg, { Path } from 'react-native-svg';
 
 import { RecipeVideo } from '@/components/recipe-video';
 import { Row } from '@/components/screen';
+import { confirmBlock, Option, ReportSheet, Sheet } from '@/components/safety';
 import { Avatar, Verified } from '@/components/social';
 import { Button, T } from '@/components/ui';
 import { Colors } from '@/constants/theme';
 import { tr } from '@/lib/i18n';
 import { SHARE_URL } from '@/constants/app';
 import {
-  addComment, type Comment, commentCounts, commentsOn, deleteComment, likesFor, postKey, sendMessage, setLike, sharedPost, socialConfigured,
+  addComment, type Comment, commentCounts, commentsOn, deleteComment, hide, likesFor, postKey, report, sendMessage, setLike, sharedPost, socialConfigured,
 } from '@/lib/social';
 import { ago } from '@/lib/ago';
 import { useSocial } from '@/lib/social-store';
@@ -36,7 +37,7 @@ export default function Watch() {
   const [paused, setPaused] = useState(false);
   const [likes, setLikes] = useState<{ counts: Record<string, number>; mine: Set<string> }>({ counts: {}, mine: new Set() });
   const [comments, setComments] = useState<Record<string, number>>({});
-  const [sheet, setSheet] = useState<'comments' | 'share' | null>(null);
+  const [sheet, setSheet] = useState<'comments' | 'share' | 'more' | 'report' | null>(null);
   const keys = posts.map((r) => postKey(r, userId));
   const signedIn = socialConfigured && !!userId;
 
@@ -96,6 +97,9 @@ export default function Watch() {
           <Pressable onPress={() => setSheet('share')} style={s.btn} accessibilityRole="button" accessibilityLabel="Share">
             <Icon d={SEND} size={28} /><T style={s.btnText}>Share</T>
           </Pressable>
+          <Pressable onPress={() => setSheet('more')} style={s.btn} accessibilityRole="button" accessibilityLabel="More">
+            <Icon d="M5 12h.01M12 12h.01M19 12h.01" size={30} />
+          </Pressable>
         </SafeAreaView>
       </View>
     );
@@ -116,6 +120,21 @@ export default function Watch() {
         <Comments postId={postKey(post, userId)} signedIn={signedIn} userId={userId} onClose={() => setSheet(null)}
           onCount={(n) => setComments((c) => ({ ...c, [postKey(post, userId)]: n }))} />
       )}
+      {post && sheet === 'more' && (
+        <Sheet onClose={() => setSheet(null)} title={!post.byId || post.byId === userId ? 'Your video' : 'More'}>
+          {!post.byId || post.byId === userId ? <T variant="muted">This is your video. Delete it from its recipe page.</T> : (
+            <>
+              <Option label="Report video" onPress={() => setSheet('report')} />
+              <Option label="Not interested" onPress={() => { hide(postKey(post, userId)); setSheet(null); Alert.alert("Got it", "You'll see fewer videos like this."); }} />
+              <Option label={`Block @${post.by ?? ''}`} danger onPress={() => confirmBlock(post.byId!, post.by, () => { setSheet(null); router.back(); })} />
+            </>
+          )}
+        </Sheet>
+      )}
+      {post && sheet === 'report' && (
+        <ReportSheet onClose={() => setSheet(null)} title="Report video"
+          onPick={(reason) => { if (!signedIn) return; report(userId!, 'post', postKey(post, userId), reason, post.byId).catch(() => {}); hide(postKey(post, userId)); }} blockId={post.byId} blockHandle={post.by} />
+      )}
       {post && sheet === 'share' && (
         <Sheet onClose={() => setSheet(null)} title="Send to">
           <SendTo post={post} userId={signedIn ? userId : null} friendIds={friendIds} people={people} />
@@ -126,49 +145,60 @@ export default function Watch() {
   );
 }
 
-function Sheet({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
-  return (
-    <Modal transparent animationType="slide" visible onRequestClose={onClose}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
-        <Pressable style={{ flex: 1 }} onPress={onClose} accessibilityLabel="Close" />
-        <SafeAreaView edges={['bottom']} style={s.sheet}>
-          <View style={s.grab} />
-          <T style={{ textAlign: 'center', fontWeight: '700' }}>{title}</T>
-          {children}
-        </SafeAreaView>
-      </KeyboardAvoidingView>
-    </Modal>
-  );
-}
-
 function Comments({ postId, signedIn, userId, onClose, onCount }: { postId: string; signedIn: boolean; userId: string | null; onClose: () => void; onCount: (n: number) => void }) {
   const [list, setList] = useState<Comment[] | null>(null);
   const [text, setText] = useState('');
+  const [replyTo, setReplyTo] = useState<{ id: string; handle: string } | null>(null);
+  const [reporting, setReporting] = useState<Comment | null>(null);
+  const input = useRef<React.ComponentRef<typeof TextInput>>(null);
   const load = () => commentsOn(postId).then((l) => { setList(l); onCount(l.length); }).catch(() => setList([]));
   useEffect(() => { if (signedIn) load(); else setList([]); }, [postId]);
   const post = async () => {
     const t = text.trim();
     if (!t || !userId) return;
     setText('');
-    try { await addComment(postId, userId, t); load(); } catch (e) { Alert.alert('Could not post your comment', e instanceof Error ? e.message : ''); }
+    const parent = replyTo?.id;
+    setReplyTo(null);
+    try { await addComment(postId, userId, t, parent); load(); } catch (e) { Alert.alert('Could not post your comment', e instanceof Error ? e.message : ''); }
   };
+  // Replies sit under the comment they answer; a reply whose comment was deleted shows on its own.
+  const ids = new Set((list ?? []).map((c) => c.id));
+  const rows = (list ?? []).filter((c) => !c.parent_id || !ids.has(c.parent_id))
+    .flatMap((c) => [{ c, reply: false }, ...(list ?? []).filter((x) => x.parent_id === c.id).map((x) => ({ c: x, reply: true }))]);
+  if (reporting) return (
+    <ReportSheet onClose={() => setReporting(null)} title="Report comment" blockId={reporting.user_id} blockHandle={reporting.author?.handle}
+      onPick={(reason) => { if (userId) report(userId, 'comment', reporting.id, reason, reporting.user_id).catch(() => {}); hide(`c:${reporting.id}`).then(load); }} />
+  );
   return (
     <Sheet onClose={onClose} title={list ? `${list.length} comment${list.length === 1 ? '' : 's'}` : 'Comments'}>
-      <FlatList style={{ maxHeight: 360 }} data={list ?? []} keyExtractor={(c) => c.id}
+      <FlatList style={{ maxHeight: 360 }} data={rows} keyExtractor={(x) => x.c.id}
         ListEmptyComponent={<T variant="muted" style={{ textAlign: 'center', paddingVertical: 20 }}>{signedIn ? 'No comments yet. Say something nice.' : 'Comments need an account. Make your recipe page on Account first.'}</T>}
-        renderItem={({ item: c }) => (
-          <Row style={{ alignItems: 'flex-start', flexWrap: 'nowrap', paddingVertical: 6 }}>
-            <Avatar p={c.author ?? { handle: '?' }} size={32} />
-            <View style={{ flex: 1 }}>
+        renderItem={({ item: { c, reply } }) => (
+          <Row style={{ alignItems: 'flex-start', flexWrap: 'nowrap', paddingVertical: 6, marginLeft: reply ? 40 : 0 }}>
+            <Avatar p={c.author ?? { handle: '?' }} size={reply ? 26 : 32} />
+            <View style={{ flex: 1, gap: 2 }}>
               <T><T style={{ fontWeight: '700' }}>@{c.author?.handle ?? 'someone'}</T> <T variant="muted">{ago(c.created_at)}</T></T>
               <T>{c.body}</T>
+              {signedIn && (
+                <Row style={{ gap: 16 }}>
+                  <Pressable onPress={() => { setReplyTo({ id: reply ? c.parent_id! : c.id, handle: c.author?.handle ?? '' }); if (c.user_id !== userId && c.author?.handle) setText(`@${c.author.handle} `); input.current?.focus(); }} hitSlop={8}><T variant="muted" style={{ fontSize: 12.5 }}>Reply</T></Pressable>
+                  {c.user_id === userId
+                    ? <Pressable onPress={() => deleteComment(c.id).then(load)} hitSlop={8}><T variant="muted" style={{ fontSize: 12.5 }}>Delete</T></Pressable>
+                    : <Pressable onPress={() => setReporting(c)} hitSlop={8}><T variant="muted" style={{ fontSize: 12.5 }}>Report</T></Pressable>}
+                </Row>
+              )}
             </View>
-            {c.user_id === userId && <Pressable onPress={() => deleteComment(c.id).then(load)} hitSlop={8}><T variant="muted">Delete</T></Pressable>}
           </Row>
         )} />
+      {replyTo && (
+        <Row style={s.replying}>
+          <T variant="muted" style={{ fontSize: 13 }}>{tr('Replying to')} @{replyTo.handle}</T>
+          <Pressable onPress={() => setReplyTo(null)} hitSlop={8} accessibilityLabel="Cancel reply"><T variant="muted">✕</T></Pressable>
+        </Row>
+      )}
       {signedIn && (
         <Row style={{ flexWrap: 'nowrap' }}>
-          <TextInput value={text} onChangeText={setText} placeholder={tr("Add a comment…")} placeholderTextColor={Colors.muted} maxLength={300} onSubmitEditing={post} returnKeyType="send" style={s.input} />
+          <TextInput ref={input} value={text} onChangeText={setText} placeholder={tr("Add a comment…")} placeholderTextColor={Colors.muted} maxLength={300} onSubmitEditing={post} returnKeyType="send" style={s.input} />
           <Button title="Post" kind="primary" disabled={!text.trim()} onPress={post} />
         </Row>
       )}
@@ -201,6 +231,7 @@ const s = StyleSheet.create({
   info: { position: 'absolute', left: 16, right: 84, bottom: 18, gap: 6, alignItems: 'flex-start' },
   recipe: { backgroundColor: Colors.bg, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 8 },
   rail: { position: 'absolute', right: 10, bottom: 26, gap: 18, alignItems: 'center' },
+  replying: { justifyContent: 'space-between', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, backgroundColor: Colors.surface2 },
   btn: { alignItems: 'center', gap: 3, width: 60 },
   btnText: { color: '#fff', fontSize: 12, fontWeight: '700' },
   sheet: { backgroundColor: Colors.surface, borderTopLeftRadius: 22, borderTopRightRadius: 22, paddingHorizontal: 16, paddingTop: 10, paddingBottom: 14, gap: 12 },

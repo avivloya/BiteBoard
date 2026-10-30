@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, View } from 'react-native';
 
 import { Row, Screen } from '@/components/screen';
+import { BiteyAvatar } from '@/components/bitey-avatar';
 import { Avatar } from '@/components/social';
 import { T } from '@/components/ui';
 import { Colors } from '@/constants/theme';
@@ -12,6 +13,13 @@ import { useSocial } from '@/lib/social-store';
 
 
 type Convo = { other: string; last: Message; unread: number };
+
+const BiteyRow = () => (
+  <Pressable onPress={() => router.push('/bitey')} accessibilityRole="button" style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8, paddingHorizontal: 8, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.45)' }}>
+    <BiteyAvatar size={48} />
+    <View style={{ flex: 1 }}><T style={{ fontWeight: '700' }}>Bitey</T><T variant="muted" numberOfLines={1}>Your Biteboard helper. Ask me anything about the app.</T></View>
+  </Pressable>
+);
 
 /** Your messages: one row per person, newest first, plus people you follow to start a chat with. */
 export default function Inbox() {
@@ -35,6 +43,7 @@ export default function Inbox() {
     return (
       <Screen>
         <T variant="h2">Inbox</T>
+        <BiteyRow />
         <T variant="muted">Make your recipe page on Account first, then you can message people you follow.</T>
       </Screen>
     );
@@ -44,6 +53,7 @@ export default function Inbox() {
   return (
     <Screen>
       <T variant="h2">Inbox</T>
+      <BiteyRow />
       {!list ? <ActivityIndicator color={Colors.accent} /> : list.length ? (
         <View style={{ gap: 4 }}>
           {list.filter((c) => person(c.other)).map((c) => (

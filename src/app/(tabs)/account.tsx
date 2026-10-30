@@ -9,7 +9,7 @@ import { Row, Screen } from '@/components/screen';
 import { Avatar, FollowCounts, refreshSocial, Verified } from '@/components/social';
 import { Button, Chip, Field, Panel, T } from '@/components/ui';
 import { Colors, Radius } from '@/constants/theme';
-import { conversations, ensureSession, saveProfile, socialConfigured } from '@/lib/social';
+import { activityNewCount, conversations, ensureSession, saveProfile, socialConfigured } from '@/lib/social';
 import { startPost } from '@/lib/recorder';
 import { useSocial } from '@/lib/social-store';
 import { findRecipe, useStore } from '@/lib/store';
@@ -20,7 +20,7 @@ type Page = 0 | 1;
 
 /** Your account: picture, name and bio, then Posts and Saved, which slide sideways. */
 export default function Account() {
-  const { userId, me, unread } = useSocial();
+  const { userId, me, unread, activityNew } = useSocial();
   const profile = useStore((s) => s.profile);
   const mine = useStore((s) => s.mine);
   const [error, setError] = useState('');
@@ -36,6 +36,7 @@ export default function Account() {
       await refreshSocial(id);
       const cs = await conversations(id).catch(() => []);
       useSocial.getState().set({ unread: cs.reduce((n, c) => n + c.unread, 0) });
+      activityNewCount(id).then((n) => useSocial.getState().set({ activityNew: n })).catch(() => {});
     }).catch((e) => setError(e.message)).finally(() => setLoading(false));
   }, []));
 
@@ -55,6 +56,14 @@ export default function Account() {
               <Path d="M4 13l2.5-8h11L20 13v6H4z" /><Path d="M4 13h4.5l1 2h5l1-2H20" />
             </Svg>
             {unread > 0 && <View style={styles.badge}><T style={{ color: '#fff', fontSize: 11, fontWeight: '800' }}>{unread}</T></View>}
+          </Pressable>
+        )}
+        {me && (
+          <Pressable onPress={() => router.push('/activity')} accessibilityRole="button" accessibilityLabel={activityNew ? `Activity, ${activityNew} new` : 'Activity'} hitSlop={12} style={{ marginLeft: 14, marginRight: 'auto' }}>
+            <Svg width={26} height={26} viewBox="0 0 24 24" fill="none" stroke={Colors.ink} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+              <Path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><Path d="M10.3 21a1.9 1.9 0 0 0 3.4 0" />
+            </Svg>
+            {activityNew > 0 && <View style={styles.badge}><T style={{ color: '#fff', fontSize: 11, fontWeight: '800' }}>{activityNew > 99 ? '99+' : activityNew}</T></View>}
           </Pressable>
         )}
         <Pressable onPress={() => router.push('/settings')} accessibilityRole="button" accessibilityLabel="Settings" hitSlop={12}>

@@ -7,6 +7,7 @@ import { useEffect } from 'react';
 import { Intro } from '@/components/intro';
 import { Colors } from '@/constants/theme';
 import { initPro } from '@/lib/pro';
+import { listenForPushTaps } from '@/lib/push';
 import { syncReminders } from '@/lib/reminders';
 import { useStore } from '@/lib/store';
 
@@ -19,6 +20,7 @@ export default function RootLayout() {
     SplashScreen.hideAsync();
     initPro().catch(() => {});
     syncReminders().catch(() => {});
+    const stopTaps = listenForPushTaps();
     // Re-plan the streak saver whenever the food log changes.
     let timer: ReturnType<typeof setTimeout>;
     const unsub = useStore.subscribe((s, prev) => {
@@ -27,7 +29,7 @@ export default function RootLayout() {
         timer = setTimeout(() => syncReminders().catch(() => {}), 1000);
       }
     });
-    return () => { unsub(); clearTimeout(timer); };
+    return () => { unsub(); clearTimeout(timer); stopTaps(); };
   }, [hydrated]);
   if (!hydrated) return null;
 
@@ -55,6 +57,9 @@ export default function RootLayout() {
         <Stack.Screen name="verification" options={{ headerShown: true, title: '', headerShadowVisible: false, headerStyle: { backgroundColor: Colors.surface }, headerTintColor: Colors.ink }} />
         <Stack.Screen name="inbox" options={{ headerShown: true, title: '', headerShadowVisible: false, headerStyle: { backgroundColor: Colors.bg }, headerTintColor: Colors.ink }} />
         <Stack.Screen name="chat/[id]" />
+        <Stack.Screen name="bitey" />
+        <Stack.Screen name="activity" options={{ headerShown: true, title: '', headerShadowVisible: false, headerStyle: { backgroundColor: Colors.bg }, headerTintColor: Colors.ink }} />
+        <Stack.Screen name="blocked" options={sheet} />
         <Stack.Screen name="record-video" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="boards" options={{ headerShown: true, title: '', headerShadowVisible: false, headerStyle: { backgroundColor: Colors.bg }, headerTintColor: Colors.ink }} />
         <Stack.Screen name="board/[id]" options={{ headerShown: true, title: '', headerShadowVisible: false, headerStyle: { backgroundColor: Colors.bg }, headerTintColor: Colors.ink }} />

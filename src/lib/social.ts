@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
 import { File } from 'expo-file-system';
 
+import { useSocial } from './social-store';
 import type { Recipe } from './types';
 
 const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
@@ -73,7 +74,9 @@ export async function searchPeople(q: string, userId: string) {
   const list = (data as PublicProfile[]) ?? [];
   // @biteboard always comes first: in suggestions, and in results when it matches.
   const fits = o && o.id !== userId && (!term || `${o.handle} ${o.name}`.toLowerCase().includes(term.toLowerCase()));
-  return fits ? [o, ...list.filter((x) => x.id !== o.id)] : list;
+  const blocked = new Set(useSocial.getState().blocked);
+  const ok = list.filter((x) => !blocked.has(x.id));
+  return fits ? [o, ...ok.filter((x) => x.id !== o.id)] : ok;
 }
 
 export async function friendIds(userId: string) {
@@ -123,8 +126,14 @@ export async function forYouPosts(userId: string, limit = 60) {
   const { data, error } = await db().from('shared_recipes').select('id, owner, recipe, created_at, profiles(handle)')
     .neq('owner', userId).order('created_at', { ascending: false }).limit(limit);
   if (error) throw new Error(error.message);
-  return ((data ?? []) as unknown as Row[]).map(toPost);
+  return ((data ?? []) as unknown as Row[]).map(toPost).filter(visible);
 }
+
+/** Hides posts from people you blocked, and posts you reported or marked "not interested". */
+export const visible = (r: Recipe) => {
+  const st = useSocial.getState();
+  return !(r.byId && st.blocked.includes(r.byId)) && !st.hidden.includes(`${r.byId}:${r.id}`);
+};
 
 const BUCKET = 'recipe-photos';
 
@@ -204,7 +213,7 @@ export async function setLike(key: string, userId: string, on: boolean) {
   if (error && error.code !== '23505') throw new Error(error.message);
 }
 
-export type Comment = { id: string; post_id: string; user_id: string; body: string; created_at: string; author?: PublicProfile };
+export type Comment = { id: string; post_id: string; user_id: string; body: string; created_at: string; parent_id?: string | null; author?: PublicProfile };
 
 export async function commentCounts(keys: string[]) {
   if (!keys.length) return {} as Record<string, number>;
@@ -215,15 +224,16 @@ export async function commentCounts(keys: string[]) {
 }
 
 export async function commentsOn(key: string) {
-  const { data, error } = await db().from('post_comments').select('id, post_id, user_id, body, created_at').eq('post_id', key).order('created_at').limit(300);
+  const { data, error } = await db().from('post_comments').select('id, post_id, user_id, body, created_at, parent_id').eq('post_id', key).order('created_at').limit(300);
   if (error) throw new Error(error.message);
-  const list = (data ?? []) as Comment[];
+  const blocked = new Set(useSocial.getState().blocked);
+  const list = ((data ?? []) as Comment[]).filter((c) => !blocked.has(c.user_id) && !useSocial.getState().hidden.includes(`c:${c.id}`));
   const people = Object.fromEntries((await profilesByIds([...new Set(list.map((c) => c.user_id))])).map((p) => [p.id, p]));
   return list.map((c) => ({ ...c, author: people[c.user_id] }));
 }
 
-export async function addComment(key: string, userId: string, body: string) {
-  const { error } = await db().from('post_comments').insert({ post_id: key, user_id: userId, body: body.slice(0, 300) });
+export async function addComment(key: string, userId: string, body: string, parentId?: string) {
+  const { error } = await db().from('post_comments').insert({ post_id: key, user_id: userId, body: body.slice(0, 300), parent_id: parentId ?? null });
   if (error) throw new Error(error.message);
 }
 
@@ -254,7 +264,8 @@ export async function conversations(userId: string) {
     if (m.recipient === userId && !m.read_at) c.unread += 1;
     byPerson.set(other, c);
   }
-  return [...byPerson.values()];
+  const blocked = new Set(useSocial.getState().blocked);
+  return [...byPerson.values()].filter((c) => !blocked.has(c.other));
 }
 
 export async function chatWith(userId: string, other: string) {
@@ -286,4 +297,89 @@ export async function searchPosts(q: string, limit = 60) {
     .or(`recipe->>title.ilike.%${term}%,recipe->>caption.ilike.%${term}%`).order('created_at', { ascending: false }).limit(limit);
   if (error) throw new Error(error.message);
   return ((data ?? []) as unknown as Row[]).map(toPost);
+}
+
+// ---------- safety: report and block ----------
+
+export const REPORT_REASONS = ['Spam or scam', 'Nudity or sexual content', 'Bullying or harassment', 'Hate speech or symbols', 'Dangerous weight-loss or eating disorder content', 'Violence or threats', 'Pretending to be someone', 'Something else'];
+
+/** Sends a report to Biteboard. Reports are anonymous to the person reported, and only Biteboard can read them. */
+export async function report(userId: string, kind: 'post' | 'comment' | 'user' | 'message', target: string, reason: string, targetUser?: string) {
+  const { error } = await db().from('reports').insert({ reporter: userId, kind, target, reason, target_user: targetUser ?? null });
+  if (error) throw new Error(error.message);
+}
+
+export async function blockedIds(userId: string) {
+  const { data } = await db().from('blocks').select('blocked').eq('blocker', userId);
+  return (data ?? []).map((r) => r.blocked as string);
+}
+
+/** Blocking also unfollows both ways (the server does that), and hides their posts, comments and messages from you. */
+export async function setBlocked(userId: string, other: string, on: boolean) {
+  const t = db().from('blocks');
+  const { error } = on ? await t.insert({ blocker: userId, blocked: other }) : await t.delete().eq('blocker', userId).eq('blocked', other);
+  if (error && error.code !== '23505') throw new Error(error.message);
+  const st = useSocial.getState();
+  st.set({ blocked: on ? [...new Set([...st.blocked, other])] : st.blocked.filter((x) => x !== other) });
+}
+
+/** Stop showing a post or comment ("post:{key}" style ids) on this phone: after a report, or "Not interested". */
+export async function hide(id: string) {
+  const st = useSocial.getState();
+  const hidden = [...new Set([...st.hidden, id])].slice(-500);
+  st.set({ hidden });
+  await AsyncStorage.setItem('biteboard:hidden', JSON.stringify(hidden)).catch(() => {});
+}
+export async function loadHidden() {
+  const raw = await AsyncStorage.getItem('biteboard:hidden').catch(() => null);
+  try { useSocial.getState().set({ hidden: raw ? JSON.parse(raw) : [] }); } catch { /* keep what we have */ }
+}
+
+// ---------- activity ----------
+
+export type ActivityItem = { type: 'like' | 'comment' | 'reply' | 'follow' | 'message'; by: string; at: string; post?: string; text?: string };
+
+/** Everything that happened to you lately: likes and comments on your posts, replies to your comments, new followers and messages. */
+export async function activity(userId: string): Promise<{ items: ActivityItem[]; people: Record<string, PublicProfile> }> {
+  const mine = `${userId}:%`;
+  const [likes, comments, myComments, follows, msgs] = await Promise.all([
+    db().from('post_likes').select('post_id, user_id, created_at').like('post_id', mine).neq('user_id', userId).order('created_at', { ascending: false }).limit(60),
+    db().from('post_comments').select('id, post_id, user_id, body, created_at, parent_id').like('post_id', mine).neq('user_id', userId).order('created_at', { ascending: false }).limit(60),
+    db().from('post_comments').select('id').eq('user_id', userId).order('created_at', { ascending: false }).limit(200),
+    db().from('friendships').select('user_id, created_at').eq('friend_id', userId).order('created_at', { ascending: false }).limit(60),
+    db().from('messages').select('sender, body, created_at').eq('recipient', userId).order('created_at', { ascending: false }).limit(60),
+  ]);
+  const myIds = (myComments.data ?? []).map((c) => c.id as string);
+  const replies = myIds.length
+    ? (await db().from('post_comments').select('post_id, user_id, body, created_at').in('parent_id', myIds).neq('user_id', userId).order('created_at', { ascending: false }).limit(60)).data ?? []
+    : [];
+  const items: ActivityItem[] = [
+    ...(likes.data ?? []).map((l) => ({ type: 'like' as const, by: l.user_id, at: l.created_at, post: l.post_id })),
+    ...(comments.data ?? []).filter((c) => !c.parent_id || !myIds.includes(c.parent_id)).map((c) => ({ type: 'comment' as const, by: c.user_id, at: c.created_at, post: c.post_id, text: c.body })),
+    ...replies.map((c) => ({ type: 'reply' as const, by: c.user_id, at: c.created_at, post: c.post_id, text: c.body })),
+    ...(follows.data ?? []).map((f) => ({ type: 'follow' as const, by: f.user_id, at: f.created_at })),
+  ];
+  // One line per person for messages: their latest.
+  const seen = new Set<string>();
+  for (const m of msgs.data ?? []) if (!seen.has(m.sender)) { seen.add(m.sender); items.push({ type: 'message', by: m.sender, at: m.created_at, text: m.body || 'Sent you a video' }); }
+  const blocked = new Set(useSocial.getState().blocked);
+  const list = items.filter((x) => !blocked.has(x.by)).sort((a, b) => Date.parse(b.at) - Date.parse(a.at)).slice(0, 150);
+  const people = Object.fromEntries((await profilesByIds([...new Set(list.map((x) => x.by))])).map((p) => [p.id, p]));
+  return { items: list, people };
+}
+
+export const ACTIVITY_READ = 'biteboard:activity-read';
+
+/** How many things happened since you last opened Activity, for the bell on Account. */
+export async function activityNewCount(userId: string) {
+  const read = Number(await AsyncStorage.getItem(ACTIVITY_READ).catch(() => 0)) || 0;
+  const { items } = await activity(userId);
+  return items.filter((x) => Date.parse(x.at) > read).length;
+}
+
+// ---------- push notifications ----------
+
+export async function savePushToken(userId: string, token: string, enabled: boolean) {
+  const { error } = await db().from('push_tokens').upsert({ token, user_id: userId, enabled, updated_at: new Date().toISOString() });
+  if (error) throw new Error(error.message);
 }
