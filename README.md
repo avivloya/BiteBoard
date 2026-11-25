@@ -63,6 +63,20 @@ eas submit --platform android              # uploads to Google Play
 
 Before submitting: replace the placeholder icon and splash in `assets/images`, add a privacy policy URL, and fill in the store listings. New Google Play personal accounts must run a closed test with 12 testers for 14 days before production.
 
+## Modern features (need a development or store build)
+
+These use native code, so they do not run in Expo Go. Make a build with `npx eas-cli@latest build --profile development` (or a normal store build).
+
+- **Dark mode**: Settings › Look and feel. Follows the phone by default; the app restarts to switch.
+- **Vibrations, confetti, filling calorie ring**: when you log food, start a streak day or reach your goal.
+- **Glass panels**: Liquid Glass on iOS 26, a blur on older phones and on the web.
+- **Live camera calories** (`/live-snap`): checks the preview every 3.5 s. Each check is one AI call, capped at 6 per session on the free plan and 40 on Pro.
+- **Voice logging** (`/voice-log`) and the **AI coach** (`/coach`), **fridge scan** (`/fridge`). New AI modes live in `supabase/functions/ai/extra.ts`; redeploy the function after pulling.
+- **Face ID / fingerprint lock**: Settings › Privacy lock.
+- **iPhone widgets and Live Activity** (Lock Screen, Dynamic Island, and Apple Watch Smart Stack): `src/widgets/calories.tsx`, configured by the `expo-widgets` plugin in `app.json`. EAS sets up the App Group `group.com.avivloya.snapspoon` the first time you build.
+- **Shortcuts**: links like `snapspoon://voice-log` for Siri (Shortcuts app) and Android long-press shortcuts (`plugins/with-app-shortcuts.js`).
+- **Progress photos** (`/progress`) and **share cards** (`/share-stats`).
+
 ## Checks
 
 ```bash

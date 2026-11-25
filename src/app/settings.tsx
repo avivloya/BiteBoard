@@ -2,13 +2,17 @@ import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { type ReactNode, useEffect, useState } from 'react';
-import { Alert, Linking, Pressable, Share, Switch, View } from 'react-native';
+import { Alert, Linking, Platform, Pressable, Share, Switch, View } from 'react-native';
 
 import { LangPicker } from '@/components/lang-picker';
 import { Screen } from '@/components/screen';
 import { Segmented, T } from '@/components/ui';
 import { PRIVACY_URL, SHARE_URL, SUPPORT_EMAIL, TERMS_URL } from '@/constants/app';
-import { Colors, Radius } from '@/constants/theme';
+import { biometricName, canFaceLock, unlock } from '@/components/face-lock';
+import { Colors, Radius, themePref } from '@/constants/theme';
+import { useExtras } from '@/lib/extras';
+import { setThemePref } from '@/lib/theme-pref';
+import { widgetsSupported } from '@/lib/widgets';
 import { type SignedIn, signedIn } from '@/lib/auth';
 import { proConfigured, restore, usePro } from '@/lib/pro';
 import { pushOn, setPushOn } from '@/lib/push';
@@ -36,6 +40,9 @@ export default function Settings() {
   const { userId, me, blocked } = useSocial();
   const [push, setPush] = useState(true);
   useEffect(() => { pushOn().then(setPush); }, []);
+  const { faceLock, liveActivity, set: setExtras } = useExtras();
+  const [lockName, setLockName] = useState<string | null>(null);
+  useEffect(() => { canFaceLock().then(async (ok) => setLockName(ok ? await biometricName() : null)).catch(() => {}); }, []);
   const [signin, setSignin] = useState<SignedIn | null>(null);
   useEffect(() => { signedIn().then(setSignin).catch(() => {}); }, [userId]);
 
@@ -90,6 +97,29 @@ export default function Settings() {
           <T style={{ fontWeight: '600' }}>Units</T>
           <Segmented value={profile?.units ?? 'metric'} onChange={setUnits} options={[{ value: 'metric', label: 'kg, cm' }, { value: 'imperial', label: 'lb, ft' }]} />
         </View>
+      </Section>
+
+      <Section title="Look and feel">
+        <View style={{ padding: 14, gap: 8 }}>
+          <T style={{ fontWeight: '600' }}>Appearance</T>
+          <Segmented value={themePref} onChange={(v) => v !== themePref && setThemePref(v)}
+            options={[{ value: 'auto', label: 'Auto' }, { value: 'light', label: 'Light' }, { value: 'dark', label: 'Dark' }]} />
+          <T variant="muted" style={{ fontSize: 12 }}>Snapspoon restarts to change its colors.</T>
+        </View>
+      </Section>
+
+      <Section title="Privacy lock">
+        {lockName ? (
+          <Item title={`Lock with ${lockName}`} sub="Ask when Snapspoon opens"
+            right={<Switch value={faceLock} onValueChange={async (v) => { if (await unlock().catch(() => false)) setExtras({ faceLock: v }); }} trackColor={{ true: Colors.accent, false: Colors.line }} />} />
+        ) : <Item title="App lock" sub="Set up Face ID, Touch ID or a fingerprint on your phone to use this" />}
+      </Section>
+
+      <Section title="Widgets and shortcuts">
+        {widgetsSupported() && <Item title="Lock Screen and Dynamic Island" sub="Show calories left live while you track today"
+          right={<Switch value={liveActivity} onValueChange={(v) => setExtras({ liveActivity: v })} trackColor={{ true: Colors.accent, false: Colors.line }} />} />}
+        <Item title="Home Screen widgets" sub={Platform.OS === 'ios' ? 'Touch and hold your Home Screen, tap Edit, then Add Widget and pick Snapspoon' : 'Coming to Android soon'} />
+        <Item title={Platform.OS === 'ios' ? 'Siri shortcuts' : 'Assistant shortcuts'} sub="Log a meal or check calories by voice" onPress={() => router.push('/shortcuts')} />
       </Section>
 
       <Section title="Subscription">
@@ -154,7 +184,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 function Item({ title, sub, onPress, right, action, danger }: { title: string; sub?: string; onPress?: () => void; right?: ReactNode; action?: string; danger?: boolean }) {
   return (
     <Pressable onPress={onPress} disabled={!onPress} accessibilityRole={onPress ? 'button' : undefined}
-      style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderBottomWidth: 1, borderBottomColor: 'rgba(207,181,146,0.35)', opacity: pressed ? 0.7 : 1 })}>
+      style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderBottomWidth: 1, borderBottomColor: Colors.divider, opacity: pressed ? 0.7 : 1 })}>
       <View style={{ flex: 1, gap: 2 }}>
         <T style={{ fontWeight: '600', color: danger ? Colors.warn : Colors.ink }}>{title}</T>
         {!!sub && <T variant="muted" style={{ fontSize: 13 }} numberOfLines={2}>{sub}</T>}

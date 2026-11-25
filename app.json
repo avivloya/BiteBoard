@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "snapspoon",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "ios": {
       "bundleIdentifier": "com.avivloya.snapspoon",
       "supportsTablet": false,
@@ -61,7 +61,41 @@
         }
       ],
       "expo-video",
-      "expo-apple-authentication"
+      "expo-apple-authentication",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Snapspoon uses Face ID to keep your food log and weight private when you lock the app."
+        }
+      ],
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Snapspoon uses the microphone so you can log meals and move through recipe steps by voice.",
+          "speechRecognitionPermission": "Snapspoon turns what you say into text to log meals and follow recipes hands-free."
+        }
+      ],
+      [
+        "expo-widgets",
+        {
+          "groupIdentifier": "group.com.avivloya.snapspoon",
+          "widgets": [
+            {
+              "name": "SnapspoonToday",
+              "displayName": "Calories left",
+              "description": "Calories left today and your streak.",
+              "supportedFamilies": [
+                "systemSmall",
+                "systemMedium",
+                "accessoryCircular",
+                "accessoryRectangular",
+                "accessoryInline"
+              ]
+            }
+          ]
+        }
+      ],
+      "./plugins/with-app-shortcuts"
     ],
     "experiments": {
       "typedRoutes": true,

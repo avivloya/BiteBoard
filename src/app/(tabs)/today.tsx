@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
+import { BiteyAvatar } from '@/components/bitey-avatar';
 import { MacroBar, Ring } from '@/components/ring';
 import { Row, Screen } from '@/components/screen';
 import { Button, Field, Panel, Segmented, T } from '@/components/ui';
@@ -42,6 +43,11 @@ export default function Today() {
         <Button title="Barcode" style={{ flex: 1 }} onPress={() => router.push('/scan')} />
         <Button title={adding ? 'Close' : 'Add'} style={{ flex: 1 }} onPress={() => setAdding((v) => !v)} />
       </Row>
+      <Row style={{ flexWrap: 'nowrap' }}>
+        <Button title="Live camera" style={{ flex: 1 }} onPress={() => router.push('/live-snap')} />
+        <Button title="Voice" style={{ flex: 1 }} onPress={() => router.push('/voice-log')} />
+        <Button title="Fridge" style={{ flex: 1 }} onPress={() => router.push('/fridge')} />
+      </Row>
       {adding && <Panel><QuickAdd onAdd={(e) => { addEntry({ ...e, src: 'manual' }, day); setAdding(false); }} /></Panel>}
 
       <Panel style={{ alignItems: 'center' }}>
@@ -61,6 +67,19 @@ export default function Today() {
         </Row>
         {editingGoals && <GoalsForm onSave={(g) => { setTargets(g); setEditingGoals(false); }} />}
       </Panel>
+
+      {day === dayKey() && (
+        <Pressable onPress={() => router.push('/coach')} accessibilityRole="button">
+          <Panel style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <BiteyAvatar size={40} />
+            <View style={{ flex: 1 }}>
+              <T variant="h3">What should I eat next?</T>
+              <T variant="muted">Ideas that fit your {Math.round(Math.max(0, targets.kcal - t.kcal))} kcal left</T>
+            </View>
+            <T variant="muted">›</T>
+          </Panel>
+        </Pressable>
+      )}
 
       <WeightPanel weights={weights} goalKg={profile?.goalKg ?? 0} imperial={profile?.units === 'imperial'} />
 

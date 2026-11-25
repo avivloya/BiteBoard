@@ -82,6 +82,13 @@ export default function Snap() {
           <Button title="Barcode" onPress={() => router.push('/scan')} style={{ flex: 1, paddingHorizontal: 8 }} />
         </Row>
       )}
+      {!result && (
+        <Row style={{ flexWrap: 'nowrap' }}>
+          <Button title="Live camera" onPress={() => router.replace('/live-snap')} style={{ flex: 1, paddingHorizontal: 8 }} />
+          <Button title="Say it" onPress={() => router.replace('/voice-log')} style={{ flex: 1, paddingHorizontal: 8 }} />
+          <Button title="Fridge" onPress={() => router.replace('/fridge')} style={{ flex: 1, paddingHorizontal: 8 }} />
+        </Row>
+      )}
       {!isPro && !result && <T variant="muted" style={{ fontSize: 12 }}>{left} free photo scan{left === 1 ? '' : 's'} left this week. Barcodes are always free.</T>}
 
       {photo && !result && (
@@ -98,7 +105,7 @@ export default function Snap() {
             <T variant="label">{result.confidence} confidence</T>
           </Row>
           {items.length ? items.map((it, i) => (
-            <Row key={i} style={{ flexWrap: 'nowrap', borderBottomWidth: 1, borderBottomColor: 'rgba(207,181,146,0.6)', paddingBottom: 6 }}>
+            <Row key={i} style={{ flexWrap: 'nowrap', borderBottomWidth: 1, borderBottomColor: Colors.divider, paddingBottom: 6 }}>
               <TextInput value={it.name} onChangeText={(v) => edit(i, 'name', v)} style={{ flex: 1, fontSize: 15, fontWeight: '600', color: Colors.ink, paddingVertical: 4 }} />
               <TextInput value={String(Math.round(it.grams))} onChangeText={(v) => edit(i, 'grams', v)} keyboardType="number-pad" accessibilityLabel={`${it.name} grams`}
                 style={{ width: 48, textAlign: 'right', fontFamily: Fonts.mono, fontSize: 13, color: Colors.ink, backgroundColor: Colors.surface2, borderRadius: 8, paddingHorizontal: 6, paddingVertical: 4 }} />

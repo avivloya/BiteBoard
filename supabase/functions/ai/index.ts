@@ -2,10 +2,12 @@
 // POST { mode: "meal", imageBase64, mediaType }  -> MealEstimate JSON
 // POST { mode: "recipe", prompt }                -> RecipeDraft JSON
 // POST { mode: "bitey", messages: [{role, content}] } -> { text } (Bitey, the helper in the Inbox)
+// More modes (live camera, voice log, coach, fridge, ...) are in extra.ts.
 // Secret: supabase secrets set ANTHROPIC_API_KEY=sk-ant-...
 import Anthropic from 'npm:@anthropic-ai/sdk';
 
 import { BITEY_GUIDE } from './bitey.ts';
+import { handleExtra } from './extra.ts';
 
 const client = new Anthropic({ apiKey: Deno.env.get('ANTHROPIC_API_KEY') });
 const MODEL = 'claude-opus-5-5';
@@ -116,6 +118,8 @@ Deno.serve(async (req) => {
       const text = response.content.find((b) => b.type === 'text');
       return json({ text: text && text.type === 'text' ? text.text.trim() : "Sorry, I didn't catch that. Try asking another way." });
     }
+    const extra = await handleExtra(body, (content, schema) => ask(content as Anthropic.Beta.BetaContentBlockParam[], schema));
+    if (extra) return json(extra);
     return json({ error: 'Unknown mode.' }, 400);
   } catch (e) {
     if (e instanceof Anthropic.RateLimitError) return json({ error: 'Too many requests right now. Try again in a minute.' }, 429);

@@ -89,6 +89,10 @@ export default function Account() {
           <Button title="Edit profile" onPress={() => router.push('/edit-profile')} />
           {me && <Button title="Find people" onPress={() => router.push('/people')} />}
         </Row>
+        <Row>
+          <Button title="Progress photos" kind="ghost" onPress={() => router.push('/progress')} />
+          <Button title="Share my stats" kind="ghost" onPress={() => router.push('/share-stats')} />
+        </Row>
       </View>
 
       {socialConfigured && loading && <ActivityIndicator color={Colors.accent} />}
