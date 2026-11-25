@@ -63,7 +63,7 @@ eas submit --platform ios                  # uploads to App Store Connect / Test
 eas submit --platform android              # uploads to Google Play
 ```
 
-Before submitting: fill in `SUPPORT_EMAIL` in `src/constants/app.ts` and `docs/delete-account.html`, and fill in the store listings. Google Play's account deletion link is `https://avivloya.github.io/BiteBoard/delete-account.html`. New Google Play personal accounts must run a closed test with 12 testers for 14 days before production.
+Before submitting: fill in the store listings. Google Play's account deletion link is `https://avivloya.github.io/BiteBoard/delete-account.html`. New Google Play personal accounts must run a closed test with 12 testers for 14 days before production.
 
 ## Checks
 
