@@ -9,7 +9,8 @@ import { Row } from '@/components/screen';
 import { confirmBlock, Option, ReportSheet, Sheet } from '@/components/safety';
 import { Avatar, Verified } from '@/components/social';
 import { Button, T } from '@/components/ui';
-import { Colors } from '@/constants/theme';
+// Camera and video screens are always dark, so they keep the light-theme cream accents.
+import { LightColors as Colors } from '@/constants/theme';
 import { tr } from '@/lib/i18n';
 import { SHARE_URL } from '@/constants/app';
 import {

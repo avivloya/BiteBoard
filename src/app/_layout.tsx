@@ -4,15 +4,19 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 
+import { Confetti } from '@/components/confetti';
 import { ErrorScreen } from '@/components/error-screen';
+import { FaceLock } from '@/components/face-lock';
 import { Intro } from '@/components/intro';
-import { Colors } from '@/constants/theme';
+import { Colors, isDark } from '@/constants/theme';
 import { catchCrashes } from '@/lib/crash';
 import { startBackup } from '@/lib/backup';
 import { initPro } from '@/lib/pro';
 import { listenForPushTaps } from '@/lib/push';
 import { syncReminders } from '@/lib/reminders';
+import { watchMoments } from '@/lib/moments';
 import { useStore } from '@/lib/store';
+import { syncWidgets } from '@/lib/widgets';
 
 SplashScreen.preventAutoHideAsync();
 catchCrashes();
@@ -28,6 +32,8 @@ export default function RootLayout() {
     initPro().catch(() => {});
     syncReminders().catch(() => {});
     const stopTaps = listenForPushTaps();
+    const stopMoments = watchMoments();
+    const stopWidgets = syncWidgets();
     const stopBackup = startBackup();
     // Re-plan the streak saver whenever the food log changes.
     let timer: ReturnType<typeof setTimeout>;
@@ -37,14 +43,14 @@ export default function RootLayout() {
         timer = setTimeout(() => syncReminders().catch(() => {}), 1000);
       }
     });
-    return () => { unsub(); clearTimeout(timer); stopTaps(); stopBackup(); };
+    return () => { unsub(); clearTimeout(timer); stopTaps(); stopBackup(); stopMoments(); stopWidgets(); };
   }, [hydrated]);
   if (!hydrated) return null;
 
   const sheet = { presentation: 'modal' as const, contentStyle: { backgroundColor: Colors.surface } };
   return (
     <>
-      <StatusBar style="dark" />
+      <StatusBar style={isDark ? 'light' : 'dark'} />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: Colors.bg } }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
@@ -60,6 +66,28 @@ export default function RootLayout() {
         <Stack.Screen name="settings" options={sheet} />
         <Stack.Screen name="edit-profile" options={sheet} />
         <Stack.Screen name="pro" options={sheet} />
+        <Stack.Screen name="voice-log" options={sheet} />
+        <Stack.Screen name="coach" options={sheet} />
+        <Stack.Screen name="fridge" options={sheet} />
+        <Stack.Screen name="progress" options={sheet} />
+        <Stack.Screen name="share-stats" options={sheet} />
+        <Stack.Screen name="shortcuts" options={sheet} />
+        <Stack.Screen name="live-snap" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
+        <Stack.Screen name="more" options={sheet} />
+        <Stack.Screen name="menu" options={sheet} />
+        <Stack.Screen name="import-recipe" options={sheet} />
+        <Stack.Screen name="meal-plan" options={sheet} />
+        <Stack.Screen name="lighter/[id]" options={sheet} />
+        <Stack.Screen name="badges" options={sheet} />
+        <Stack.Screen name="mood" options={sheet} />
+        <Stack.Screen name="challenges" options={sheet} />
+        <Stack.Screen name="challenge/[id]" options={sheet} />
+        <Stack.Screen name="classes" options={sheet} />
+        <Stack.Screen name="chefs" options={sheet} />
+        <Stack.Screen name="portions" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
+        <Stack.Screen name="cook/[id]" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="recap" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
+        <Stack.Screen name="wrapped" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
         <Stack.Screen name="watch" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
         <Stack.Screen name="search" options={{ animation: 'fade' }} />
         <Stack.Screen name="verification" options={{ headerShown: true, title: '', headerShadowVisible: false, headerStyle: { backgroundColor: Colors.surface }, headerTintColor: Colors.ink }} />
@@ -74,6 +102,8 @@ export default function RootLayout() {
         <Stack.Screen name="board/[id]" options={{ headerShown: true, title: '', headerShadowVisible: false, headerStyle: { backgroundColor: Colors.bg }, headerTintColor: Colors.ink }} />
       </Stack>
       <Intro />
+      <Confetti />
+      <FaceLock />
     </>
   );
 }

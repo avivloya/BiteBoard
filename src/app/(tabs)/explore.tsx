@@ -94,7 +94,7 @@ export default function Explore() {
     <Screen style={{ gap: 14 }}>
       {header}
       <TextInput value={q} onChangeText={setQ} placeholder={tr("Search recipes")} placeholderTextColor={Colors.muted} returnKeyType="search"
-        style={[ui.input, { borderRadius: 999, backgroundColor: 'rgba(248,239,226,0.7)', borderColor: 'transparent' }]} />
+        style={[ui.input, { borderRadius: 999, backgroundColor: Colors.glass, borderColor: 'transparent' }]} />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
         {FILTERS.map((f) => <Chip key={f} label={f} selected={filter === f} onPress={() => setFilter(f)} />)}
       </ScrollView>

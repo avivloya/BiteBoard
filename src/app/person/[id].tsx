@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Alert, Pressable, View } from 'react-native';
 
 import { Masonry } from '@/components/recipe-card';
 import { confirmBlock, Option, ReportSheet, Sheet } from '@/components/safety';
@@ -8,6 +8,8 @@ import { Row, Screen } from '@/components/screen';
 import { Avatar, FollowCounts, refreshSocial, Verified } from '@/components/social';
 import { Button, T } from '@/components/ui';
 import { Colors } from '@/constants/theme';
+import { highFive } from '@/lib/community';
+import { haptic } from '@/lib/haptics';
 import { type PublicProfile, profilesByIds, recipesBy, report, setBlocked, setFriend } from '@/lib/social';
 import { useSocial } from '@/lib/social-store';
 import type { Recipe } from '@/lib/types';
@@ -53,7 +55,10 @@ export default function Person() {
       {!!p.bio && <T>{p.bio}</T>}
       {other && isBlocked && <Button title="Unblock" onPress={() => setBlocked(userId!, id, false).catch(() => {})} />}
       {other && !isBlocked && (
-        <Button title={friend ? 'Following' : 'Follow'} kind={friend ? 'secondary' : 'primary'} onPress={async () => { await setFriend(userId, id, !friend); await refreshSocial(userId); }} />
+        <Row>
+          <Button title={friend ? 'Following' : 'Follow'} kind={friend ? 'secondary' : 'primary'} onPress={async () => { await setFriend(userId, id, !friend); await refreshSocial(userId); }} />
+          <Button title="🙌 High five" onPress={() => highFive(id, p.streak || undefined).then(() => { haptic.success(); Alert.alert('High five sent', `@${p.handle} will see it in their messages.`); }).catch((e) => Alert.alert('Could not send', e.message))} />
+        </Row>
       )}
       <T variant="label">{recipes.length} posted recipe{recipes.length === 1 ? '' : 's'}</T>
       {menu === 'more' && (

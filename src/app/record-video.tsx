@@ -12,7 +12,8 @@ import { FILTER_TINT, RecipeVideo, type VideoFilter } from '@/components/recipe-
 import { Row } from '@/components/screen';
 import { Button, T } from '@/components/ui';
 import { TextChip } from '@/components/video-texts';
-import { Colors } from '@/constants/theme';
+// Camera and video screens are always dark, so they keep the light-theme cream accents.
+import { LightColors as Colors } from '@/constants/theme';
 import { keepVideo, pickRecipeVideo } from '@/lib/photos';
 import { tr } from '@/lib/i18n';
 import { cutsToParam, type Filmed, finishFilming } from '@/lib/recorder';

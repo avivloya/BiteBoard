@@ -3,6 +3,7 @@
 // POST { mode: "recipe", prompt }                -> RecipeDraft JSON
 // POST { mode: "bitey", messages: [{role, content}] } -> { text } (Bitey, the helper in the Inbox)
 // POST { mode: "fix", estimate, correction }      -> MealEstimate JSON (redo a photo estimate from "it was 2 eggs")
+// More modes (live camera, voice log, coach, fridge, ...) are in extra.ts.
 // Every request needs a signed-in Supabase user (guests count): send "Authorization: Bearer <access token>".
 // Free accounts get FREE_LIMITS a week, counted here on the server (table ai_usage), so the limit can't be skipped.
 // Secrets: supabase secrets set ANTHROPIC_API_KEY=sk-ant-... REVENUECAT_SECRET_KEY=sk_...
@@ -11,6 +12,7 @@ import Anthropic from 'npm:@anthropic-ai/sdk';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 import { BITEY_GUIDE } from './bitey.ts';
+import { EXTRA_KINDS, handleExtra } from './extra.ts';
 
 const client = new Anthropic({ apiKey: Deno.env.get('ANTHROPIC_API_KEY') });
 const MODEL = 'claude-opus-5-5';
@@ -18,8 +20,8 @@ const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE
 const RC_KEY = Deno.env.get('REVENUECAT_SECRET_KEY');
 
 /** Uses a week per account. Pro is unlimited for photo scans and recipes; Bitey has a high cap for everyone. */
-const FREE_LIMITS = { scans: 3, recipes: 3, fixes: 20, bitey: 50 } as const;
-const PRO_LIMITS = { scans: 300, recipes: 300, fixes: 300, bitey: 50 } as const;
+const FREE_LIMITS = { scans: 3, recipes: 3, fixes: 20, bitey: 50, live: 30 } as const;
+const PRO_LIMITS = { scans: 300, recipes: 300, fixes: 300, bitey: 50, live: 400 } as const;
 type Kind = keyof typeof FREE_LIMITS;
 
 /** True when RevenueCat says this user has an active "pro" entitlement. The app logs in to RevenueCat with the Supabase user id. */
@@ -43,6 +45,7 @@ async function useOne(userId: string, kind: Kind) {
   if (error) throw new Error('Could not check your weekly AI uses. Try again.');
   if (data) return null;
   if (kind === 'bitey') return 'Bitey needs a rest. You can ask again next week.';
+  if (kind === 'live') return 'Live guesses are used up for this week. You can still snap a photo for an estimate.';
   if (kind === 'fixes') return 'You made a lot of corrections this week. Change the grams by hand instead.';
   if (pro) return 'You reached this week\'s fair-use limit. It resets on Monday.';
   return kind === 'scans'
@@ -126,7 +129,7 @@ Deno.serve(async (req) => {
     const userId = auth.user.id;
 
     const body = await req.json();
-    const kind: Kind | null = body.mode === 'meal' ? 'scans' : body.mode === 'fix' ? 'fixes' : body.mode === 'recipe' ? 'recipes' : body.mode === 'bitey' ? 'bitey' : null;
+    const kind: Kind | null = body.mode === 'meal' ? 'scans' : body.mode === 'fix' ? 'fixes' : body.mode === 'recipe' ? 'recipes' : body.mode === 'bitey' ? 'bitey' : (EXTRA_KINDS[body.mode] ?? null);
     if (!kind) return json({ error: 'Unknown mode.' }, 400);
     const over = await useOne(userId, kind);
     if (over) return json({ error: over, limit: true }, 402);
@@ -175,6 +178,8 @@ Deno.serve(async (req) => {
       const text = response.content.find((b) => b.type === 'text');
       return json({ text: text && text.type === 'text' ? text.text.trim() : "Sorry, I didn't catch that. Try asking another way." });
     }
+    const extra = await handleExtra(body, (content, schema) => ask(content as Anthropic.Beta.BetaContentBlockParam[], schema));
+    if (extra) return json(extra);
     return json({ error: 'Unknown mode.' }, 400);
   } catch (e) {
     if (e instanceof Anthropic.RateLimitError) return json({ error: 'Too many requests right now. Try again in a minute.' }, 429);

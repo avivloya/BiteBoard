@@ -102,6 +102,11 @@ export default function RecipeScreen() {
           ))}
         </Row>
 
+        <Row style={{ flexWrap: 'nowrap' }}>
+          {recipe.steps.length > 0 && <Button title="Cook hands-free" kind="primary" style={{ flex: 1 }} onPress={() => router.push({ pathname: '/cook/[id]', params: { id: recipe.id } })} />}
+          <Button title="Make it lighter" style={{ flex: 1 }} onPress={() => router.push({ pathname: '/lighter/[id]', params: { id: recipe.id } })} />
+        </Row>
+
         <Panel style={{ backgroundColor: Colors.bg }}>
           <Row style={{ justifyContent: 'space-between' }}>
             <T style={{ fontWeight: '600' }}>Servings eaten</T>

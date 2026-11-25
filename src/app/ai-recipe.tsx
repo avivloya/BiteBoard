@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator } from 'react-native';
 
@@ -16,7 +16,8 @@ export default function AiRecipe() {
   const countAiUse = useStore((s) => s.countAiUse);
   const markAiUsedUp = useStore((s) => s.markAiUsedUp);
   const isPro = usePro((s) => s.isPro);
-  const [prompt, setPrompt] = useState('');
+  const params = useLocalSearchParams<{ prompt?: string }>();
+  const [prompt, setPrompt] = useState(params.prompt ?? '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 

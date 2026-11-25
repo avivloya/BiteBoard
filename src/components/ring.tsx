@@ -1,4 +1,6 @@
+import { useEffect } from 'react';
 import { View } from 'react-native';
+import Animated, { Easing, useAnimatedProps, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
 
 import { Colors } from '@/constants/theme';
@@ -8,16 +10,22 @@ export function Ring({ size = 170, stroke = 14, value, max, children }: { size?:
   const r = (size - stroke) / 2;
   const C = 2 * Math.PI * r;
   const pct = Math.min(1, max ? value / max : 0);
+  // The ring fills up smoothly when food is added.
+  const shown = useSharedValue(0);
+  useEffect(() => { shown.value = withTiming(pct, { duration: 900, easing: Easing.out(Easing.cubic) }); }, [pct, shown]);
+  const arc = useAnimatedProps(() => ({ strokeDashoffset: C * (1 - shown.value) }));
   return (
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
       <Svg width={size} height={size} style={{ position: 'absolute', transform: [{ rotate: '-90deg' }] }}>
         <Circle cx={size / 2} cy={size / 2} r={r} stroke={Colors.surface2} strokeWidth={stroke} fill="none" />
-        <Circle cx={size / 2} cy={size / 2} r={r} stroke={value > max ? Colors.warn : Colors.accent} strokeWidth={stroke} fill="none" strokeLinecap="round" strokeDasharray={`${C * pct} ${C}`} />
+        <AnimatedCircle cx={size / 2} cy={size / 2} r={r} stroke={value > max ? Colors.warn : Colors.accent} strokeWidth={stroke} fill="none" strokeLinecap="round" strokeDasharray={`${C} ${C}`} animatedProps={arc} />
       </Svg>
       {children}
     </View>
   );
 }
+
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 export function MacroBar({ label, value, goal, color }: { label: string; value: number; goal: number; color: string }) {
   return (
@@ -27,8 +35,15 @@ export function MacroBar({ label, value, goal, color }: { label: string; value: 
         <T variant="num">{Math.round(value)} / {goal} g</T>
       </View>
       <View style={{ height: 8, borderRadius: 99, backgroundColor: Colors.surface2, overflow: 'hidden' }}>
-        <View style={{ width: `${Math.min(100, goal ? (value / goal) * 100 : 0)}%`, height: '100%', borderRadius: 99, backgroundColor: color }} />
+        <Fill pct={Math.min(100, goal ? (value / goal) * 100 : 0)} color={color} />
       </View>
     </View>
   );
+}
+
+function Fill({ pct, color }: { pct: number; color: string }) {
+  const w = useSharedValue(0);
+  useEffect(() => { w.value = withSpring(pct, { damping: 18, stiffness: 120 }); }, [pct, w]);
+  const st = useAnimatedStyle(() => ({ width: `${w.value}%` }));
+  return <Animated.View style={[{ height: '100%', borderRadius: 99, backgroundColor: color }, st]} />;
 }

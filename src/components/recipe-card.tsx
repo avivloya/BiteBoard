@@ -1,7 +1,9 @@
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { Colors, Radius } from '@/constants/theme';
+import { Glass } from './glass';
 import type { Recipe } from '@/lib/types';
 import { RecipeArt } from './plate';
 
@@ -13,6 +15,11 @@ export function RecipeCard({ recipe, index, height }: { recipe: Recipe; index: n
     <Pressable onPress={() => router.push({ pathname: '/recipe/[id]', params: { id: recipe.id } })} style={({ pressed }) => [styles.card, pressed && { opacity: 0.9 }]} accessibilityLabel={recipe.title}>
       <View style={[styles.tile, { height: h }]}>
         <RecipeArt recipe={recipe} style={StyleSheet.absoluteFill} />
+        {recipe.kcal > 0 && (
+          <Glass strong style={styles.pill}>
+            <Text style={styles.pillText}>{Math.round(recipe.kcal)} kcal</Text>
+          </Glass>
+        )}
       </View>
       <Text style={styles.title} numberOfLines={2}>{recipe.title}</Text>
       <Text style={styles.meta}>
@@ -38,7 +45,12 @@ export function Masonry({ recipes }: { recipes: Recipe[] }) {
     <View style={{ flexDirection: 'row', gap: 12 }}>
       {cols.map((col, ci) => (
         <View key={ci} style={{ flex: 1, gap: 18 }}>
-          {col.map((r) => <RecipeCard key={r.id} recipe={r} index={recipes.indexOf(r)} />)}
+          {col.map((r, i) => (
+            // Cards slide up into place, one after another.
+            <Animated.View key={r.id} entering={FadeInDown.delay(Math.min(i * 2 + ci, 10) * 55).springify().damping(16)}>
+              <RecipeCard recipe={r} index={recipes.indexOf(r)} />
+            </Animated.View>
+          ))}
         </View>
       ))}
     </View>
@@ -51,4 +63,6 @@ const styles = StyleSheet.create({
   title: { fontSize: 15, fontWeight: '600', color: Colors.ink, marginTop: 6, paddingHorizontal: 2 },
   meta: { fontSize: 12, color: Colors.muted, paddingHorizontal: 2 },
   by: { fontWeight: '700', color: Colors.ink },
+  pill: { position: 'absolute', left: 8, bottom: 8, borderRadius: 99, paddingVertical: 4, paddingHorizontal: 9 },
+  pillText: { fontSize: 11, fontWeight: '700', color: Colors.ink },
 });
