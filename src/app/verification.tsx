@@ -1,11 +1,14 @@
 import { useState } from 'react';
-import { Alert, View } from 'react-native';
+import { Alert, Linking, View } from 'react-native';
+
+import { SUPPORT_EMAIL } from '@/constants/app';
 
 import { Row, Screen } from '@/components/screen';
 import { Verified } from '@/components/social';
 import { Button, T } from '@/components/ui';
 import { Colors, Radius } from '@/constants/theme';
 import { buy, usePro } from '@/lib/pro';
+import { PolicyLinks } from './pro';
 import { useSocial } from '@/lib/social-store';
 import { VERIFIED_PRICE, VERIFY_RULES } from '@/lib/verification';
 
@@ -47,7 +50,9 @@ export default function Verification() {
       <T variant="muted">{VERIFY_RULES.appeal}</T>
       {!verified && verifiedPlan && <T variant="muted">You're on the Verified plan. Your badge turns on once your ID is checked.</T>}
       {!verified && !verifiedPlan && <Button title={`Get Verified · ${price}`} kind="primary" onPress={subscribe} disabled={busy} />}
-      {!verified && <Button title="Apply for free" kind="secondary" onPress={() => soon('Free verification requests')} />}
+      {!verified && <Button title="Apply for free" kind="secondary" onPress={() => (SUPPORT_EMAIL ? Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Snapspoon verification request')}&body=${encodeURIComponent('My username: @\nWhy I should be verified:\n')}`) : soon('Free verification requests'))} />}
+      {!verified && !verifiedPlan && <T variant="muted" style={{ fontSize: 11 }}>The Verified plan renews every month until cancelled. Cancel any time in your App Store or Google Play account settings.</T>}
+      <PolicyLinks />
     </Screen>
   );
 }

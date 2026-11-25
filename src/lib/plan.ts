@@ -13,14 +13,22 @@ export const PACE = [
   { value: 0.75, title: 'Fast', sub: '0.75 kg a week' },
 ];
 
-export type Plan = Targets & { tdee: number; weeks: number; bmi: number; losing: boolean };
+export type Plan = Targets & { tdee: number; weeks: number; bmi: number; losing: boolean; teen: boolean };
+
+/** Lowest healthy weight for this height (BMI 18.5), in kg. Goals below it aren't allowed. */
+export const minHealthyKg = (heightCm: number) => Math.ceil(18.5 * (heightCm / 100) ** 2 * 10) / 10;
+/** Under 18 the app doesn't set a calorie cut: teens are still growing, so the plan keeps them steady. */
+export const ADULT_AGE = 18;
+/** No daily target goes below this, whatever someone types on Today. */
+export const KCAL_FLOOR = 1200;
 
 /** Mifflin-St Jeor BMR x activity, minus a deficit sized to the chosen pace (7700 kcal per kg). */
 export function calcPlan(d: Profile): Plan {
   const sexAdj = d.sex === 'male' ? 5 : d.sex === 'female' ? -161 : -78;
   const bmr = 10 * d.weightKg + 6.25 * d.heightCm - 5 * d.age + sexAdj;
   const tdee = bmr * d.activity;
-  const losing = d.goalKg < d.weightKg;
+  const teen = d.age < ADULT_AGE;
+  const losing = !teen && d.goalKg < d.weightKg;
   const floor = d.sex === 'male' ? 1500 : d.sex === 'female' ? 1200 : 1350;
   const raw = losing ? Math.max(floor, tdee - (d.pace * 7700) / 7) : tdee;
   const kcal = Math.round(raw / 10) * 10;
@@ -29,7 +37,7 @@ export function calcPlan(d: Profile): Plan {
   const c = Math.max(50, Math.round((kcal - p * 4 - f * 9) / 4));
   const weeks = losing ? Math.ceil((d.weightKg - d.goalKg) / d.pace) : 0;
   const bmi = d.weightKg / (d.heightCm / 100) ** 2;
-  return { kcal, p, c, f, tdee: Math.round(tdee), weeks, bmi, losing };
+  return { kcal, p, c, f, tdee: Math.round(tdee), weeks, bmi, losing, teen };
 }
 
 export const kgToLb = (kg: number) => kg * 2.20462;

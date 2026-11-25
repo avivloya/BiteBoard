@@ -2,6 +2,8 @@ import { Platform } from 'react-native';
 import Purchases, { type CustomerInfo, type PurchasesPackage } from 'react-native-purchases';
 import { create } from 'zustand';
 
+import { supabase } from './social';
+
 // RevenueCat handles App Store and Google Play subscriptions. "pro" is the entitlement id set up in RevenueCat.
 const ENTITLEMENT = 'pro';
 // The Verified plan ($10/month) is its own entitlement and offering, both named "verified" in RevenueCat.
@@ -18,8 +20,18 @@ let started = false;
 export async function initPro() {
   if (!apiKey || started) return;
   started = true;
-  Purchases.configure({ apiKey });
+  // RevenueCat knows each buyer by their Snapspoon account id, so Pro follows the account to a new phone
+  // and the AI server can check it (supabase/functions/ai).
+  const session = supabase ? (await supabase.auth.getSession()).data.session : null;
+  Purchases.configure({ apiKey, appUserID: session?.user.id ?? null });
   Purchases.addCustomerInfoUpdateListener(apply);
+  let current = session?.user.id;
+  supabase?.auth.onAuthStateChange((_event, s) => {
+    const id = s?.user.id;
+    if (!id || id === current) return;
+    current = id;
+    Purchases.logIn(id).then(({ customerInfo }) => apply(customerInfo)).catch(() => {});
+  });
   try {
     const [info, offerings] = await Promise.all([Purchases.getCustomerInfo(), Purchases.getOfferings()]);
     apply(info);
