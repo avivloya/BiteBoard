@@ -1,6 +1,6 @@
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Alert, View } from 'react-native';
+import { Alert, Share, View } from 'react-native';
 
 import { Masonry } from '@/components/recipe-card';
 import { Row, Screen } from '@/components/screen';
@@ -32,6 +32,7 @@ export default function BoardScreen() {
         </View>
       )}
       <Row>
+        {recipes.length > 0 && <Button title="Shopping list" kind="primary" onPress={() => Share.share({ message: shoppingList(board.name, recipes) })} />}
         <Button title="Rename" onPress={() => setEditing(true)} />
         <Button title="Delete board" kind="ghost" onPress={() => Alert.alert('Delete this board?', 'The recipes stay in Explore.', [
           { text: 'Keep it', style: 'cancel' },
@@ -41,4 +42,16 @@ export default function BoardScreen() {
       {recipes.length ? <Masonry recipes={recipes} /> : <T variant="muted">This board is empty. Open any recipe and tap Save to add it here.</T>}
     </Screen>
   );
+}
+
+/** Every ingredient on the board, grouped by recipe, ready to send to Notes, Reminders or a friend. */
+function shoppingList(name: string, recipes: { title: string; ing: string[] }[]) {
+  const seen = new Set<string>();
+  const parts = recipes
+    .map((r) => {
+      const items = r.ing.filter((i) => { const k = i.trim().toLowerCase(); if (!k || seen.has(k)) return false; seen.add(k); return true; });
+      return items.length ? `${r.title}\n${items.map((i) => `☐ ${i}`).join('\n')}` : '';
+    })
+    .filter(Boolean);
+  return `Shopping list: ${name}\n\n${parts.join('\n\n')}\n\nMade with Snapspoon`;
 }

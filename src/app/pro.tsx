@@ -1,9 +1,11 @@
 import { router } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, View } from 'react-native';
 
 import { Screen } from '@/components/screen';
 import { Button, T } from '@/components/ui';
+import { PRIVACY_URL, TERMS_URL } from '@/constants/app';
 import { Colors, Radius } from '@/constants/theme';
 import { buy, proConfigured, restore, usePro } from '@/lib/pro';
 import { FREE_LIMITS } from '@/lib/store';
@@ -71,6 +73,21 @@ export default function Pro() {
         }} />
       )}
       <T variant="muted" style={{ fontSize: 11 }}>Subscriptions renew automatically until cancelled. Cancel any time in your App Store or Google Play account settings.</T>
+      <PolicyLinks />
     </Screen>
+  );
+}
+
+/** Apple and Google want the terms and privacy policy linked right where people subscribe. */
+export function PolicyLinks() {
+  return (
+    <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 18 }}>
+      <Pressable onPress={() => WebBrowser.openBrowserAsync(TERMS_URL)} accessibilityRole="link" hitSlop={8}>
+        <T variant="muted" style={{ fontSize: 12, textDecorationLine: 'underline' }}>Terms of use</T>
+      </Pressable>
+      <Pressable onPress={() => WebBrowser.openBrowserAsync(PRIVACY_URL)} accessibilityRole="link" hitSlop={8}>
+        <T variant="muted" style={{ fontSize: 12, textDecorationLine: 'underline' }}>Privacy policy</T>
+      </Pressable>
+    </View>
   );
 }

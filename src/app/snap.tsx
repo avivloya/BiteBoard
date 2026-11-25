@@ -7,7 +7,7 @@ import { ActivityIndicator, Pressable, TextInput, useWindowDimensions, View } fr
 import { Row, Screen } from '@/components/screen';
 import { Button, Panel, Segmented, T } from '@/components/ui';
 import { Colors, Fonts, Radius } from '@/constants/theme';
-import { type MealEstimate, aiConfigured, estimateMeal } from '@/lib/ai';
+import { AiLimitError, type MealEstimate, aiConfigured, estimateMeal, fixEstimate } from '@/lib/ai';
 import { guessMeal } from '@/lib/dates';
 import { usePro } from '@/lib/pro';
 import { aiLeft, useStore } from '@/lib/store';
@@ -24,6 +24,9 @@ export default function Snap() {
   const [error, setError] = useState('');
   const [result, setResult] = useState<MealEstimate | null>(null);
   const [meal, setMeal] = useState<Meal>(guessMeal());
+  const [fix, setFix] = useState('');
+  const [fixing, setFixing] = useState(false);
+  const markAiUsedUp = useStore((s) => s.markAiUsedUp);
   const { height } = useWindowDimensions();
 
   const pick = async (camera: boolean) => {
@@ -43,9 +46,23 @@ export default function Snap() {
       setResult(await estimateMeal(photo.base64, photo.mimeType ?? 'image/jpeg'));
       if (!isPro) countAiUse('scans');
     } catch (e) {
+      if (e instanceof AiLimitError) { markAiUsedUp('scans'); setBusy(false); return router.push('/pro'); }
       setError(e instanceof Error ? e.message : 'The estimate did not come back. Try again.');
     }
     setBusy(false);
+  };
+
+  // "It was 2 eggs, not 3": AI redoes the estimate with the correction.
+  const correct = async () => {
+    if (!result || !fix.trim()) return;
+    setFixing(true); setError('');
+    try {
+      setResult(await fixEstimate(result, fix.trim()));
+      setFix('');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'The correction did not come back. Try again.');
+    }
+    setFixing(false);
   };
 
   const items = result?.items ?? [];
@@ -120,6 +137,15 @@ export default function Snap() {
             <T variant="num" style={{ fontSize: 22 }}>{Math.round(sum.kcal)} kcal</T>
             <T variant="muted">{Math.round(sum.p)}g protein · {Math.round(sum.c)}g carbs · {Math.round(sum.f)}g fat</T>
           </View>
+          {!!result.notes && <T variant="muted" style={{ fontSize: 12 }}>{result.notes}</T>}
+          {aiConfigured && (
+            <Row style={{ flexWrap: 'nowrap' }}>
+              <TextInput value={fix} onChangeText={setFix} placeholder="Something wrong? e.g. it was 2 eggs" placeholderTextColor={Colors.muted} onSubmitEditing={correct} returnKeyType="send"
+                style={{ flex: 1, fontSize: 14, color: Colors.ink, backgroundColor: Colors.surface2, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 8 }} />
+              <Button title={fixing ? '…' : 'Fix'} onPress={correct} disabled={fixing || !fix.trim()} />
+            </Row>
+          )}
+          <T variant="muted" style={{ fontSize: 11 }}>AI estimates can be off, especially for oils and sauces. Check the grams, and treat the numbers as a guide, not medical advice.</T>
           <Segmented value={meal} onChange={setMeal} options={MEALS.map((m) => ({ value: m, label: m }))} />
           <Row style={{ flexWrap: 'nowrap' }}>
             <Button title="Start over" kind="ghost" onPress={() => { setPhoto(null); setResult(null); }} />

@@ -8,7 +8,8 @@ import { refreshSocial } from '@/components/social';
 import { Button, T } from '@/components/ui';
 import { Colors, Radius } from '@/constants/theme';
 import { appleAvailable, type Provider, signedIn, type SignedIn, signIn, signOut } from '@/lib/auth';
-import { socialConfigured } from '@/lib/social';
+import { restoreBackup, uploadBackup } from '@/lib/backup';
+import { socialConfigured, supabase } from '@/lib/social';
 import { useSocial } from '@/lib/social-store';
 import { useStore } from '@/lib/store';
 
@@ -24,14 +25,18 @@ export default function SignIn() {
   const go = async (p: Provider) => {
     setBusy(true);
     try {
+      const before = (await supabase?.auth.getSession())?.data.session?.user.id;
       const id = await signIn(p);
       if (!id) return;
       await refreshSocial(id);
+      // Back on an old account: bring back its food log, weigh-ins and boards. Otherwise back up this phone's.
+      const restored = id !== before && (await restoreBackup().catch(() => false));
+      if (!restored) await uploadBackup().catch(() => {});
       // Coming back to an old account: bring its name and username onto this phone.
       const me = useSocial.getState().me;
-      if (me) useStore.getState().setAbout({ name: me.name, bio: me.bio, handle: me.handle, photo: me.photo ?? undefined });
+      if (me && !restored) useStore.getState().setAbout({ name: me.name, bio: me.bio, handle: me.handle, photo: me.photo ?? undefined });
       setState(await signedIn());
-      Alert.alert('Signed in', `Your account is saved to ${NAMES[p]}. Sign in the same way on a new phone to get it back.`);
+      Alert.alert('Signed in', restored ? `Welcome back. Your food log, weigh-ins and boards are back on this phone.` : `Your account is saved to ${NAMES[p]}, and your food log and weigh-ins are backed up. Sign in the same way on a new phone to get it all back.`);
       router.back();
     } catch (e) {
       Alert.alert('Could not sign in', e instanceof Error ? e.message : 'Try again.');
@@ -58,7 +63,7 @@ export default function SignIn() {
         </>
       ) : (
         <>
-          <T variant="muted">Sign in so you never lose your profile, posts and followers, even if you change phones. Already have an account? Sign in the same way to get it back.</T>
+          <T variant="muted">Sign in so you never lose your profile, posts, followers, food log and weigh-ins, even if you change phones. Already have an account? Sign in the same way to get it back.</T>
           {apple && Platform.OS === 'ios' && (
             <AppleAuthentication.AppleAuthenticationButton
               buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}

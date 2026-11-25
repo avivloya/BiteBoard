@@ -10,7 +10,7 @@ import { WeightChart } from '@/components/weight-chart';
 import { Colors } from '@/constants/theme';
 import { useExtras } from '@/lib/extras';
 import { goalDate, niceDate } from '@/lib/goal-date';
-import { kgToLb } from '@/lib/plan';
+import { KCAL_FLOOR, kgToLb } from '@/lib/plan';
 import { dayKey, guessMeal, shiftDay } from '@/lib/dates';
 import { totals, useStore } from '@/lib/store';
 import { streakInfo } from '@/lib/streak';
@@ -18,7 +18,7 @@ import { myXp } from '@/lib/xp';
 import { MEALS, type Meal } from '@/lib/types';
 
 export default function Today() {
-  const { targets, days, addEntry, removeEntry, setTargets, weights, profile } = useStore();
+  const { targets, days, addEntry, removeEntry, setTargets, weights, profile, water, addWater } = useStore();
   const [day, setDay] = useState(dayKey());
   const [adding, setAdding] = useState(false);
   const [editingGoals, setEditingGoals] = useState(false);
@@ -100,6 +100,10 @@ export default function Today() {
         </Pressable>
       )}
 
+      <WaterPanel glasses={water?.[day] ?? 0} onAdd={(n) => addWater(n, day)} />
+
+      <WeekPanel days={days} weights={weights} target={targets.kcal} imperial={profile?.units === 'imperial'} />
+
       <WeightPanel weights={weights} goalKg={profile?.goalKg ?? 0} imperial={profile?.units === 'imperial'} />
 
       <Panel>
@@ -151,6 +155,7 @@ function QuickAdd({ onAdd }: { onAdd: (e: { name: string; kcal: number; p: numbe
 function GoalsForm({ onSave }: { onSave: (t: { kcal: number; p: number; c: number; f: number }) => void }) {
   const targets = useStore((s) => s.targets);
   const [v, setV] = useState({ kcal: String(targets.kcal), p: String(targets.p), c: String(targets.c), f: String(targets.f) });
+  const [low, setLow] = useState(false);
   return (
     <View style={{ alignSelf: 'stretch', gap: 10 }}>
       <Row style={{ flexWrap: 'nowrap' }}>
@@ -158,8 +163,68 @@ function GoalsForm({ onSave }: { onSave: (t: { kcal: number; p: number; c: numbe
           <View key={k} style={{ flex: 1 }}><Field label={{ kcal: 'kcal', p: 'Protein g', c: 'Carbs g', f: 'Fat g' }[k]} value={v[k]} onChangeText={(x) => setV({ ...v, [k]: x })} keyboardType="number-pad" /></View>
         ))}
       </Row>
-      <Button title="Save targets" kind="primary" onPress={() => onSave({ kcal: Number(v.kcal) || targets.kcal, p: Number(v.p) || 0, c: Number(v.c) || 0, f: Number(v.f) || 0 })} />
+      {low && <T style={{ color: Colors.warn }}>Eating less than {KCAL_FLOOR} kcal a day isn't safe without a doctor, so the lowest target is {KCAL_FLOOR}.</T>}
+      <Button title="Save targets" kind="primary" onPress={() => {
+        const kcal = Number(v.kcal) || targets.kcal;
+        if (kcal < KCAL_FLOOR) return setLow(true);
+        onSave({ kcal, p: Number(v.p) || 0, c: Number(v.c) || 0, f: Number(v.f) || 0 });
+      }} />
     </View>
+  );
+}
+
+const WATER_GOAL = 8;
+
+/** Glasses of water today (250 ml each), with a goal of 8. */
+function WaterPanel({ glasses, onAdd }: { glasses: number; onAdd: (n: number) => void }) {
+  return (
+    <Panel>
+      <Row style={{ justifyContent: 'space-between', flexWrap: 'nowrap' }}>
+        <View style={{ flex: 1 }}>
+          <T variant="label">Water</T>
+          <T style={{ fontSize: 22, fontWeight: '800' }}>{glasses} <T variant="muted">of {WATER_GOAL} glasses</T></T>
+        </View>
+        <Button title="−" onPress={() => onAdd(-1)} disabled={glasses <= 0} />
+        <Button title="+ Glass" kind="primary" onPress={() => onAdd(1)} />
+      </Row>
+      <Row style={{ gap: 4, flexWrap: 'nowrap' }}>
+        {Array.from({ length: WATER_GOAL }, (_, i) => (
+          <View key={i} style={{ flex: 1, height: 8, borderRadius: 4, backgroundColor: i < glasses ? Colors.ink : Colors.surface2 }} />
+        ))}
+      </Row>
+    </Panel>
+  );
+}
+
+/** The last 7 days at a glance: average calories, days on target and weight change. */
+function WeekPanel({ days, weights, target, imperial }: { days: Record<string, { kcal: number }[]>; weights: Record<string, number>; target: number; imperial: boolean }) {
+  const week = Array.from({ length: 7 }, (_, i) => shiftDay(dayKey(), -i));
+  const logged = week.map((d) => (days[d] ?? []).reduce((a, e) => a + e.kcal, 0)).filter((k) => k > 0);
+  if (!logged.length) return null;
+  const avg = Math.round(logged.reduce((a, k) => a + k, 0) / logged.length);
+  const onTarget = logged.filter((k) => k <= target).length;
+  const inWeek = Object.keys(weights).filter((d) => d >= week[6]).sort();
+  const before = Object.keys(weights).filter((d) => d < week[6]).sort().pop();
+  const first = before ?? inWeek[0];
+  const last = inWeek[inWeek.length - 1];
+  const change = first && last && first !== last ? (weights[last] - weights[first]) * (imperial ? 2.20462 : 1) : null;
+  const unit = imperial ? 'lb' : 'kg';
+  return (
+    <Panel style={{ gap: 6 }}>
+      <T variant="label">Your week</T>
+      <Row style={{ flexWrap: 'nowrap' }}>
+        {[
+          [`${avg}`, 'avg kcal a day'],
+          [`${onTarget} of ${logged.length}`, 'days on target'],
+          [change === null ? '–' : `${change > 0 ? '+' : ''}${Math.round(change * 10) / 10} ${unit}`, 'weight change'],
+        ].map(([v, l]) => (
+          <View key={l} style={{ flex: 1 }}>
+            <T variant="num" style={{ fontSize: 18 }}>{v}</T>
+            <T variant="muted" style={{ fontSize: 12 }}>{l}</T>
+          </View>
+        ))}
+      </Row>
+    </Panel>
   );
 }
 

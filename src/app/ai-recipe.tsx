@@ -5,7 +5,7 @@ import { ActivityIndicator } from 'react-native';
 import { Row, Screen } from '@/components/screen';
 import { Button, Chip, Field, T } from '@/components/ui';
 import { Colors } from '@/constants/theme';
-import { aiConfigured, draftRecipe } from '@/lib/ai';
+import { AiLimitError, aiConfigured, draftRecipe } from '@/lib/ai';
 import { usePro } from '@/lib/pro';
 import { aiLeft, useStore } from '@/lib/store';
 
@@ -14,6 +14,7 @@ const IDEAS = ['Under 400 kcal breakfast with eggs', 'Sweet snack under 200 kcal
 export default function AiRecipe() {
   const addRecipe = useStore((s) => s.addRecipe);
   const countAiUse = useStore((s) => s.countAiUse);
+  const markAiUsedUp = useStore((s) => s.markAiUsedUp);
   const isPro = usePro((s) => s.isPro);
   const params = useLocalSearchParams<{ prompt?: string }>();
   const [prompt, setPrompt] = useState(params.prompt ?? '');
@@ -30,6 +31,7 @@ export default function AiRecipe() {
       const id = addRecipe({ ...r, tags, ai: true });
       router.replace({ pathname: '/recipe/[id]', params: { id } });
     } catch (e) {
+      if (e instanceof AiLimitError) { markAiUsedUp('recipes'); setBusy(false); return router.push('/pro'); }
       setError(e instanceof Error ? e.message : 'The recipe did not come back. Try again.');
       setBusy(false);
     }

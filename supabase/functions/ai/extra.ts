@@ -1,5 +1,10 @@
 // Newer AI features. Each mode returns JSON, or null when the mode is not one of these.
 // Kept apart from index.ts so the main endpoint stays small. Same model and key as index.ts.
+/** Which weekly limit each mode counts against (see FREE_LIMITS in index.ts). */
+export const EXTRA_KINDS: Record<string, 'scans' | 'recipes' | 'bitey' | 'live'> = {
+  live: 'live', text: 'scans', menu: 'scans', coach: 'bitey', fridge: 'recipes', import: 'recipes', plan: 'recipes', lighten: 'recipes',
+};
+
 type Ask = (content: unknown[], schema: object) => Promise<unknown>;
 
 const num = { type: 'number' };
