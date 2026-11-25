@@ -8,6 +8,7 @@ import { ErrorScreen } from '@/components/error-screen';
 import { Intro } from '@/components/intro';
 import { Colors } from '@/constants/theme';
 import { catchCrashes } from '@/lib/crash';
+import { startBackup } from '@/lib/backup';
 import { initPro } from '@/lib/pro';
 import { listenForPushTaps } from '@/lib/push';
 import { syncReminders } from '@/lib/reminders';
@@ -27,6 +28,7 @@ export default function RootLayout() {
     initPro().catch(() => {});
     syncReminders().catch(() => {});
     const stopTaps = listenForPushTaps();
+    const stopBackup = startBackup();
     // Re-plan the streak saver whenever the food log changes.
     let timer: ReturnType<typeof setTimeout>;
     const unsub = useStore.subscribe((s, prev) => {
@@ -35,7 +37,7 @@ export default function RootLayout() {
         timer = setTimeout(() => syncReminders().catch(() => {}), 1000);
       }
     });
-    return () => { unsub(); clearTimeout(timer); stopTaps(); };
+    return () => { unsub(); clearTimeout(timer); stopTaps(); stopBackup(); };
   }, [hydrated]);
   if (!hydrated) return null;
 

@@ -7,7 +7,7 @@ import { Logo } from '@/components/logo';
 import { Row, Screen } from '@/components/screen';
 import { Button, Field, Panel, Segmented, T } from '@/components/ui';
 import { Colors, Radius } from '@/constants/theme';
-import { ACTIVITY, PACE, calcPlan, kgToLb, lbToKg } from '@/lib/plan';
+import { ACTIVITY, PACE, calcPlan, kgToLb, lbToKg, minHealthyKg } from '@/lib/plan';
 import { ensureSession, handleProblem, saveProfile, socialConfigured } from '@/lib/social';
 import { refreshSocial } from '@/components/social';
 import { useSocial } from '@/lib/social-store';
@@ -166,6 +166,8 @@ export default function Onboarding() {
         {nav('See my plan', () => {
           const g = imp ? lbToKg(Number(goal)) : Number(goal);
           if (!(g >= 30 && g <= 300)) return setError('Enter your goal weight.');
+          const low = minHealthyKg(d.heightCm ?? 0);
+          if (g < low) return setError(`That's below a healthy weight for your height. Pick ${imp ? `${Math.ceil(kgToLb(low))} lb` : `${low} kg`} or more.`);
           setD({ ...d, goalKg: g });
           next();
         })}
@@ -183,7 +185,7 @@ export default function Onboarding() {
       <View style={{ gap: 8 }}>
         <T variant="title">{d.name ? `${d.name}, here's your plan` : 'Your plan'}</T>
         <T variant="muted" style={{ fontSize: 16 }}>
-          {plan.losing ? `From ${u(profile.weightKg)} to ${u(profile.goalKg)}, reaching your goal around ${when} (${plan.weeks} weeks).` : 'Your goal is at or above your current weight, so this plan keeps you steady.'}
+          {plan.teen ? "Because you're under 18 and still growing, Snapspoon won't set a calorie cut. This plan keeps you steady and healthy. Talk to a doctor or your parents before trying to lose weight." : plan.losing ? `From ${u(profile.weightKg)} to ${u(profile.goalKg)}, reaching your goal around ${when} (${plan.weeks} weeks).` : 'Your goal is at or above your current weight, so this plan keeps you steady.'}
         </T>
       </View>
       <View style={{ backgroundColor: Colors.accent, borderRadius: 24, padding: 24, gap: 4 }}>

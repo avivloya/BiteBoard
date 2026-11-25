@@ -7,3 +7,5 @@ export const PRIVACY_URL = 'https://avivloya.github.io/BiteBoard/privacy.html';
 export const TERMS_URL = 'https://avivloya.github.io/BiteBoard/terms.html';
 /** App Store / Google Play page, once the app is live. */
 export const SHARE_URL = '';
+/** Web page for deleting an account without the app (Google Play asks for one). */
+export const DELETE_URL = 'https://avivloya.github.io/BiteBoard/delete-account.html';

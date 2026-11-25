@@ -27,6 +27,8 @@ type State = {
   days: Record<string, Entry[]>;
   /** weigh-ins by day, in kg */
   weights: Record<string, number>;
+  /** glasses of water (250 ml) by day */
+  water: Record<string, number>;
   reminders: Reminders;
   /** free-tier AI usage, reset each week */
   aiUsage: { week: string; scans: number; recipes: number };
@@ -35,8 +37,11 @@ type State = {
 
   logWeight: (kg: number, day?: string) => void;
   removeWeight: (day: string) => void;
+  addWater: (glasses: number, day?: string) => void;
   setReminders: (r: Reminders) => void;
   countAiUse: (kind: 'scans' | 'recipes') => void;
+  /** the server said this week's free uses are gone, so show 0 left */
+  markAiUsedUp: (kind: 'scans' | 'recipes') => void;
   finishOnboarding: (p: Profile) => void;
   setTargets: (t: Targets) => void;
   addEntry: (e: Omit<Entry, 'id' | 't'>, day?: string) => void;
@@ -67,6 +72,7 @@ const fresh = () => ({
   photos: {} as Record<string, string>,
   days: {} as Record<string, Entry[]>,
   weights: {} as Record<string, number>,
+  water: {} as Record<string, number>,
   reminders: { meals: false, streak: false, weighIn: false },
   aiUsage: { week: weekStart(), scans: 0, recipes: 0 },
 });
@@ -87,10 +93,15 @@ export const useStore = create<State>()(
       logWeight: (kg, day = dayKey()) =>
         set((s) => ({ weights: { ...s.weights, [day]: kg }, profile: s.profile && day >= latestDay(s.weights) ? { ...s.profile, weightKg: kg } : s.profile })),
       removeWeight: (day) => set((s) => { const { [day]: _, ...rest } = s.weights; return { weights: rest }; }),
+      addWater: (glasses, day = dayKey()) => set((s) => ({ water: { ...s.water, [day]: Math.max(0, (s.water?.[day] ?? 0) + glasses) } })),
       setReminders: (reminders) => set({ reminders }),
       countAiUse: (kind) => set((s) => {
         const u = s.aiUsage.week === weekStart() ? s.aiUsage : { week: weekStart(), scans: 0, recipes: 0 };
         return { aiUsage: { ...u, [kind]: u[kind] + 1 } };
+      }),
+      markAiUsedUp: (kind) => set((s) => {
+        const u = s.aiUsage.week === weekStart() ? s.aiUsage : { week: weekStart(), scans: 0, recipes: 0 };
+        return { aiUsage: { ...u, [kind]: Math.max(u[kind], FREE_LIMITS[kind]) } };
       }),
       finishOnboarding: (p) => {
         const plan = calcPlan(p);

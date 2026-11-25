@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Delete your account · Snapspoon</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='28' fill='%236B4026'/%3E%3C/svg%3E">
+<style>
+:root{--bg:#e2ceb1;--ink:#4a2e1c;--muted:#75563f;--surface:#f8efe2;--line:#cfb592}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+main{max-width:720px;margin:0 auto;padding:28px 18px 60px}
+a{color:var(--ink)}h1{font-size:34px;line-height:1.15;letter-spacing:-.02em;margin:18px 0 4px}h2{font-size:20px;margin:30px 0 6px}
+.note{color:var(--muted);font-size:14px}.card{background:var(--surface);border-radius:16px;padding:14px 18px;margin:16px 0}
+ul{padding-left:20px}li{margin:4px 0}.brand{display:flex;align-items:center;gap:8px;font-weight:800;font-size:20px;text-decoration:none}
+</style>
+<main>
+<a class="brand" href="./"><svg width="26" height="26" viewBox="157 150 720 720" aria-hidden="true"><defs><mask id="b" maskUnits="userSpaceOnUse" x="-2000" y="-2000" width="5000" height="5000"><rect x="-2000" y="-2000" width="5000" height="5000" fill="#fff"/><circle cx="650" cy="250" r="72"/><circle cx="660" cy="345" r="60"/><circle cx="615" cy="168" r="58"/></mask></defs><g transform="rotate(35 512 512)"><g mask="url(#b)"><ellipse cx="512" cy="330" rx="165" ry="215" fill="#6b4026"/><ellipse cx="482" cy="305" rx="78" ry="118" fill="#e2ceb1" opacity=".14"/><path d="M484 520 Q512 556 540 520 L556 880 Q556 922 512 922 Q468 922 468 880 Z" fill="#6b4026"/></g></g></svg>Snapspoon</a>
+<h1>Delete your Snapspoon account</h1>
+<p class="note">Google Play and the App Store let you delete your account from inside the app or from this page.</p>
+
+<h2>In the app (fastest)</h2>
+<ol>
+<li>Open Snapspoon and go to <b>Account</b>.</li>
+<li>Tap the gear to open <b>Settings</b>.</li>
+<li>Under <b>Your data</b>, tap <b>Delete account</b> and confirm.</li>
+</ol>
+<p>Your account is deleted right away.</p>
+
+<h2>Without the app</h2>
+<p id="ask">Email us from the address you signed in with (or tell us your @username) and ask us to delete your account. We'll do it within 7 days and reply when it's done.</p>
+<p><a id="mail" class="card" style="display:none;text-decoration:none;font-weight:700" href="#"></a></p>
+
+<h2>What gets deleted</h2>
+<ul>
+<li>Your profile, username, picture and bio</li>
+<li>Your posts, recipes, photos and videos</li>
+<li>Your comments, likes, follows and messages</li>
+<li>Your food log, weigh-ins and goals backed up to your account</li>
+</ul>
+<p>Crash reports stay, with your account removed from them. Purchase records are kept by Apple or Google as the law requires. To stop a subscription, cancel it in your App Store or Google Play settings; deleting your account doesn't cancel it.</p>
+<p class="note">See also the <a href="privacy.html">privacy policy</a>.</p>
+</main>
+<script>
+// Fill in the support email (the same one as SUPPORT_EMAIL in src/constants/app.ts).
+const SUPPORT_EMAIL = '';
+if (SUPPORT_EMAIL) {
+  const a = document.getElementById('mail');
+  a.href = 'mailto:' + SUPPORT_EMAIL + '?subject=' + encodeURIComponent('Delete my Snapspoon account') + '&body=' + encodeURIComponent('Please delete my account.\nMy username: @');
+  a.textContent = 'Email ' + SUPPORT_EMAIL;
+  a.style.display = 'block';
+}
+</script>

@@ -279,5 +279,62 @@
    "hungry"
   ],
   "a": "Aim for your daily calories, get plenty of protein, and fill half your plate with vegetables. Most people lose about 0.5 kg a week safely. Never go under 1,200 kcal a day without a doctor, and check with a doctor before big changes."
+ },
+ {
+  "k": [
+   "water",
+   "drink",
+   "glass",
+   "hydration"
+  ],
+  "a": "Open Tracker and tap + Glass under Water each time you drink a glass (about 250 ml). The goal is 8 glasses a day."
+ },
+ {
+  "k": [
+   "week",
+   "weekly",
+   "summary",
+   "average",
+   "on target"
+  ],
+  "a": "Tracker shows Your week once you've logged food: your average calories a day, how many days you stayed on target, and how much your weight changed over the last 7 days."
+ },
+ {
+  "k": [
+   "shopping",
+   "grocery",
+   "groceries",
+   "ingredients list"
+  ],
+  "a": "Open a board under Saved and tap Shopping list. Snapspoon puts every ingredient from those recipes in one list you can send to Notes, Reminders or a friend."
+ },
+ {
+  "k": [
+   "wrong estimate",
+   "fix estimate",
+   "correct",
+   "it was",
+   "not right"
+  ],
+  "a": "After a photo estimate, type what's wrong in the box under the result, like \"it was 2 eggs, not 3\", and tap Fix. You can also change the grams by hand."
+ },
+ {
+  "k": [
+   "backup",
+   "new phone",
+   "lost my data",
+   "restore",
+   "lose my food log"
+  ],
+  "a": "Sign in with Apple or Google in Settings › Save your account. Your food log, weigh-ins, targets and boards are then backed up, and they come back when you sign in the same way on a new phone."
+ },
+ {
+  "k": [
+   "under 18",
+   "teen",
+   "teenager",
+   "young"
+  ],
+  "a": "If you're under 18, Snapspoon doesn't set a calorie cut, because your body is still growing. Your plan keeps you steady and healthy. Talk to a doctor or a parent before trying to lose weight."
  }
 ]

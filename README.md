@@ -13,7 +13,7 @@ An AI-powered weight-loss app for iPhone and Android, built with Expo.
 - **Snapspoon Pro:** a subscription for unlimited AI photo scans and AI recipes (free plan: 3 of each per week).
 - **Sign-up:** gender, age, height, weight, goal and activity produce a personal calorie plan (Mifflin-St Jeor).
 
-Your weight and food log stay on the phone. Only your public profile, friend list and the recipes you choose to share go to the server.
+Your weight and food log stay on the phone for guests. Once someone signs in with Apple or Google, a private backup goes to their account (table `user_data`) so it comes back on a new phone.
 
 ## Run it
 
@@ -34,8 +34,10 @@ Subscriptions (RevenueCat) need a development build instead of Expo Go: `eas bui
 5. Add your Anthropic API key and deploy the AI function:
    ```bash
    supabase secrets set ANTHROPIC_API_KEY=sk-ant-...
+   supabase secrets set REVENUECAT_SECRET_KEY=sk_...   # RevenueCat › API keys › secret key, so the server knows who has Pro
    supabase functions deploy ai --no-verify-jwt
    ```
+   The function itself checks that every request comes from a signed-in Snapspoon account and counts the free plan's weekly uses (table `ai_usage`), so nobody can use your AI credit from outside the app.
 6. Put the function URL, project URL and anon key in `.env`.
 
 The Anthropic key only lives in the Edge Function, never in the app.
@@ -46,7 +48,7 @@ The Anthropic key only lives in the Edge Function, never in the app.
 2. In RevenueCat, add both apps, create an entitlement named `pro`, attach the products, and put them in the current offering.
 3. Copy the public iOS and Android SDK keys into `.env`.
 
-The free-plan limit is counted on the phone. Before launch, also enforce it in the AI function (for example with RevenueCat's REST API) so it can't be bypassed.
+The free-plan limit is enforced by the AI function on the server. The app logs in to RevenueCat with the Supabase user id, so Pro follows the account to a new phone.
 
 ## Release to the App Store and Google Play
 
@@ -61,7 +63,7 @@ eas submit --platform ios                  # uploads to App Store Connect / Test
 eas submit --platform android              # uploads to Google Play
 ```
 
-Before submitting: replace the placeholder icon and splash in `assets/images`, add a privacy policy URL, and fill in the store listings. New Google Play personal accounts must run a closed test with 12 testers for 14 days before production.
+Before submitting: fill in `SUPPORT_EMAIL` in `src/constants/app.ts` and `docs/delete-account.html`, and fill in the store listings. Google Play's account deletion link is `https://avivloya.github.io/BiteBoard/delete-account.html`. New Google Play personal accounts must run a closed test with 12 testers for 14 days before production.
 
 ## Checks
 
