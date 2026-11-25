@@ -91,7 +91,8 @@ export default function Account() {
         </Row>
         <Row>
           <Button title="Progress photos" kind="ghost" onPress={() => router.push('/progress')} />
-          <Button title="Share my stats" kind="ghost" onPress={() => router.push('/share-stats')} />
+          <Button title="Badges" kind="ghost" onPress={() => router.push('/badges')} />
+          <Button title="More ✦" kind="ghost" onPress={() => router.push('/more')} />
         </Row>
       </View>
 

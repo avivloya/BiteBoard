@@ -16,7 +16,7 @@ import { widgetsSupported } from '@/lib/widgets';
 import { type SignedIn, signedIn } from '@/lib/auth';
 import { proConfigured, restore, usePro } from '@/lib/pro';
 import { pushOn, setPushOn } from '@/lib/push';
-import { askPermission, syncReminders } from '@/lib/reminders';
+import { askPermission, learnedMealTimes, syncReminders } from '@/lib/reminders';
 import { deleteAccount, socialConfigured } from '@/lib/social';
 import { useSocial } from '@/lib/social-store';
 import { aiLeft, useStore } from '@/lib/store';
@@ -27,6 +27,13 @@ const REMINDERS: { key: keyof Reminders; title: string; sub: string }[] = [
   { key: 'streak', title: 'Streak saver', sub: "8pm, only on days you haven't logged" },
   { key: 'weighIn', title: 'Weekly weigh-in', sub: 'Mondays at 8:00' },
 ];
+
+// Shows the learned times once Snapspoon knows when you usually eat.
+const mealSub = () => {
+  const t = learnedMealTimes();
+  const fmt = (m: (typeof t)[number]) => `${m.hour}:${String(m.minute).padStart(2, '0')}`;
+  return `Breakfast ${fmt(t[0])}, lunch ${fmt(t[1])}, dinner ${fmt(t[2])}${t.some((m) => m.learned) ? ' · learned from when you eat' : ''}`;
+};
 
 const soon = (what: string) => Alert.alert(`${what} is coming soon`, 'This will be added before Snapspoon is in the App Store.');
 const openUrl = (url: string, what: string) => (url ? WebBrowser.openBrowserAsync(url) : soon(what));
@@ -139,7 +146,7 @@ export default function Settings() {
         <Item title="Likes, comments and follows" sub="Also replies and messages"
           right={<Switch value={push} onValueChange={(v) => { setPush(v); setPushOn(userId, v); }} trackColor={{ true: Colors.accent, false: Colors.line }} />} />
         {REMINDERS.map((it) => (
-          <Item key={it.key} title={it.title} sub={it.sub}
+          <Item key={it.key} title={it.title} sub={it.key === 'meals' ? mealSub() : it.sub}
             right={<Switch value={reminders[it.key]} onValueChange={(v) => toggle(it.key, v)} trackColor={{ true: Colors.accent, false: Colors.line }} />} />
         ))}
       </Section>

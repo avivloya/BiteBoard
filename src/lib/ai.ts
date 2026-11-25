@@ -38,3 +38,14 @@ export const estimateText = (text: string) => call<MealEstimate>({ mode: 'text',
 export const askCoach = (b: { left: { kcal: number; p: number; c: number; f: number }; eaten: string[]; meal: string; prefs?: string }) =>
   call<CoachReply>({ mode: 'coach', ...b });
 export const scanFridge = (imageBase64: string, mediaType: string) => call<FridgeReply>({ mode: 'fridge', imageBase64, mediaType });
+
+// Second batch: menus, recipe links, weekly plans, lighter versions.
+export type MenuDish = { name: string; kcal: number; protein: number; fit: 'great' | 'ok' | 'heavy'; tip: string };
+export type MealPlanDay = { day: string; meals: { meal: Meal; title: string; kcal: number; protein: number }[] };
+export type MealPlan = { days: MealPlanDay[]; grocery: { aisle: string; items: string[] }[]; made: string; kcal: number };
+export type Lighter = RecipeDraft & { swaps: string[] };
+
+export const scanMenu = (imageBase64: string, mediaType: string, kcalLeft: number) => call<{ dishes: MenuDish[] }>({ mode: 'menu', imageBase64, mediaType, kcalLeft });
+export const importRecipe = (source: string) => call<RecipeDraft>({ mode: 'import', source });
+export const planWeek = (b: { kcal: number; protein: number; prefs?: string }) => call<Omit<MealPlan, 'made' | 'kcal'>>({ mode: 'plan', ...b });
+export const lightenRecipe = (recipe: object) => call<Lighter>({ mode: 'lighten', recipe });

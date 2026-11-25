@@ -71,6 +71,21 @@ export default function RootLayout() {
         <Stack.Screen name="share-stats" options={sheet} />
         <Stack.Screen name="shortcuts" options={sheet} />
         <Stack.Screen name="live-snap" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
+        <Stack.Screen name="more" options={sheet} />
+        <Stack.Screen name="menu" options={sheet} />
+        <Stack.Screen name="import-recipe" options={sheet} />
+        <Stack.Screen name="meal-plan" options={sheet} />
+        <Stack.Screen name="lighter/[id]" options={sheet} />
+        <Stack.Screen name="badges" options={sheet} />
+        <Stack.Screen name="mood" options={sheet} />
+        <Stack.Screen name="challenges" options={sheet} />
+        <Stack.Screen name="challenge/[id]" options={sheet} />
+        <Stack.Screen name="classes" options={sheet} />
+        <Stack.Screen name="chefs" options={sheet} />
+        <Stack.Screen name="portions" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
+        <Stack.Screen name="cook/[id]" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="recap" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
+        <Stack.Screen name="wrapped" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
         <Stack.Screen name="watch" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
         <Stack.Screen name="search" options={{ animation: 'fade' }} />
         <Stack.Screen name="verification" options={{ headerShown: true, title: '', headerShadowVisible: false, headerStyle: { backgroundColor: Colors.surface }, headerTintColor: Colors.ink }} />

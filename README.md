@@ -76,6 +76,12 @@ These use native code, so they do not run in Expo Go. Make a build with `npx eas
 - **iPhone widgets and Live Activity** (Lock Screen, Dynamic Island, and Apple Watch Smart Stack): `src/widgets/calories.tsx`, configured by the `expo-widgets` plugin in `app.json`. EAS sets up the App Group `group.com.avivloya.snapspoon` the first time you build.
 - **Shortcuts**: links like `snapspoon://voice-log` for Siri (Shortcuts app) and Android long-press shortcuts (`plugins/with-app-shortcuts.js`).
 - **Progress photos** (`/progress`) and **share cards** (`/share-stats`).
+- **More** (`/more`) lists everything below in one place.
+- **AI**: menu scan (`/menu`), recipe import from links (`/import-recipe`), weekly meal plan with grocery list (`/meal-plan`), "Make it lighter" (`/lighter/[id]`). Goal date prediction is on the Tracker's weight card.
+- **Cooking**: hands-free cooking mode with voice commands and timers (`/cook/[id]`), portion guide on the camera (`/portions`), weekly recap story with music (`/recap`).
+- **Fun**: XP, levels and badges (`/badges`), streak freezes (earned every 7 days, used automatically), Snapspoon Wrapped (`/wrapped`), high fives (sent as a message).
+- **Together**: group challenges with leaderboards (`/challenges`), live cooking classes (`/classes`), healthy chefs (`/chefs`). Run `supabase/migrations/0014_challenges_classes_chefs.sql`. To make someone a chef, set `chef = true` (and optionally `specialty`) on their row in `profiles` in the Supabase dashboard.
+- **Smart reminders** move meal reminders to when you usually eat, and **mood check-ins** (`/mood`) show how food links to mood and energy.
 
 ## Checks
 

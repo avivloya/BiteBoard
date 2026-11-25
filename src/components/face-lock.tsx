@@ -26,19 +26,25 @@ export const unlock = async () =>
 /** Covers the app until you unlock it, when the lock is on. Locks again after a minute in the background. */
 export function FaceLock() {
   const on = useExtras((s) => s.faceLock);
-  const [locked, setLocked] = useState(on);
+  const [locked, setLocked] = useState(false);
   const away = useRef(0);
   const tryUnlock = useCallback(async () => { if (await unlock().catch(() => false)) setLocked(false); }, []);
 
+  // Lock at launch once the saved setting has loaded (turning it on in Settings doesn't lock you out).
+  useEffect(() => {
+    const atLaunch = () => { if (useExtras.getState().faceLock) { setLocked(true); tryUnlock(); } };
+    if (useExtras.persist.hasHydrated()) atLaunch();
+    else return useExtras.persist.onFinishHydration(atLaunch);
+  }, [tryUnlock]);
+
   useEffect(() => {
     if (!on) return setLocked(false);
-    if (locked) tryUnlock();
     const sub = AppState.addEventListener('change', (st) => {
       if (st === 'background') away.current = Date.now();
-      if (st === 'active' && away.current && Date.now() - away.current > 60_000) { setLocked(true); tryUnlock(); }
+      if (st === 'active' && away.current && Date.now() - away.current > 60_000) { away.current = 0; setLocked(true); tryUnlock(); }
     });
     return () => sub.remove();
-  }, [on]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [on, tryUnlock]);
 
   if (!on || !locked) return null;
   return (

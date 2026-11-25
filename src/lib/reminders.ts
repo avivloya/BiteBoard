@@ -15,6 +15,24 @@ const MEAL_TIMES = [
   { hour: 18, minute: 30, title: 'Dinner time', body: 'Log dinner to finish your day on track.' },
 ];
 
+/**
+ * Smart meal reminders: when you have logged a meal at least 4 times in the last 3 weeks,
+ * the reminder moves to the time you usually eat it (the middle of your logging times).
+ */
+export function learnedMealTimes() {
+  const { days } = useStore.getState();
+  const since = Date.now() - 21 * 86_400_000;
+  const meals = ['Breakfast', 'Lunch', 'Dinner'] as const;
+  return MEAL_TIMES.map((m, i) => {
+    const mins = Object.values(days).flat().filter((e) => e.meal === meals[i] && e.t >= since && e.src !== 'recipe')
+      .map((e) => { const d = new Date(e.t); return d.getHours() * 60 + d.getMinutes(); }).sort((a, b) => a - b);
+    if (mins.length < 4) return { ...m, learned: false };
+    const mid = mins[Math.floor(mins.length / 2)];
+    const at = Math.max(5 * 60, Math.min(22 * 60, mid - 10)); // a few minutes before you usually eat
+    return { ...m, hour: Math.floor(at / 60), minute: at % 60, learned: true };
+  });
+}
+
 export async function askPermission() {
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync('reminders', { name: 'Reminders', importance: Notifications.AndroidImportance.DEFAULT });
@@ -33,7 +51,7 @@ export async function syncReminders() {
   const channelId = 'reminders';
 
   if (reminders.meals) {
-    for (const m of MEAL_TIMES) {
+    for (const m of learnedMealTimes()) {
       await Notifications.scheduleNotificationAsync({
         content: { title: m.title, body: m.body },
         trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour: m.hour, minute: m.minute, channelId },

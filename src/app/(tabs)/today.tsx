@@ -8,10 +8,13 @@ import { Row, Screen } from '@/components/screen';
 import { Button, Field, Panel, Segmented, T } from '@/components/ui';
 import { WeightChart } from '@/components/weight-chart';
 import { Colors } from '@/constants/theme';
+import { useExtras } from '@/lib/extras';
+import { goalDate, niceDate } from '@/lib/goal-date';
 import { kgToLb } from '@/lib/plan';
 import { dayKey, guessMeal, shiftDay } from '@/lib/dates';
 import { totals, useStore } from '@/lib/store';
 import { streakInfo } from '@/lib/streak';
+import { myXp } from '@/lib/xp';
 import { MEALS, type Meal } from '@/lib/types';
 
 export default function Today() {
@@ -23,6 +26,7 @@ export default function Today() {
   const t = totals(entries);
   const over = t.kcal > targets.kcal;
   const streak = streakInfo(days);
+  const moodToday = useExtras((x) => !!x.moods[dayKey()]);
   const label = day === dayKey() ? 'Today' : day === shiftDay(dayKey(), -1) ? 'Yesterday' : day;
 
   return (
@@ -30,7 +34,9 @@ export default function Today() {
       <Row style={{ justifyContent: 'space-between' }}>
         <View>
           <T variant="title">{label}</T>
-          <T variant="muted">{streak.current} day streak{streak.best > streak.current ? ` · best ${streak.best}` : ''}</T>
+          <Pressable onPress={() => router.push('/badges')} hitSlop={6}>
+            <T variant="muted">🔥 {streak.current} day streak{streak.best > streak.current ? ` · best ${streak.best}` : ''} · Level {myXp().level} ›</T>
+          </Pressable>
         </View>
         <Row>
           <Button title="‹" onPress={() => setDay(shiftDay(day, -1))} />
@@ -44,9 +50,9 @@ export default function Today() {
         <Button title={adding ? 'Close' : 'Add'} style={{ flex: 1 }} onPress={() => setAdding((v) => !v)} />
       </Row>
       <Row style={{ flexWrap: 'nowrap' }}>
-        <Button title="Live camera" style={{ flex: 1 }} onPress={() => router.push('/live-snap')} />
+        <Button title="Live scan" style={{ flex: 1 }} onPress={() => router.push('/live-snap')} />
         <Button title="Voice" style={{ flex: 1 }} onPress={() => router.push('/voice-log')} />
-        <Button title="Fridge" style={{ flex: 1 }} onPress={() => router.push('/fridge')} />
+        <Button title="More ✦" style={{ flex: 1 }} onPress={() => router.push('/more')} />
       </Row>
       {adding && <Panel><QuickAdd onAdd={(e) => { addEntry({ ...e, src: 'manual' }, day); setAdding(false); }} /></Panel>}
 
@@ -67,6 +73,19 @@ export default function Today() {
         </Row>
         {editingGoals && <GoalsForm onSave={(g) => { setTargets(g); setEditingGoals(false); }} />}
       </Panel>
+
+      {day === dayKey() && !moodToday && new Date().getHours() >= 16 && (
+        <Pressable onPress={() => router.push('/mood')} accessibilityRole="button">
+          <Panel style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <T style={{ fontSize: 30 }}>🙂</T>
+            <View style={{ flex: 1 }}>
+              <T variant="h3">How do you feel today?</T>
+              <T variant="muted">A 2-second check-in shows how food affects your mood and energy</T>
+            </View>
+            <T variant="muted">›</T>
+          </Panel>
+        </Pressable>
+      )}
 
       {day === dayKey() && (
         <Pressable onPress={() => router.push('/coach')} accessibilityRole="button">
@@ -148,6 +167,7 @@ function WeightPanel({ weights, goalKg, imperial }: { weights: Record<string, nu
   const show = (kg: number) => Math.round((imperial ? kgToLb(kg) : kg) * 10) / 10;
   const days = Object.keys(weights).sort();
   const latest = days.length ? show(weights[days[days.length - 1]]) : null;
+  const pace = goalDate(weights, goalKg);
   return (
     <Pressable onPress={() => router.push('/weight')}>
       <Panel>
@@ -157,6 +177,7 @@ function WeightPanel({ weights, goalKg, imperial }: { weights: Record<string, nu
         </Row>
         <T style={{ fontSize: 28, fontWeight: '800' }}>{latest ?? '–'} <T variant="muted">{imperial ? 'lb' : 'kg'}</T></T>
         <WeightChart points={days.slice(-30).map((d) => ({ day: d, v: show(weights[d]) }))} goal={show(goalKg)} height={100} />
+        {pace && <T variant="muted">{pace.reached ? 'You reached your goal weight 🎉' : `At this pace (${Math.abs(Math.round(show(pace.perWeek) * 10) / 10)} ${imperial ? 'lb' : 'kg'} a week) you'll reach your goal by ${niceDate(pace.date)}.`}</T>}
       </Panel>
     </Pressable>
   );
