@@ -10,6 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="manifest" href="manifest.webmanifest">
 <meta charset="utf-8">
+<script>try{var t=localStorage.getItem("snapspoon:theme")||"auto";document.documentElement.dataset.theme=t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light"}catch(e){}</script>
 <title>Snapspoon</title>
 <meta name="description" content="Healthy recipes, AI photo calorie estimates and a daily calorie tracker.">
 <script src="vendor/supabase-2.118.0.js"></script>
@@ -591,6 +592,7 @@ body.cam-open{overflow:hidden}
 .note.bad{color:var(--warn)}
 .acct .pic .pic-edit{position:absolute;right:2px;bottom:2px;width:30px;height:30px;border-radius:50%;background:var(--ink);color:var(--bg);display:grid;place-items:center;border:2px solid var(--bg)}
 </style>
+<link rel="stylesheet" href="extras.css">
 <div id="intro" aria-hidden="true"><div class="intro-in"><svg width="96" height="96" viewBox="157 150 720 720"><defs><mask id="biteIntro" maskUnits="userSpaceOnUse" x="-2000" y="-2000" width="5000" height="5000"><rect x="-2000" y="-2000" width="5000" height="5000" fill="#fff"/><circle cx="650" cy="250" r="72"/><circle cx="660" cy="345" r="60"/><circle cx="615" cy="168" r="58"/></mask></defs><g transform="rotate(35 512 512)"><g mask="url(#biteIntro)"><ellipse cx="512" cy="330" rx="165" ry="215" fill="#6b4026"/><ellipse cx="482" cy="305" rx="78" ry="118" fill="#e2ceb1" opacity=".14"/><path d="M484 520 Q512 556 540 520 L556 880 Q556 922 512 922 Q468 922 468 880 Z" fill="#6b4026"/></g></g></svg><b data-notr>Snapspoon</b></div></div>
 <script>/* Opening screen: the logo with the name under it, then the app fades in. */setTimeout(()=>{const i=document.getElementById("intro");if(!i)return;i.classList.add("out");setTimeout(()=>i.remove(),450)},matchMedia("(prefers-reduced-motion: reduce)").matches?500:1400)</script>
 
@@ -1295,7 +1297,7 @@ function viewOnboard(){
   if(o.step===0) return `<div class="ob-wrap"><div class="ob-lang">${langPicker()}</div>${steps}
     <div><h1>Lose weight, one plate at a time.</h1><p class="lead">Create your account to get a calorie plan built around your body and your goal.</p></div>
     <form class="ob-form" data-form="ob-0">
-      <label class="field">First name<input id="ob_name" autocomplete="given-name" required value="${esc(d.name||"")}" placeholder="John Doe"></label>
+      <label class="field">First name<input id="ob_name" autocomplete="given-name" required value="${esc(d.name||"")}" placeholder="John"></label>
       <label class="field">Username<span class="handle-in"><span>@</span><input id="ob_handle" required autocapitalize="none" autocomplete="username" spellcheck="false" pattern="[A-Za-z0-9_.]{3,20}" value="${esc(d.handle||"")}" placeholder="john.doe"></span><small class="note" id="ob_handle_msg">3 to 20 letters, numbers, dots or underscores. No one else can have it.</small></label>
       ${window.SnapCloud?.configured?`<label class="field">Email<input id="ob_email" type="email" autocomplete="email" value="${esc(d.email||SnapCloud.email||"")}" placeholder="you@example.com"></label>
       ${SnapCloud.signedIn?`<p class="note" style="margin:0">Signed in with Google${SnapCloud.email?` as ${esc(SnapCloud.email)}`:""}. Your data saves to your Snapspoon account.</p>`:`<div class="provider"><button type="button" class="btn" style="justify-content:center" data-act="cloud-signin">Continue with Google</button></div><div class="or">or</div>`}
@@ -2152,3 +2154,4 @@ setTimeout(markReady,4000);
   }catch(e){markReady()}
 })();
 </script>
+<script src="extras.js"></script>

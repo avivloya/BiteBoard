@@ -18,6 +18,7 @@ import {
 } from '@/lib/social';
 import { ago } from '@/lib/ago';
 import { useSocial } from '@/lib/social-store';
+import { toggleSavedVideo, useExtras } from '@/lib/extras';
 import type { Recipe } from '@/lib/types';
 
 
@@ -28,6 +29,7 @@ const HEART = 'M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 1
 const CHAT = 'M4 5h16v11H9l-5 4z';
 const SEND = 'M21 3 10 14M21 3l-7 18-4-7-7-4z';
 const LIKED = '#FF6B5E';
+const SAVE = 'M6 3h12v18l-6-4-6 4z';
 
 /** Full-screen videos from Watch: swipe up and down, with like, comment and share down the side. */
 export default function Watch() {
@@ -39,6 +41,7 @@ export default function Watch() {
   const [likes, setLikes] = useState<{ counts: Record<string, number>; mine: Set<string> }>({ counts: {}, mine: new Set() });
   const [comments, setComments] = useState<Record<string, number>>({});
   const [sheet, setSheet] = useState<'comments' | 'share' | 'more' | 'report' | null>(null);
+  const savedVideos = useExtras((x) => x.savedVideos);
   const keys = posts.map((r) => postKey(r, userId));
   const signedIn = socialConfigured && !!userId;
 
@@ -95,6 +98,10 @@ export default function Watch() {
           <Pressable onPress={() => setSheet('comments')} style={s.btn} accessibilityRole="button" accessibilityLabel="Comments">
             <Icon d={CHAT} /><T style={s.btnText}>{c || 'Comment'}</T>
           </Pressable>
+          <Pressable onPress={() => toggleSavedVideo(r)} style={s.btn} accessibilityRole="button" accessibilityLabel="Save" accessibilityState={{ selected: savedVideos.some((x) => x.id === r.id) }}>
+            <Icon d={SAVE} fill={savedVideos.some((x) => x.id === r.id) ? '#fff' : 'none'} size={28} />
+            <T style={s.btnText}>{savedVideos.some((x) => x.id === r.id) ? 'Saved' : 'Save'}</T>
+          </Pressable>
           <Pressable onPress={() => setSheet('share')} style={s.btn} accessibilityRole="button" accessibilityLabel="Share">
             <Icon d={SEND} size={28} /><T style={s.btnText}>Share</T>
           </Pressable>
@@ -104,7 +111,7 @@ export default function Watch() {
         </SafeAreaView>
       </View>
     );
-  }, [width, height, current, paused, sheet, likes, comments, people, userId]);
+  }, [width, height, current, paused, sheet, likes, comments, people, userId, savedVideos]);
 
   const post = posts[current];
   if (!posts.length) return <View style={{ flex: 1, backgroundColor: '#120C07' }} />;

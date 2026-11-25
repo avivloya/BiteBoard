@@ -89,6 +89,8 @@
     return ai({ mode: "recipe", prompt: (m ? m[1] : prompt).slice(0, 500) });
   };
   sample.limits = async () => ({ images: true });
+  // extras.js (the newer tools) calls the other AI modes directly, and reads the classes and chefs tables.
+  Object.assign(cloud, { ai, photo64, sb, userId: () => me });
 
   // ---------- Photos and videos: your own folder in the recipe-photos bucket ----------
   const assets = {

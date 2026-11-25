@@ -75,7 +75,7 @@ export default function Onboarding() {
           <T variant="title">Lose weight, one plate at a time.</T>
           <T variant="muted" style={{ fontSize: 16 }}>Create your account to get a calorie plan built around your body and your goal.</T>
         </View>
-        <Field label="First name" value={d.name ?? ''} onChangeText={(name) => setD({ ...d, name })} autoComplete="given-name" placeholder="John Doe" />
+        <Field label="First name" value={d.name ?? ''} onChangeText={(name) => setD({ ...d, name })} autoComplete="given-name" placeholder="John" />
         <Field label="Username" value={d.handle ?? ''} onChangeText={(handle) => setD({ ...d, handle: handle.replace(/^@/, '').trim() })} autoCapitalize="none" autoCorrect={false} autoComplete="username" placeholder="john.doe" />
         <T variant="muted" style={{ fontSize: 12, marginTop: -14 }}>3 to 20 letters, numbers, dots or underscores. No one else can have it.</T>
         <Field label="Email" value={d.email ?? ''} onChangeText={(email) => setD({ ...d, email })} autoComplete="email" keyboardType="email-address" autoCapitalize="none" placeholder="you@example.com" />

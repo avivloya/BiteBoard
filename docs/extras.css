@@ -1,0 +1,136 @@
+/* Snapspoon website: dark mode, glass panels, motion, and the screens added in extras.js. */
+
+/* ---------- Dark mode: deep espresso ground, cream ink (same colors as the phone app) ---------- */
+html[data-theme="dark"]{
+  --bg:#1e140d; --surface:#2a1d13; --surface-2:#36261a; --ink:#f3e4ce; --muted:#bfa486; --line:#4e3826;
+  --accent:#d9ae7e; --accent-ink:#22160e; --leaf:#9aa865; --warn:#e58a5c;
+  --protein:#d9ae7e; --carbs:#a9825e; --fat:#c98e70;
+  --tile:#33241a; --tile-2:#45311f; --plate:#3a2a1e; --blob-s:30%; --blob-l:40%;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+  color-scheme:dark;
+}
+html[data-theme="dark"] #intro{background:#1e140d}
+html[data-theme="dark"] .intro-in b{color:#f3e4ce}
+html[data-theme="dark"] .scrim{background:rgba(0,0,0,.6)}
+html[data-theme="dark"] .bitey-row{background:rgba(255,255,255,.05)}
+html[data-theme="dark"] .bubble.me{color:#22160e}
+/* Camera, video player and photo crop are dark screens already; they keep the cream highlight. */
+html[data-theme="dark"] .cam,html[data-theme="dark"] .player,html[data-theme="dark"] .crop{--bg:#e2ceb1;--ink:#4a2e1c}
+
+/* ---------- Glass: see-through bars and sheets ---------- */
+@supports ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  /* Only on wide screens: a blur on the header would trap the phone tab bar (which sits inside it) at the top. */
+  @media (min-width:761px){header.top{background:color-mix(in srgb,var(--bg) 78%,transparent);-webkit-backdrop-filter:saturate(1.4) blur(18px);backdrop-filter:saturate(1.4) blur(18px)}}
+  @media (max-width:760px){
+    header.top nav.tabs{background:color-mix(in srgb,var(--bg) 72%,transparent);-webkit-backdrop-filter:saturate(1.4) blur(20px);backdrop-filter:saturate(1.4) blur(20px)}
+  }
+  .x-glass{background:color-mix(in srgb,var(--surface) 70%,transparent);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border:1px solid color-mix(in srgb,var(--line) 45%,transparent)}
+  .card .kcal{background:color-mix(in srgb,var(--surface) 70%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+}
+
+/* ---------- Motion ---------- */
+@keyframes xUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes xSheet{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+@keyframes xFade{from{opacity:0}to{opacity:1}}
+@keyframes xPop{0%{transform:scale(.85);opacity:0}60%{transform:scale(1.04)}100%{transform:scale(1);opacity:1}}
+@media (prefers-reduced-motion:no-preference){
+  #view>*{animation:xUp .35s cubic-bezier(.2,.8,.2,1) both}
+  #view>*:nth-child(2){animation-delay:.03s}#view>*:nth-child(3){animation-delay:.06s}#view>*:nth-child(4){animation-delay:.09s}
+  .masonry .card,.h-row .card{animation:xUp .4s cubic-bezier(.2,.8,.2,1) both}
+  .scrim{animation:xFade .2s ease both}.sheet{animation:xSheet .32s cubic-bezier(.2,.8,.2,1) both}
+  .x-tile,.x-badge{animation:xUp .35s cubic-bezier(.2,.8,.2,1) both}
+  .btn,.chip,.x-tile{transition:transform .12s ease,background-color .2s,opacity .2s}
+  .btn:active,.chip:active,.x-tile:active{transform:scale(.96)}
+  .ring svg circle:last-child,.home-bar i,.track .fill{transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1),width .8s cubic-bezier(.2,.8,.2,1)}
+}
+
+/* ---------- Confetti ---------- */
+.x-confetti{position:fixed;inset:0;pointer-events:none;z-index:120;overflow:hidden}
+.x-confetti i{position:absolute;top:-12px;width:8px;height:14px;border-radius:2px;animation:xFall linear forwards}
+@keyframes xFall{to{transform:translateY(110vh) rotate(720deg)}}
+.x-celebrate{position:fixed;left:50%;top:22%;transform:translateX(-50%);z-index:121;background:var(--surface);color:var(--ink);border-radius:22px;padding:18px 22px;box-shadow:var(--shadow);text-align:center;display:grid;gap:4px;min-width:240px;animation:xPop .45s cubic-bezier(.2,.8,.2,1) both}
+.x-celebrate b{font-family:var(--f-display);font-size:22px}
+
+/* ---------- Shared bits for the new screens ---------- */
+.x-page{display:grid;gap:18px;max-width:760px}
+.x-page h1{font-size:30px}
+.x-sub{color:var(--muted);margin:4px 0 0}
+.x-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.x-tile{display:grid;gap:3px;align-content:start;text-align:left;text-decoration:none;color:var(--ink);background:var(--surface);border:0;border-radius:18px;padding:14px;min-height:104px;cursor:pointer;font:inherit}
+.x-tile .e{font-size:28px;line-height:1.1}.x-tile b{font-weight:700}.x-tile small{color:var(--muted);font-size:12px;line-height:1.3}
+.x-tile.off{opacity:.55}
+.x-strip{display:flex;max-width:100%;gap:10px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}.x-strip::-webkit-scrollbar{display:none}
+.x-strip .x-tile{flex:none;width:132px;min-height:92px}
+.x-card{background:var(--surface);border-radius:var(--r);padding:16px;display:grid;gap:10px;min-width:0}
+.x-card h3{font-size:18px}
+.x-list{display:grid;gap:8px}
+.x-row{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--surface);border-radius:14px;min-width:0}
+.x-row .grow{flex:1;min-width:0}.x-row .grow b{display:block;overflow:hidden;text-overflow:ellipsis}
+.x-pill{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--surface-2);color:var(--ink);white-space:nowrap}
+.x-pill.great{background:color-mix(in srgb,var(--leaf) 30%,var(--surface))}.x-pill.heavy{background:color-mix(in srgb,var(--warn) 28%,var(--surface))}
+.x-area{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:12px 14px;font:inherit;resize:vertical;min-height:84px;color:var(--ink)}
+.x-input{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:10px 12px;font:inherit;color:var(--ink)}
+.x-err{color:var(--warn);margin:0}
+.x-big{font-family:var(--f-display);font-weight:800;font-size:44px;line-height:1;letter-spacing:-.03em}
+.x-bar{height:10px;border-radius:6px;background:var(--surface-2);overflow:hidden}.x-bar i{display:block;height:100%;background:var(--accent);border-radius:6px}
+.x-dz{display:grid;place-items:center;gap:8px;min-height:180px;border:2px dashed var(--line);border-radius:var(--r);background:var(--surface);cursor:pointer;text-align:center;padding:16px;color:var(--muted)}
+.x-dz img{max-width:100%;max-height:320px;border-radius:14px}
+.x-chk{display:flex;gap:10px;align-items:flex-start;padding:7px 0;cursor:pointer}.x-chk input{margin-top:4px;accent-color:var(--accent);width:18px;height:18px}
+.x-chk.done span{text-decoration:line-through;color:var(--muted)}
+.x-more-link{justify-self:start}
+
+/* Live camera, portion guide, cooking mode */
+.x-cam{position:relative;border-radius:var(--r);overflow:hidden;background:#120c07;aspect-ratio:3/4;max-height:70vh;width:100%}
+.x-cam video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.x-cam .x-guess{position:absolute;left:12px;right:12px;bottom:12px;color:#fff8ee;background:rgba(20,12,6,.55);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-radius:16px;padding:12px 14px;display:grid;gap:2px}
+.x-cam .x-guess b{font-size:22px;font-family:var(--f-display)}
+.x-plate{position:absolute;left:50%;top:46%;width:72%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;border:2px dashed rgba(255,248,238,.85);pointer-events:none}
+.x-plate i{position:absolute;border:2px solid rgba(255,248,238,.9);background:rgba(255,248,238,.12);color:#fff8ee;font-style:normal;font-size:11px;font-weight:700;display:grid;place-items:center;text-align:center;line-height:1.15}
+.x-plate .veg{left:0;top:0;width:100%;height:50%;border-radius:999px 999px 0 0}
+.x-plate .pro{left:0;bottom:0;width:50%;height:50%;border-radius:0 0 0 999px}
+.x-plate .carb{right:0;bottom:0;width:50%;height:50%;border-radius:0 0 999px 0}
+.x-cook{position:fixed;inset:0;z-index:90;background:var(--bg);color:var(--ink);display:grid;grid-template-rows:auto 1fr auto;padding:calc(env(safe-area-inset-top) + 14px) 18px calc(env(safe-area-inset-bottom) + 18px)}
+.x-cook .step{align-self:center;font-family:var(--f-display);font-weight:700;font-size:clamp(26px,6vw,44px);line-height:1.2;text-wrap:balance;max-width:900px;margin:0 auto}
+.x-cook .nav{display:flex;gap:10px}.x-cook .nav .btn{flex:1;height:58px;font-size:17px}
+.x-cook .x-bar{height:6px}
+
+/* Stories: weekly recap and Wrapped */
+.x-story{position:fixed;inset:0;z-index:95;background:#1e140d;color:#f3e4ce;display:grid;place-items:center;padding:24px;text-align:center;cursor:pointer}
+.x-story .bars{position:absolute;top:calc(env(safe-area-inset-top) + 10px);left:12px;right:12px;display:flex;gap:4px}
+.x-story .bars i{flex:1;height:3px;border-radius:2px;background:rgba(243,228,206,.25);overflow:hidden}.x-story .bars i.on{background:#f3e4ce}
+.x-story .slide{display:grid;gap:10px;max-width:420px;animation:xPop .45s cubic-bezier(.2,.8,.2,1) both}
+.x-story .slide .k{font-size:15px;color:#bfa486;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.x-story .slide .v{font-family:var(--f-display);font-weight:800;font-size:clamp(48px,14vw,84px);line-height:1;letter-spacing:-.04em;color:#d9ae7e}
+.x-story .slide p{margin:0;font-size:18px}
+.x-story .x-close{position:absolute;top:calc(env(safe-area-inset-top) + 22px);right:14px;width:40px;height:40px;border-radius:50%;border:0;background:rgba(255,255,255,.12);color:#fff;font-size:18px;cursor:pointer}
+.x-story .x-share{position:absolute;bottom:calc(env(safe-area-inset-bottom) + 22px);left:50%;transform:translateX(-50%)}
+
+/* Badges, progress photos, mood */
+.x-badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px}
+.x-badge{display:grid;justify-items:center;gap:4px;text-align:center;background:var(--surface);border-radius:16px;padding:12px 8px}
+.x-badge .e{font-size:30px}.x-badge b{font-size:13px;line-height:1.2}.x-badge small{font-size:11px;color:var(--muted);line-height:1.25}
+.x-badge.locked .e{filter:grayscale(1);opacity:.35}
+.x-photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px}
+.x-photos figure{margin:0;position:relative;border-radius:12px;overflow:hidden;aspect-ratio:3/4;background:var(--surface-2)}
+.x-photos img{width:100%;height:100%;object-fit:cover}
+.x-photos figcaption{position:absolute;left:6px;bottom:6px;font-size:11px;font-weight:700;color:#fff;background:rgba(0,0,0,.45);padding:2px 7px;border-radius:999px}
+.x-photos .rm{position:absolute;top:4px;right:4px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(0,0,0,.45);color:#fff;cursor:pointer}
+.x-compare{position:relative;aspect-ratio:3/4;max-height:70vh;border-radius:var(--r);overflow:hidden;background:var(--surface-2);touch-action:none}
+.x-compare img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.x-compare .after{clip-path:inset(0 0 0 var(--cut,50%))}
+.x-compare .line{position:absolute;top:0;bottom:0;left:var(--cut,50%);width:3px;margin-left:-1.5px;background:#fff8ee;box-shadow:0 0 8px rgba(0,0,0,.4)}
+.x-compare span{position:absolute;top:10px;font-size:12px;font-weight:700;color:#fff;background:rgba(0,0,0,.45);padding:3px 9px;border-radius:999px}
+.x-faces{display:flex;gap:6px;flex-wrap:wrap}
+.x-faces button{flex:1;min-width:48px;font-size:26px;padding:8px 0;border-radius:14px;border:2px solid transparent;background:var(--surface-2);cursor:pointer}
+.x-faces button[aria-pressed="true"]{border-color:var(--accent);background:var(--surface)}
+.x-dots{display:flex;gap:4px;align-items:end;height:60px}.x-dots i{flex:1;border-radius:4px 4px 0 0;background:var(--accent);min-height:3px}
+.x-dots i.e{background:var(--carbs)}
+
+/* Voice */
+.x-mic{width:96px;height:96px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;cursor:pointer;justify-self:center;box-shadow:var(--shadow)}
+.x-mic.on{animation:xPulse 1.2s ease-in-out infinite}
+@keyframes xPulse{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 45%,transparent)}50%{box-shadow:0 0 0 18px transparent}}
+
+/* Profile numbers: three equal columns, so Followers sits exactly under the centered profile picture. */
+.stats{display:grid;grid-template-columns:repeat(3,88px);gap:0;justify-content:center}
+.sheet .stats,.inner .stats{justify-content:start}

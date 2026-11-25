@@ -14,6 +14,7 @@ import { startPost } from '@/lib/recorder';
 import { useSocial } from '@/lib/social-store';
 import { findRecipe, useStore } from '@/lib/store';
 import { streakInfo } from '@/lib/streak';
+import { useExtras } from '@/lib/extras';
 import type { Recipe } from '@/lib/types';
 
 type Page = 0 | 1;
@@ -150,15 +151,29 @@ function Saved() {
   const ids = [...new Set((board ? boards.filter((b) => b.id === board) : boards).flatMap((b) => b.ids))];
   const items = ids.map((id) => findRecipe(id, [...feed, ...forYou])).filter((r): r is Recipe => !!r);
   const where = (id: string) => boards.filter((b) => b.ids.includes(id)).map((b) => b.name).join(', ');
+  const videos = useExtras((x) => x.savedVideos);
+  const showVideos = board === null || board === 'videos';
+  const watch = (i: number) => { useSocial.getState().set({ watch: { posts: videos, index: i } }); router.push('/watch'); };
 
   return (
     <View style={{ gap: 12 }}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
         <Chip label="All" selected={!board} onPress={() => setBoard(null)} />
+        {videos.length > 0 && <Chip label="Videos" selected={board === 'videos'} onPress={() => setBoard('videos')} />}
         {boards.map((b) => <Chip key={b.id} label={b.name} selected={board === b.id} onPress={() => setBoard(b.id)} />)}
         <Chip label="Manage" onPress={() => router.push('/boards')} />
       </ScrollView>
-      {items.length ? items.map((r) => (
+      {showVideos && videos.length > 0 && (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 3, borderRadius: Radius.md, overflow: 'hidden' }}>
+          {videos.map((r, i) => (
+            <Pressable key={r.id} onPress={() => watch(i)} style={styles.tile} accessibilityLabel={`${r.title || 'Cooking video'}, video`}>
+              {r.cover ? <Image source={{ uri: r.cover }} style={StyleSheet.absoluteFill} contentFit="cover" /> : <RecipeArt recipe={r} style={StyleSheet.absoluteFill} />}
+              <View style={styles.mark}><T style={{ color: '#fff', fontSize: 12 }}>▶</T></View>
+            </Pressable>
+          ))}
+        </View>
+      )}
+      {board === 'videos' ? null : items.length ? items.map((r) => (
         <Pressable key={r.id} onPress={() => router.push({ pathname: '/recipe/[id]', params: { id: r.id } })} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <View style={{ width: 60, height: 60, borderRadius: 12, overflow: 'hidden', backgroundColor: Colors.tile }}>
             <RecipeArt recipe={r} style={StyleSheet.absoluteFill} />
@@ -169,7 +184,7 @@ function Saved() {
           </View>
           <T variant="muted">›</T>
         </Pressable>
-      )) : <T variant="muted">Tap the bookmark on any recipe to save it here.</T>}
+      )) : !videos.length && <T variant="muted">Tap the bookmark on any recipe or video to save it here.</T>}
     </View>
   );
 }

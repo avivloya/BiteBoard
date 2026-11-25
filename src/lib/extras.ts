@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
 import type { MealPlan } from './ai';
+import type { Recipe } from './types';
 
 /** A dated progress photo kept on this phone. */
 export type ProgressPhoto = { id: string; uri: string; day: string; kg?: number };
@@ -26,8 +27,18 @@ type Extras = {
   groceryDone: string[];
   /** badges you've already been congratulated for */
   badgesSeen: string[];
+  /** cooking videos you saved from the feed, newest first (a copy, so they stay even if the feed changes) */
+  savedVideos: Recipe[];
   set: (patch: Partial<Omit<Extras, 'set'>>) => void;
 };
+
+/** Save or unsave a cooking video. Returns true when it is now saved. */
+export function toggleSavedVideo(r: Recipe) {
+  const list = useExtras.getState().savedVideos;
+  const on = !list.some((x) => x.id === r.id);
+  useExtras.getState().set({ savedVideos: on ? [r, ...list].slice(0, 200) : list.filter((x) => x.id !== r.id) });
+  return on;
+}
 
 // Newer features keep their settings here, apart from the main store, so the two can change independently.
 export const useExtras = create<Extras>()(
@@ -43,6 +54,7 @@ export const useExtras = create<Extras>()(
       plan: null,
       groceryDone: [],
       badgesSeen: [],
+      savedVideos: [],
       set: (patch) => set(patch),
     }),
     { name: 'snapspoon:extras', storage: createJSONStorage(() => AsyncStorage), partialize: ({ set: _s, ...rest }) => rest },

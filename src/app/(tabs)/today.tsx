@@ -1,19 +1,22 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Pressable, View } from 'react-native';
 
 import { BiteyAvatar } from '@/components/bitey-avatar';
+import { MealResult } from '@/components/meal-result';
 import { MacroBar, Ring } from '@/components/ring';
 import { Row, Screen } from '@/components/screen';
 import { Button, Field, Panel, Segmented, T } from '@/components/ui';
 import { WeightChart } from '@/components/weight-chart';
 import { Colors } from '@/constants/theme';
+import { type MealEstimate, aiConfigured, estimateText } from '@/lib/ai';
 import { useExtras } from '@/lib/extras';
 import { goalDate, niceDate } from '@/lib/goal-date';
 import { KCAL_FLOOR, kgToLb } from '@/lib/plan';
 import { dayKey, guessMeal, shiftDay } from '@/lib/dates';
 import { totals, useStore } from '@/lib/store';
 import { streakInfo } from '@/lib/streak';
+import { useVoice } from '@/lib/voice';
 import { myXp } from '@/lib/xp';
 import { MEALS, type Meal } from '@/lib/types';
 
@@ -134,12 +137,48 @@ export default function Today() {
   );
 }
 
+/** Quick add: the mic opens straight away. Say what you ate and AI turns it into foods with calories; or type the numbers. */
 function QuickAdd({ onAdd }: { onAdd: (e: { name: string; kcal: number; p: number; c: number; f: number; meal: Meal }) => void }) {
   const [name, setName] = useState('');
   const [v, setV] = useState({ kcal: '', p: '', c: '', f: '' });
   const [meal, setMeal] = useState<Meal>(guessMeal());
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [result, setResult] = useState<MealEstimate | null>(null);
+  const estimate = async (what: string) => {
+    if (!what.trim() || !aiConfigured) return;
+    setBusy(true); setError('');
+    try { setResult(await estimateText(what)); } catch (e) { setError(e instanceof Error ? e.message : 'That did not work. Try again.'); }
+    setBusy(false);
+  };
+  const voice = useVoice({ onFinal: estimate });
+  useEffect(() => { if (aiConfigured) voice.start(); return () => voice.stop(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (result) {
+    return (
+      <MealResult result={result} onChange={setResult} onReset={() => { setResult(null); voice.setText(''); }}
+        onAdd={(n, sum, m) => onAdd({ name: n, kcal: Math.round(sum.kcal), p: Math.round(sum.p), c: Math.round(sum.c), f: Math.round(sum.f), meal: m })} />
+    );
+  }
   return (
     <View style={{ gap: 10 }}>
+      {aiConfigured && (
+        <View style={{ gap: 8 }}>
+          <Row style={{ flexWrap: 'nowrap' }}>
+            <Pressable onPress={voice.listening ? voice.stop : voice.start} accessibilityRole="button" accessibilityLabel={voice.listening ? 'Stop listening' : 'Talk to log a meal'}
+              style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: voice.listening ? Colors.warn : Colors.accent, alignItems: 'center', justifyContent: 'center' }}>
+              <T style={{ fontSize: 24 }}>🎙️</T>
+            </Pressable>
+            <View style={{ flex: 1 }}>
+              <T style={{ fontWeight: '700' }}>{busy ? 'Working it out…' : voice.listening ? 'Listening… say what you ate' : 'Tap the mic and say what you ate'}</T>
+              <T variant="muted" numberOfLines={3}>{voice.text || 'Like “two eggs on toast and a latte”'}</T>
+            </View>
+            {busy && <ActivityIndicator color={Colors.accent} />}
+          </Row>
+          {!!(error || voice.error) && <T style={{ color: Colors.warn }}>{error || voice.error}</T>}
+          <T variant="label">Or type the numbers</T>
+        </View>
+      )}
       <Field label="What did you eat?" value={name} onChangeText={setName} placeholder="Coffee with oat milk" />
       <Row style={{ flexWrap: 'nowrap' }}>
         {(['kcal', 'p', 'c', 'f'] as const).map((k) => (

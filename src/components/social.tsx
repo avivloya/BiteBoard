@@ -36,17 +36,18 @@ export function FollowCounts({ id }: { id: string }) {
   const [c, setC] = useState<{ followers: number; following: number; likes: number } | null>(null);
   useEffect(() => { followCounts(id).then(setC).catch(() => {}); }, [id, mine]);
   if (!c) return null;
-  // Profile numbers, TikTok style: Following, Followers, Likes.
+  // Profile numbers, TikTok style: Following, Followers, Likes. Each has the same width, so Followers sits exactly
+  // under the centered profile picture.
   // Tap Following or Followers to see who it is.
   const stat = (n: number, label: string, tab?: 'following' | 'followers') => (
     <Pressable disabled={!tab} onPress={() => tab && router.push({ pathname: '/follows', params: { id, tab } })} accessibilityRole={tab ? 'button' : undefined}
-      style={({ pressed }) => ({ alignItems: 'center', minWidth: 64, paddingVertical: 2, borderRadius: 10, opacity: pressed ? 0.6 : 1 })}>
+      style={({ pressed }) => ({ alignItems: 'center', width: 80, paddingVertical: 2, borderRadius: 10, opacity: pressed ? 0.6 : 1 })}>
       <T style={{ fontSize: 19, fontWeight: '800', color: Colors.ink }}>{short(n)}</T>
       <T variant="muted" style={{ fontSize: 12.5 }}>{label}</T>
     </Pressable>
   );
   return (
-    <View style={{ flexDirection: 'row', gap: 14, marginVertical: 4 }}>
+    <View style={{ flexDirection: 'row', gap: 2, marginVertical: 4 }}>
       {stat(c.following, 'Following', 'following')}
       {stat(c.followers, c.followers === 1 ? 'Follower' : 'Followers', 'followers')}
       {stat(c.likes, c.likes === 1 ? 'Like' : 'Likes')}
