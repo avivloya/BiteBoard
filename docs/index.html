@@ -1,18 +1,34 @@
 <!doctype html>
 <html lang="en">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#E2CEB1">
 <link rel="icon" href="favicon.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Snapspoon">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
 <meta charset="utf-8">
 <title>Snapspoon</title>
+<meta name="description" content="Healthy recipes, AI photo calorie estimates and a daily calorie tracker.">
+<script src="vendor/supabase-2.118.0.js"></script>
+<script src="config.js"></script>
+<script src="cloud.js"></script>
+<script>["gesturestart","gesturechange"].forEach(t=>document.addEventListener(t,e=>e.preventDefault(),{passive:false}));document.addEventListener("touchmove",e=>{if(e.touches.length>1)e.preventDefault()},{passive:false})</script>
+<script>if("serviceWorker" in navigator&&location.protocol==="https:")addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Urbanist:wght@500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap">
 <style>
 #intro{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;background:#e2ceb1;transition:opacity .4s ease}
 #intro.out{opacity:0;pointer-events:none}
+/* Feel like an app: no zooming, no text selection or copy menu (typing still works), no sideways scroll or rubber-band bounce. */
+html,body{overflow-x:clip;overscroll-behavior:none;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+html{touch-action:manipulation}
+*{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+input,textarea,select,[contenteditable="true"]{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
+.g-signin{display:inline-flex;align-items:center;gap:8px;justify-self:start;margin-top:10px}
 .intro-in{display:grid;justify-items:center;gap:14px;animation:introPop .7s cubic-bezier(.2,.8,.2,1) both}
 .intro-in b{font-family:Urbanist,system-ui,sans-serif;font-weight:800;font-size:34px;letter-spacing:-.035em;color:#4a2e1c;animation:introUp .6s .25s cubic-bezier(.2,.8,.2,1) both}
 @keyframes introPop{from{opacity:0;transform:scale(.82)}to{opacity:1;transform:none}}
@@ -798,6 +814,8 @@ const isSaved=id=>S.boards.some(b=>b.ids.includes(id));
 const UI={feed:"watch",ob:null,filter:"All",q:"",day:todayKey(),board:null,snap:{file:null,url:null,busy:false,result:null,err:null,meal:guessMeal()}};
 function guessMeal(){const h=new Date().getHours();return h<11?"Breakfast":h<15?"Lunch":h<21?"Dinner":"Snack"}
 
+// "Sign in with Google" button, shown only on the real website once config.js is filled in.
+function cloudSignInBtn(label){const c=window.SnapCloud;return c?.configured&&!c.signedIn?`<button class="btn primary sm g-signin" data-act="cloud-signin"><svg width="16" height="16" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>${label||"Sign in with Google"}</button>`:""}
 function toast(msg){const el=document.createElement("div");el.className="toast";el.setAttribute("role","status");el.textContent=msg;document.body.appendChild(el);setTimeout(()=>el.remove(),2600)}
 
 // ---------- likes, comments, messages ----------
@@ -1104,7 +1122,7 @@ function render(){
   const navTab=tab==="snap"?"today":tab==="people"||tab==="inbox"?"account":tab==="search"?"explore":tab;
   document.querySelectorAll("nav.tabs a").forEach(a=>{if(a.dataset.tab===navTab)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current")});
   const v=$("#view");
-  if(!S.profile&&!UI.ob&&S.ready)UI.ob={step:0,editing:false,d:{units:"metric",activity:"1.375",pace:"0.5"}};
+  if(!S.profile&&!UI.ob&&S.ready){let kept=null;try{kept=JSON.parse(sessionStorage.getItem("snapspoon:ob"));sessionStorage.removeItem("snapspoon:ob")}catch(e){}UI.ob={step:0,editing:false,d:{units:"metric",activity:"1.375",pace:"0.5",...(kept||{})}}};
   document.body.classList.toggle("ob",!!UI.ob||!S.ready&&!S.profile);
   if(!S.ready&&!S.profile){v.innerHTML=`<div class="ob-wrap" style="place-items:center;min-height:40vh"><span class="spinner" style="color:var(--accent)"></span></div>`;return}
   if(UI.ob){v.innerHTML=viewOnboard();return}
@@ -1118,7 +1136,7 @@ function render(){
   if(tab==="activity")v.innerHTML=viewActivity();
   if(tab==="search"){v.innerHTML=viewSearch();if(!UI.sq)setTimeout(()=>$("#sq")?.focus(),50)}
   if(tab==="inbox"){v.innerHTML=viewInbox();const cl=$("#chatList");if(cl)cl.scrollTop=cl.scrollHeight}
-  v.insertAdjacentHTML("beforeend",`<p class="status-line">${S.mode==="db"?"Your boards and food log are saved to your account.":"Prototype mode: your data is kept in this browser only."}</p>`);
+  v.insertAdjacentHTML("beforeend",`<p class="status-line">${S.mode==="db"?"Your boards and food log are saved to your account.":(window.SnapCloud?.configured?"Your data is kept in this browser only. Sign in with Google to save it to your account and use it on any device.":"Prototype mode: your data is kept in this browser only.")}</p>${S.mode==="db"?"":cloudSignInBtn()}`);
 }
 function renderPill(){
   const t=totals(todayKey()),g=S.settings.kcal,pct=Math.min(1,t.kcal/g),C=2*Math.PI*9;
@@ -1179,7 +1197,7 @@ function viewSnap(){
   else if(res) right=resultPanel(res);
   else right=`<p class="note snap-hint">Shoot from above. AI lists each food with its calories and macros, and you can fix anything before logging it.</p>
     ${s.err?`<p class="note" style="color:var(--accent);margin:0">${esc(s.err)}</p>`:""}
-    ${canAI?"":`<button class="btn ghost sm" data-act="demo-snap" style="justify-self:start">See an example estimate</button>`}`;
+    ${canAI?"":`${cloudSignInBtn("Sign in with Google to get AI estimates")}<button class="btn ghost sm" data-act="demo-snap" style="justify-self:start">See an example estimate</button>`}`;
   return `<div class="view-head"><div><a class="btn ghost sm" href="#today">← Tracker</a><h1 style="margin-top:6px">Snap a meal</h1><p>Take a photo and get an instant calorie estimate.</p></div></div>
     <div class="snap-grid">
       <label class="drop" id="drop" for="photo" ${res&&!s.url?"hidden":""}>
@@ -1279,12 +1297,16 @@ function viewOnboard(){
     <form class="ob-form" data-form="ob-0">
       <label class="field">First name<input id="ob_name" autocomplete="given-name" required value="${esc(d.name||"")}" placeholder="John Doe"></label>
       <label class="field">Username<span class="handle-in"><span>@</span><input id="ob_handle" required autocapitalize="none" autocomplete="username" spellcheck="false" pattern="[A-Za-z0-9_.]{3,20}" value="${esc(d.handle||"")}" placeholder="john.doe"></span><small class="note" id="ob_handle_msg">3 to 20 letters, numbers, dots or underscores. No one else can have it.</small></label>
-      <label class="field">Email<input id="ob_email" type="email" autocomplete="email" required value="${esc(d.email||"")}" placeholder="you@example.com"></label>
+      ${window.SnapCloud?.configured?`<label class="field">Email<input id="ob_email" type="email" autocomplete="email" value="${esc(d.email||SnapCloud.email||"")}" placeholder="you@example.com"></label>
+      ${SnapCloud.signedIn?`<p class="note" style="margin:0">Signed in with Google${SnapCloud.email?` as ${esc(SnapCloud.email)}`:""}. Your data saves to your Snapspoon account.</p>`:`<div class="provider"><button type="button" class="btn" style="justify-content:center" data-act="cloud-signin">Continue with Google</button></div><div class="or">or</div>`}
+      <div class="ob-actions"><button class="btn primary">${SnapCloud.signedIn?"Next":"Continue without an account"}</button></div>
+      ${SnapCloud.signedIn?"":`<p class="note" style="text-align:center;margin:0">Without an account, your data stays in this browser only. You can sign in with Google later in Settings.</p>`}`
+      :`<label class="field">Email<input id="ob_email" type="email" autocomplete="email" required value="${esc(d.email||"")}" placeholder="you@example.com"></label>
       <label class="field">Password<input id="ob_pw" type="password" autocomplete="new-password" minlength="8" required placeholder="At least 8 characters"></label>
       <div class="ob-actions"><button class="btn primary">Create account</button></div>
       <div class="or">or</div>
       <div class="provider"><button type="button" class="btn" style="justify-content:center" data-act="ob-provider">Continue with Apple</button><button type="button" class="btn" style="justify-content:center" data-act="ob-provider">Continue with Google</button></div>
-      <p class="note" style="text-align:center;margin:0">Prototype: no password is stored or sent anywhere. Your data saves to the Claude account you're signed in with.</p>
+      <p class="note" style="text-align:center;margin:0">${window.claude?.use?"Prototype: no password is stored or sent anywhere. Your data saves to the Claude account you're signed in with.":"Your data is saved in this browser only."}</p>`}
     </form></div>`;
   if(o.step===1){
     const ft=d.heightCm?Math.floor(d.heightCm/2.54/12):"",inch=d.heightCm?Math.round(d.heightCm/2.54-ft*12):"";
@@ -1414,6 +1436,7 @@ function settingsSheet(){
   const item=(act,title,sub="",cls="")=>`<button class="set-item ${cls}" data-act="${act}"><span><b>${title}</b>${sub?`<small class="note">${sub}</small>`:""}</span><span class="note">›</span></button>`;
   openSheet(`<div class="inner"><button class="close" data-act="close" aria-label="Close">✕</button><h2 style="font-size:24px">Settings</h2>
     <div class="set-group"><div class="label">Account</div><div class="set-card">
+      ${window.SnapCloud?.configured?(SnapCloud.signedIn?item("cloud-signout","Sign out",esc(SnapCloud.email?`Signed in with Google as ${SnapCloud.email}`:"Signed in with Google")):item("cloud-signin","Sign in with Google","Save your food log, boards and posts, and use AI")):""}
       ${item("edit-profile","Edit profile",me?"Picture, name, handle and bio":"Name and bio")}
       ${item("profile","Personal info and goals",esc([S.profile?.name,S.profile?.email].filter(Boolean).join(" · ")))}
       ${item("goals","Daily calorie and macro targets",`${S.settings.kcal} kcal a day`)}
@@ -1428,7 +1451,7 @@ function settingsSheet(){
       ${item("open-privacy","Privacy policy")}${item("open-terms","Terms of use")}</div></div>
     <div class="set-group"><div class="label">Help</div><div class="set-card">${item("soon","Contact support")}${item("share-app","Share Snapspoon")}</div></div>
     <div class="set-group"><div class="label">Your data</div><div class="set-card">${item("clear-data","Clear my data","Food log, weight, boards and recipes","danger")}${me?item("delete-account","Delete account","Removes your recipe page and posts too","danger"):""}</div></div>
-    <p class="note" style="text-align:center">Snapspoon prototype</p></div>`);
+    <p class="note" style="text-align:center">${window.SnapCloud?.configured?"Snapspoon":"Snapspoon prototype"}</p></div>`);
 }
 // Profile picture cropper: drag the picture and zoom it inside the circle, then save just what's in the circle.
 function cropPhoto(file){return new Promise((ok,no)=>{const img=new Image(),url=URL.createObjectURL(file);
@@ -1473,7 +1496,7 @@ function editProfileSheet(){UI.lpPhoto=null;
 
 function viewFriends(){
   const head=`<div class="view-head"><div><a class="btn ghost sm" href="#account">← Account</a><h1 style="margin-top:6px">People</h1><p>Follow people to see what they cook.</p></div></div>`;
-  if(S.mode!=="db")return head+`<div class="empty"><h3>Sign in to use Friends</h3>Friends and public profiles need you to be signed in, so your profile can be shared.</div>`;
+  if(S.mode!=="db")return head+`<div class="empty"><h3>Sign in to use Friends</h3>Friends and public profiles need you to be signed in, so your profile can be shared.${cloudSignInBtn()}</div>`;
   const me=S.people[uidUser];
   if(!me)return head+`<div class="panel" style="max-width:520px"><h3 style="font-size:22px">Create your public profile</h3><p class="note" style="margin:0">Friends find you by your handle. Only the recipes you choose to share appear on it. Your weight and food log stay private.</p>
     <form data-form="pub" class="ob-form">${photoField(null)}<label class="field">Handle<input id="pub_handle" required pattern="[A-Za-z0-9_.]{3,20}" placeholder="john.doe" value="${esc((S.profile?.name||"").toLowerCase().replace(/[^a-z0-9_.]/g,""))}"></label>
@@ -1922,7 +1945,7 @@ If the image contains no food, return {"meal_name": "", "items": [], "confidence
     const out=await sample.json(prompt,{images:[s.file],modelTier:"default"});
     s.result={meal_name:out.meal_name||"Your meal",items:(out.items||[]).map(i=>({name:i.name,grams:+i.grams||0,kcal:+i.kcal||0,protein:+i.protein||0,carbs:+i.carbs||0,fat:+i.fat||0})),confidence:out.confidence||"medium",notes:out.notes||""};
   }catch(e){
-    s.err=e?.code==="rate_limited"?"Too many requests right now. Wait a minute and try again.":e?.code==="not_granted"?"Claude access was declined for this page, so photos can't be analysed.":e?.code==="image_rejected"?"That image couldn't be read. Try a JPG or PNG under the size limit.":"The estimate didn't come back. Try again.";
+    s.err=e?.userMessage?e.userMessage:e?.code==="rate_limited"?"Too many requests right now. Wait a minute and try again.":e?.code==="not_granted"?"Claude access was declined for this page, so photos can't be analysed.":e?.code==="image_rejected"?"That image couldn't be read. Try a JPG or PNG under the size limit.":"The estimate didn't come back. Try again.";
   }
   s.busy=false;render();
 }
@@ -1937,7 +1960,7 @@ Macros must be consistent: kcal ≈ 4p + 4c + 9f.`;
       tags:Array.isArray(o.tags)?o.tags.map(String):[],ing:Array.isArray(o.ing)?o.ing.map(String):[],steps:Array.isArray(o.steps)?o.steps.map(String):[],hue:hashStr(String(o.title))%360};
     if(r.kcal<400&&!r.tags.includes("Under 400"))r.tags.push("Under 400");
     S.mine=[r,...S.mine];saveMine();render();recipeSheet(r.id);toast("Recipe added to Discover");
-  }catch(e){go.disabled=false;st.textContent=e?.code==="rate_limited"?"Too many requests. Wait a minute and try again.":e?.code==="not_granted"?"Claude access was declined for this page.":"The recipe didn't come back. Try again."}
+  }catch(e){go.disabled=false;st.textContent=e?.userMessage?e.userMessage:e?.code==="rate_limited"?"Too many requests. Wait a minute and try again.":e?.code==="not_granted"?"Claude access was declined for this page.":"The recipe didn't come back. Try again."}
 }
 
 function setPhoto(file){
@@ -1982,6 +2005,8 @@ document.addEventListener("click",e=>{
   if(a==="notify-on"){if("Notification" in window)Notification.requestPermission().then(()=>{socSet("notify",true);render();if($("#layer").innerHTML)settingsSheet()});return}
   if(a==="blocked-list"){openSheet(`<div class="inner"><button class="close" data-act="close" aria-label="Close">✕</button><h2 style="font-size:22px">Blocked accounts</h2>${S.blocked.length?S.blocked.map(id=>`<div class="person"><span class="person-main">${avatar(S.people[id]||{})}<span><b>@${esc(S.people[id]?.handle||"someone")}</b></span></span><button class="btn sm" data-unblock-list="${esc(id)}">Unblock</button></div>`).join(""):`<p class="note">You haven't blocked anyone.</p>`}</div>`);return}
   if(a==="notify-off"){socSet("notify",!socGet("notify",true));settingsSheet();return}
+  if(a==="cloud-signin"){toast("Opening Google…");if(UI.ob){const d=UI.ob.d;for(const k of ["name","handle","email"]){const v=$("#ob_"+k)?.value?.trim();if(v)d[k]=k==="handle"?v.replace(/^@/,""):v}try{sessionStorage.setItem("snapspoon:ob",JSON.stringify(d))}catch(e){}}window.SnapCloud?.signIn();return}
+  if(a==="cloud-signout"){window.SnapCloud?.signOut();return}
   if(a==="soon")toast("This will be added before Snapspoon is in the App Store.");
   if(a==="share-app"){const t="I'm using Snapspoon to cook healthy and track calories.";if(navigator.share)navigator.share({text:t}).catch(()=>{});else{navigator.clipboard?.writeText(t);toast("Copied to share")}}
   if(a==="clear-data")openSheet(`<div class="inner"><h2 style="font-size:22px">Clear your data?</h2><p class="note">Your food log, weight, boards and recipes are erased. This can't be undone.</p><div class="row"><button class="btn" data-act="close">Cancel</button><button class="btn primary" data-act="clear-data-yes">Clear</button></div></div>`);
